@@ -798,3 +798,43 @@ a{color:inherit;text-decoration:none}
   .about-section .divider:first-of-type{ margin-top: 1.25rem !important; }
   .about-section .divider:last-of-type{ margin-bottom: 1.25rem !important; }
 }
+/* --- Fix excessive white space between text and image on About (mobile) --- */
+@media (max-width: 768px) {
+  .about-split,
+  .about-split.reverse {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem !important; /* Tighten space between text and image */
+    margin-bottom: 1rem !important;
+  }
+
+  .about-text {
+    text-align: center;
+    margin-bottom: 0.5rem !important; /* Remove excess space below text */
+  }
+
+  .about-text p {
+    margin: 0.4rem 0 !important;
+    line-height: 1.55;
+  }
+
+  .about-image {
+    width: 100%;
+    max-width: 380px;
+    margin-top: 0 !important; /* Remove top margin pushing image too low */
+  }
+
+  .about-photo {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+  }
+
+  /* Divider spacing — keep it minimal for better visual rhythm */
+  .divider {
+    width: 80%;
+    margin: 1.25rem auto !important;
+  }
+}
