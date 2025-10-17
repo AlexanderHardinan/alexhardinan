@@ -1,13 +1,35 @@
 import { NextResponse } from 'next/server';
+import { Resend } from 'resend';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: Request) {
-  const form = await req.formData();
-  const name = String(form.get('name')||'');
-  const email = String(form.get('email')||'');
-  const message = String(form.get('message')||'');
+  try {
+    const formData = await req.formData();
+    const name = formData.get('name')?.toString() || '';
+    const email = formData.get('email')?.toString() || '';
+    const message = formData.get('message')?.toString() || '';
 
-  console.log('Contact', { name, email, message });
+    if (!name || !email || !message) {
+      return NextResponse.json({ success: false, error: 'Missing fields' }, { status: 400 });
+    }
 
-  const mailto = `mailto:chefalex.theglobeasia@gmail.com?subject=${encodeURIComponent('Website inquiry from '+name)}&body=${encodeURIComponent(message+'\n\nFrom: '+email)}`;
-  return NextResponse.json({ ok:true, mailto });
+    await resend.emails.send({
+      from: 'Website Contact <onboarding@resend.dev>',
+      to: 'chefalex.theglobeasia@gmail.com',
+      subject: `New Message from ${name}`,
+      html: `
+        <h2>Website Contact Form</h2>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Message:</strong></p>
+        <p>${message}</p>
+      `,
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error('Error sending email:', err);
+    return NextResponse.json({ success: false, error: 'Email failed' }, { status: 500 });
+  }
 }
