@@ -17,12 +17,18 @@ export default function FoodEthos() {
   }, []);
 
   return (
-    <main className="container" style={{ padding: '3rem 1rem' }}>
-      <section className="fade-up" style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-        <h1 className="title">Food Ethos</h1>
-        <p className="subtitle">By Chef Alex</p>
+    <main className="container" style={{ padding: '2.5rem 1rem' }}>
+      {/* ===== PAGE HEADER ===== */}
+      <section className="page-header fade-up">
+        <h1>
+          <span style={{ color: '#CBA135' }}>Chef Alex Hardinan</span>
+          <br />
+          Food Ethos
+        </h1>
+        <p>By Chef Alex — a philosophy rooted in respect, sustainability, and creativity.</p>
       </section>
 
+      {/* ===== CONTENT ===== */}
       <section className="fade-up ethos-content">
         <h2>My Philosophy</h2>
         <p>
@@ -48,8 +54,8 @@ export default function FoodEthos() {
           <div className="ethos-card fade-up">
             <h3>Quality and Freshness</h3>
             <p>
-              Commitment to fresh, seasonal, and locally sourced ingredients ensures both superior taste
-              and support for regional farmers and producers.
+              Commitment to fresh, seasonal, and locally sourced ingredients ensures both superior
+              taste and support for regional farmers and producers.
             </p>
           </div>
 
@@ -127,7 +133,15 @@ export default function FoodEthos() {
 
         <hr className="divider" />
 
-        <p className="fade-up" style={{ fontWeight: 600, textAlign: 'center', fontSize: '1.15rem' }}>
+        <p
+          className="fade-up"
+          style={{
+            fontWeight: 600,
+            textAlign: 'center',
+            fontSize: '1.15rem',
+            marginTop: '2rem',
+          }}
+        >
           In essence, my food ethos is a commitment to craft cuisine that nourishes the body, respects the
           earth, and uplifts the people who make it possible — one mindful dish at a time.
         </p>

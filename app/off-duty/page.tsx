@@ -49,20 +49,27 @@ export default function OffDuty() {
       caption:
         'Fashion and form share rhythm with flavor. Off duty, I find creativity through design, tailoring, and timeless aesthetics.',
     },
-    // Add more as needed:
-    // { src: '/offduty/photo5.png', title: 'Title', caption: 'Your description here.' },
   ];
 
   return (
-    <main className="container" style={{ padding: '3rem 1rem' }}>
-      <section className="fade-up" style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-        <h1 className="title">Off Duty</h1>
-        <p className="subtitle">The world beyond the kitchen — where passion meets lifestyle.</p>
+    <main className="container" style={{ padding: '2.5rem 1rem' }}>
+      {/* PAGE HEADER */}
+      <section className="page-header fade-up">
+        <h1>
+          <span style={{ color: '#CBA135' }}>Chef Alex Hardinan</span>
+          <br />
+          Off Duty
+        </h1>
+        <p>The world beyond the kitchen — where passion meets lifestyle.</p>
       </section>
 
-      <section className="fade-up offduty-grid">
+      {/* GRID SECTION */}
+      <section className="offduty-grid fade-up">
         {features.map((item, i) => (
-          <div key={i} className="offduty-card fade-up">
+          <div
+            key={i}
+            className={`offduty-card fade-up ${i % 2 === 1 ? 'reverse' : ''}`}
+          >
             <div className="offduty-image">
               <ImageCard src={item.src} alt={item.title} />
             </div>

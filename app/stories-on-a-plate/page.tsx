@@ -1,4 +1,5 @@
 'use client';
+
 import ImageCard from '../../components/ImageCard';
 
 type Story = {
@@ -7,7 +8,7 @@ type Story = {
 };
 
 export default function StoriesOnAPlate() {
-  // ===== Edit here any time =====
+  // ===== Edit images and captions here =====
   const stories: Story[] = [
     { src: '/stories/thai-ravioli.png', caption: 'Thai Blue Crab Ravioli — inspired by seasonal ingredients in Thailand, Chef’s Table: Winter Edition III.' },
     { src: '/stories/thai-rissoto.png', caption: 'Khao Hom Mali risotto — jasmine rice reinterpretation of the classic risotto.' },
@@ -15,14 +16,14 @@ export default function StoriesOnAPlate() {
     { src: '/stories/truffle-pasta.png', caption: 'Truffle royale pasta.' },
     { src: '/stories/vegan-tartare.png', caption: 'When vegan meets tartare.' },
     { src: '/stories/tenderloin-butternut.png', caption: 'Wagyu Tenderloin with beef jus and butternut purée.' },
-    { src: '/stories/san-sebastian.png', caption: '“Basque-Style San Sebastián Cheesecake with Seasonal Berries.' },
+    { src: '/stories/san-sebastian.png', caption: 'Basque-Style San Sebastián Cheesecake with Seasonal Berries.' },
     { src: '/stories/salmon-kal.png', caption: 'Kal-Wrapped Norwegian Salmon — dill-turmeric emulsion, mixed citrus, tapioca crisp.' },
     { src: '/stories/roselle-bonzai.png', caption: 'Roselle Sorbet Bonsai — a playful ode to nature in dessert form.' },
     { src: '/stories/riverprawn-aurora.png', caption: 'Ayutthaya River Prawn — coconut-poached with Thai herbs, lemongrass essence, mango sphere, pineapple caviar, and compressed pomelo.' },
     { src: '/stories/a5-tartare.png', caption: 'Kagoshima A5 Tartare — Himalayan salt presentation, paired with artisanal corn bread.' },
     { src: '/stories/a5-tataki.png', caption: 'Applewood-Smoked A5 Tataki — shiso wrap, yuzu truffle glaze.' },
     { src: '/stories/american-pie.png', caption: 'Vol-au-Vent of Figs and Orange Marmalade — topped with a cream-filled cocktail apple.' },
-    { src: '/stories/andaman-island.png', caption: 'Andaman Island — an artistic composition of coconut water essence, cherry mousse, fresh berries, and kaffir lime cream within a fishbone tuile.' },
+    { src: '/stories/andaman-island.png', caption: 'Andaman Island — coconut water essence, cherry mousse, fresh berries, and kaffir lime cream within a fishbone tuile.' },
     { src: '/stories/applemint-granita.png', caption: 'Apple and Mint Granita — crafted as a refined interlude to refresh the palate.' },
     { src: '/stories/apple-slaw.png', caption: 'Green Apple Slaw Roll — pineapple, carrot, and red cabbage with a delicate yuzu cream.' },
     { src: '/stories/beetroot-elixir.png', caption: 'Beetroot Elixir — poached root and velouté in harmonious balance.' },
@@ -49,21 +50,22 @@ export default function StoriesOnAPlate() {
     { src: '/stories/mesa-postre.png', caption: 'Tableside Dessert Creation — ‘Mesa de Postre,’ an interactive showcase of flavor and artistry.' },
     { src: '/stories/pomelo-pearl.png', caption: 'Pomelo Pearl — lemongrass granita, lime caviar, compressed pomelo; a refreshing opening bite.' },
     { src: '/stories/pumpkin-veloute.png', caption: 'Northern Coconut Pumpkin Velouté — fresh coconut cream and silky Northern Thai pumpkin, garnished with pumpkin seeds and basil foam, presented in a natural coconut shell.' },
-    // Continue adding until story40.png
-    // { src: '/stories/story6.png', caption: '...' },
-    // ...
   ];
   // =================================
 
   return (
     <main className="container" style={{ padding: '2rem 0' }}>
-      <section style={{ textAlign: 'center', marginBottom: '2rem' }}>
-        <h1 className="title">Stories on a Plate</h1>
-        <p className="subtitle">
-          Each dish tells a story — a memory, a moment, a passion captured in flavor.
-        </p>
+      {/* PAGE HEADER */}
+      <section className="page-header fade-up">
+        <h1>
+          <span style={{ color: '#CBA135' }}>Chef Alex Hardinan</span>
+          <br />
+          Stories on a Plate
+        </h1>
+        <p>Each dish tells a story — a memory, a moment, a passion captured in flavor.</p>
       </section>
 
+      {/* IMAGE GRID */}
       <section>
         <div className="stories-grid">
           {stories.map((item, i) => (
