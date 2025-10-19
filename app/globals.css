@@ -1206,4 +1206,27 @@ a{color:inherit;text-decoration:none}
     gap: 2rem;
   }
 }
+/* === MOBILE TITLE SPACING FIX === */
+@media (max-width: 768px) {
+  /* Adds breathing room below the header */
+  .site-header {
+    margin-bottom: 1.25rem !important;
+  }
+
+  /* Ensures the first section title has spacing below header */
+  main.container > section:first-of-type {
+    margin-top: 2rem !important;
+  }
+
+  /* Optional: tighter vertical rhythm for small screens */
+  .title {
+    margin-top: 0.5rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  .subtitle {
+    margin-top: 0 !important;
+    margin-bottom: 1.25rem !important;
+  }
+}
 

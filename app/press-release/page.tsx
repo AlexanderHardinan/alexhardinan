@@ -1,4 +1,5 @@
 'use client';
+
 import { useEffect } from 'react';
 
 export default function PressRelease() {
@@ -11,25 +12,20 @@ export default function PressRelease() {
       },
       { threshold: 0.1 }
     );
+
     document.querySelectorAll('.fade-up').forEach((el) => observer.observe(el));
     return () => observer.disconnect();
   }, []);
 
   return (
-    <main className="container" style={{ padding: '2.5rem 1rem' }}>
-      {/* ===== PAGE HEADER ===== */}
-      <section className="page-header fade-up">
-        <h1>
-          <span style={{ color: '#CBA135' }}>Chef Alex Hardinan</span>
-          <br />
-          Press Release
-        </h1>
-        <p>
+    <main className="container" style={{ padding: '3rem 1rem' }}>
+      <section className="fade-up" style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+        <h1 className="title">Press Release</h1>
+        <p className="subtitle">
           Chef Alex: A Global Culinary Visionary Recognized Across Prestigious Platforms
         </p>
       </section>
 
-      {/* ===== CONTENT ===== */}
       <section className="fade-up press-content">
         <p>
           Chef Alex continues to gain international acclaim for his innovative approach to modern
