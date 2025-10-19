@@ -14,9 +14,9 @@ export default function Header() {
           <Link
             href="/"
             className="brand"
-            aria-label="Chef Alex Hardinan Home"
+            aria-label="My Profile Home"
           >
-            Chef Alex Hardinan
+            My Profile
           </Link>
 
           {/* Desktop nav */}
