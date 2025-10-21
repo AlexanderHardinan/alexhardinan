@@ -1,6 +1,10 @@
 'use client';
 
-import ImageCard from '../../components/ImageCard';
+import dynamic from 'next/dynamic';
+const ImageCard = dynamic(() => import('../../components/ImageCard'), {
+  ssr: false,
+  loading: () => <div style={{ height: '250px', background: '#f2f2f2', borderRadius: '12px' }} />,
+});
 
 type Story = {
   src: string;
@@ -8,7 +12,7 @@ type Story = {
 };
 
 export default function StoriesOnAPlate() {
-  // ===== Edit here any time =====
+  // ===== Data =====
   const stories: Story[] = [
     { src: '/stories/thai-ravioli.png', caption: 'Thai Blue Crab Ravioli — inspired by seasonal ingredients in Thailand, Chef’s Table: Winter Edition III.' },
     { src: '/stories/thai-rissoto.png', caption: 'Khao Hom Mali risotto — jasmine rice reinterpretation of the classic risotto.' },
@@ -50,11 +54,7 @@ export default function StoriesOnAPlate() {
     { src: '/stories/mesa-postre.png', caption: 'Tableside Dessert Creation — ‘Mesa de Postre,’ an interactive showcase of flavor and artistry.' },
     { src: '/stories/pomelo-pearl.png', caption: 'Pomelo Pearl — lemongrass granita, lime caviar, compressed pomelo; a refreshing opening bite.' },
     { src: '/stories/pumpkin-veloute.png', caption: 'Northern Coconut Pumpkin Velouté — fresh coconut cream and silky Northern Thai pumpkin, garnished with pumpkin seeds and basil foam, presented in a natural coconut shell.' },
-    // Continue adding until story40.png
-    // { src: '/stories/story6.png', caption: '...' },
-    // ...
   ];
-  // =================================
 
   return (
     <main className="container" style={{ padding: '2rem 0' }}>
@@ -68,7 +68,7 @@ export default function StoriesOnAPlate() {
       <section>
         <div className="stories-grid">
           {stories.map((item, i) => (
-            <div key={i} className="story-card">
+            <div key={i} className="story-card" style={{ willChange: 'transform, opacity' }}>
               <ImageCard src={item.src} alt={`Story ${i + 1}`} />
               <p className="story-caption">{item.caption}</p>
             </div>
