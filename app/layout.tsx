@@ -4,16 +4,45 @@ import type { Metadata } from 'next';
 import Header from '../components/Header';
 import ContactWidget from '../components/ContactWidget';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap', // prevents font blocking render
+});
 
 export const metadata: Metadata = {
   title: 'Alexander Hardinan',
   description: 'Culinary innovator. Modern gastronomy.',
+  icons: '/favicon.ico',
+  openGraph: {
+    title: 'Alexander Hardinan',
+    description: 'Culinary innovator. Modern gastronomy.',
+    url: 'https://alexhardinan.com',
+    siteName: 'Alexander Hardinan',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Alexander Hardinan',
+      },
+    ],
+    type: 'website',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* 🔥 Speed optimizations */}
+        <link rel="preconnect" href="https://vitals.vercel-insights.com" />
+        <link rel="preconnect" href="https://res.cloudinary.com" />
+        <link rel="dns-prefetch" href="https://vitals.vercel-insights.com" />
+        <meta httpEquiv="Cache-Control" content="public, max-age=604800, immutable" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta name="theme-color" content="#ffffff" />
+      </head>
+
       <body className={inter.className}>
         <Header />
         {children}
