@@ -211,7 +211,7 @@ export default function Page() {
       <section id="gallery">
         <div className="grid" style={{ padding: '2rem' }}>
           {['/g1.png', '/g2.png', '/g3.png', '/g4.png', '/g5.png', '/g6.png'].map((src, i) => (
-            <ImageCard key={i} src={src} />
+            <ImageCard key={i} src={src} alt={`Gallery image ${i + 1}`} />
           ))}
         </div>
       </section>
