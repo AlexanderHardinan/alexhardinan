@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Lock, Unlock } from 'lucide-react'; // using lucide icons for lock/unlock
+import { Lock, Unlock } from 'lucide-react'; // lock/unlock icons
 
 export default function CharacterReferences() {
   const [enteredPassword, setEnteredPassword] = useState('');
@@ -29,14 +29,14 @@ export default function CharacterReferences() {
 
   return (
     <main
-      className={`min-h-screen flex flex-col items-center justify-center px-4 sm:px-8 py-10 transition-colors duration-300 ${
+      className={`min-h-screen flex flex-col items-center justify-start px-4 sm:px-8 py-16 sm:py-20 transition-colors duration-300 ${
         isAuthenticated
           ? 'bg-gradient-to-br from-gray-50 via-white to-gray-100 text-gray-900'
           : 'bg-gradient-to-br from-gray-950 via-gray-900 to-black text-white'
       }`}
     >
       {!isAuthenticated ? (
-        <div className="backdrop-blur-md bg-white/10 border border-white/20 p-8 sm:p-10 rounded-2xl shadow-xl max-w-sm w-full text-center animate-fadeIn">
+        <div className="backdrop-blur-md bg-white/10 border border-white/20 p-8 sm:p-10 rounded-2xl shadow-xl max-w-sm w-full text-center animate-fadeIn mt-10 sm:mt-16">
           <h1 className="text-2xl sm:text-3xl font-semibold mb-4 text-yellow-400">
             Character References
           </h1>
@@ -65,7 +65,7 @@ export default function CharacterReferences() {
           {error && <p className="text-red-400 text-sm mt-3">{error}</p>}
         </div>
       ) : (
-        <section className="max-w-4xl w-full bg-white shadow-xl rounded-2xl p-6 sm:p-10 mt-10 animate-fadeIn">
+        <section className="max-w-4xl w-full bg-white shadow-xl rounded-2xl p-6 sm:p-10 mt-16 sm:mt-24 animate-fadeIn">
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
               Character References
