@@ -20,6 +20,7 @@ export default function CharacterReferences() {
       setPwd('');
     }
   }
+
   function logout() {
     setOk(false);
     setPwd('');
@@ -27,11 +28,10 @@ export default function CharacterReferences() {
   }
 
   return (
-    // Add reliable clearance below your site header (which is overlay/absolute)
     <main
       className="container"
       style={{
-        paddingTop: '112px',   // ↑ space from “My Profile” header to page title
+        paddingTop: '112px',
         paddingBottom: '48px',
       }}
     >
@@ -82,7 +82,9 @@ export default function CharacterReferences() {
                 required
               />
             </div>
-            <button className="btn" type="submit">Access Page</button>
+            <button className="btn" type="submit">
+              Access Page
+            </button>
           </form>
 
           {err && (
@@ -97,7 +99,6 @@ export default function CharacterReferences() {
             padding: '0 0 0',
           }}
         >
-          {/* Title row with safe spacing below header */}
           <div
             style={{
               display: 'flex',
@@ -107,20 +108,18 @@ export default function CharacterReferences() {
               marginBottom: 18,
             }}
           >
-            <h1 className="title" style={{ margin: 0 }}>Character References</h1>
+            <h1 className="title" style={{ margin: 0 }}>
+              Character References
+            </h1>
             <button className="btn" onClick={logout} aria-label="Logout">
               <Unlock style={{ width: 16, height: 16 }} />
               <span style={{ marginLeft: 6 }}>Logout</span>
             </button>
           </div>
 
-          {/* Fine-grained vertical rhythm for content */}
           <div style={{ display: 'grid', gap: 24 }}>
             {/* Reference 1 */}
-            <article
-              className="card"
-              style={{ padding: 20, lineHeight: 1.6 }}
-            >
+            <article className="card" style={{ padding: 20, lineHeight: 1.6 }}>
               <h2
                 style={{
                   margin: '0 0 8px',
@@ -145,11 +144,8 @@ export default function CharacterReferences() {
               </p>
             </article>
 
-            {/* Reference 2 */}
-            <article
-              className="card"
-              style={{ padding: 20, lineHeight: 1.6 }}
-            >
+            {/* Reference 2 (updated) */}
+            <article className="card" style={{ padding: 20, lineHeight: 1.6 }}>
               <h2
                 style={{
                   margin: '0 0 8px',
@@ -162,9 +158,13 @@ export default function CharacterReferences() {
               <p style={{ margin: '0 0 6px', opacity: 0.9 }}>
                 Located in Tabuk, Saudi Arabia
               </p>
-              <p style={{ margin: 0 }}>
+              <p style={{ margin: '0 0 6px' }}>
                 <strong>Mr. Abdul Kareem Khan</strong> | Admin Specialist
               </p>
+              <p style={{ margin: '0 0 6px' }}>
+                Email: kareem@westernroadksa.com
+              </p>
+              <p style={{ margin: 0 }}>Tel: +966 58 021 6412</p>
             </article>
 
             <p
