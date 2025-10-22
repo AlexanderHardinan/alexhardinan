@@ -1,18 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function CharacterReferences() {
   const [enteredPassword, setEnteredPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [error, setError] = useState('');
-
   const correctPassword = 'SAth123456';
+
+  useEffect(() => {
+    // If password was previously entered in this session, skip login
+    const auth = sessionStorage.getItem('auth');
+    if (auth === 'true') setIsAuthenticated(true);
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (enteredPassword.trim() === correctPassword) {
       setIsAuthenticated(true);
+      sessionStorage.setItem('auth', 'true');
       setError('');
     } else {
       setError('Incorrect password. Please try again.');
@@ -24,8 +30,12 @@ export default function CharacterReferences() {
     return (
       <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white p-6">
         <div className="backdrop-blur-md bg-white/10 border border-white/20 p-8 rounded-2xl shadow-xl max-w-sm w-full text-center animate-fadeIn">
-          <h1 className="text-2xl font-semibold mb-4 text-yellow-400">Character References</h1>
-          <p className="text-sm mb-6 text-gray-300">Please enter the access password to view this page.</p>
+          <h1 className="text-2xl font-semibold mb-4 text-yellow-400">
+            Character References
+          </h1>
+          <p className="text-sm mb-6 text-gray-300">
+            Please enter the access password to view this page.
+          </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <input
@@ -51,9 +61,11 @@ export default function CharacterReferences() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-100 via-white to-gray-50 p-6">
-      <section className="max-w-4xl mx-auto bg-white shadow-xl rounded-2xl p-8 mt-8 fade-up">
-        <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">Character References</h1>
+    <main className="min-h-screen bg-gradient-to-br from-gray-100 via-white to-gray-50 p-6 fade-up">
+      <section className="max-w-4xl mx-auto bg-white shadow-xl rounded-2xl p-8 mt-8">
+        <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">
+          Character References
+        </h1>
 
         {/* Reference 1 */}
         <div className="mb-10 border-l-4 border-yellow-500 pl-4">
@@ -77,7 +89,9 @@ export default function CharacterReferences() {
 
         {/* Reference 2 */}
         <div className="mb-10 border-l-4 border-yellow-500 pl-4">
-          <h2 className="text-xl font-semibold text-gray-800">Western Road Restaurants</h2>
+          <h2 className="text-xl font-semibold text-gray-800">
+            Western Road Restaurants
+          </h2>
           <p className="text-gray-600">Located in Tabuk, Saudi Arabia</p>
           <p className="mt-2 text-gray-700">
             <strong>Mr. Abdul Kareem Khan</strong> | Admin Specialist
@@ -86,6 +100,18 @@ export default function CharacterReferences() {
 
         <div className="text-center text-sm text-gray-500 italic">
           More references will be added in the future.
+        </div>
+
+        <div className="text-center mt-8">
+          <button
+            onClick={() => {
+              sessionStorage.removeItem('auth');
+              setIsAuthenticated(false);
+            }}
+            className="px-6 py-2 rounded-lg bg-gradient-to-r from-gray-700 to-gray-900 text-white font-semibold hover:opacity-90 transition-all duration-200"
+          >
+            Logout
+          </button>
         </div>
       </section>
     </main>
