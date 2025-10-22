@@ -4,6 +4,10 @@ import { useEffect } from 'react';
 import Image from 'next/image';
 import Bubbles from '../components/Bubbles';
 import ImageCard from '../components/ImageCard';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, Pagination } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/pagination';
 
 export default function Page() {
   useEffect(() => {
@@ -15,12 +19,7 @@ export default function Page() {
       },
       { threshold: 0.1 }
     );
-
-    document.querySelectorAll('.fade-up, .fade-left, .fade-right').forEach((el) =>
-      observer.observe(el)
-    );
-
-    // Cleanup observer on unmount
+    document.querySelectorAll('.fade-up, .fade-left, .fade-right').forEach((el) => observer.observe(el));
     return () => observer.disconnect();
   }, []);
 
@@ -75,20 +74,14 @@ export default function Page() {
                 Currently, he leads <strong>The Globe’s Heritage by Chef Alex</strong> in Pattaya,
                 Thailand, elevating the city’s gastronomic reputation to rival Bangkok. Learn more
                 at{' '}
-                <a
-                  href="https://www.theglobeasia.com"
-                  target="_blank"
-                  rel="noreferrer"
-                >
+                <a href="https://www.theglobeasia.com" target="_blank" rel="noreferrer">
                   www.theglobeasia.com
                 </a>
                 .
               </p>
               <p>
                 Featured in MSN News among the{' '}
-                <strong>
-                  Top 5 Food Experts Who Are Changing the Way We Eat.
-                </strong>{' '}
+                <strong>Top 5 Food Experts Who Are Changing the Way We Eat.</strong>{' '}
                 <a
                   href="https://www.msn.com/en-us/health/nutrition/top-5-food-experts-who-are-changing-the-way-we-eat/ar-AA1NDetW"
                   target="_blank"
@@ -207,13 +200,29 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ===== GALLERY ===== */}
-      <section id="gallery">
-        <div className="grid" style={{ padding: '2rem' }}>
+      {/* ===== GALLERY CAROUSEL ===== */}
+      <section id="gallery" className="fade-up" style={{ padding: '3rem 1rem' }}>
+        <h2 className="title" style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+          Gallery
+        </h2>
+        <Swiper
+          modules={[Autoplay, Pagination]}
+          spaceBetween={20}
+          pagination={{ clickable: true }}
+          autoplay={{ delay: 2500, disableOnInteraction: false }}
+          breakpoints={{
+            320: { slidesPerView: 2 },
+            768: { slidesPerView: 3 },
+            1024: { slidesPerView: 6 },
+          }}
+          style={{ paddingBottom: '2rem' }}
+        >
           {['/g1.png', '/g2.png', '/g3.png', '/g4.png', '/g5.png', '/g6.png'].map((src, i) => (
-            <ImageCard key={i} src={src} alt={`Gallery image ${i + 1}`} />
+            <SwiperSlide key={i}>
+              <ImageCard src={src} alt={`Gallery image ${i + 1}`} />
+            </SwiperSlide>
           ))}
-        </div>
+        </Swiper>
       </section>
     </main>
   );
