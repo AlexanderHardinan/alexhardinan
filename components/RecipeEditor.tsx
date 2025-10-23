@@ -115,9 +115,31 @@ export default function RecipeEditor({
     }
   }
 
+  // ===== INGREDIENT HANDLERS =====
+  function addIngredient() {
+    setIngredients([...ingredients, { id: uid(), amount: '', unit: '', item: '' }]);
+  }
+  function updateIngredient(id: string, field: keyof Ingredient, value: any) {
+    setIngredients((prev) => prev.map((i) => (i.id === id ? { ...i, [field]: value } : i)));
+  }
+  function removeIngredient(id: string) {
+    setIngredients((prev) => prev.filter((i) => i.id !== id));
+  }
+
+  // ===== STEP HANDLERS =====
+  function addStep() {
+    setSteps([...steps, { id: uid(), text: '' }]);
+  }
+  function updateStep(id: string, text: string) {
+    setSteps((prev) => prev.map((s) => (s.id === id ? { ...s, text } : s)));
+  }
+  function removeStep(id: string) {
+    setSteps((prev) => prev.filter((s) => s.id !== id));
+  }
+
   return (
     <main className="container" style={{ paddingTop: '110px', paddingBottom: '60px' }}>
-      {/* Toast Notification */}
+      {/* Toast */}
       {toast && (
         <div
           style={{
@@ -217,7 +239,125 @@ export default function RecipeEditor({
         )}
       </section>
 
-      {/* More recipe fields will appear below this later */}
+      {/* Recipe Details */}
+      <section
+        className="card"
+        style={{
+          maxWidth: 1100,
+          margin: '0 auto',
+          padding: 20,
+          borderRadius: 16,
+        }}
+      >
+        <label>
+          <strong>Recipe Title</strong>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            style={{
+              width: '100%',
+              marginTop: 8,
+              padding: '8px',
+              border: '1px solid #ccc',
+              borderRadius: 8,
+            }}
+          />
+        </label>
+
+        <div style={{ display: 'flex', gap: 12, marginTop: 16, flexWrap: 'wrap' }}>
+          <label style={{ flex: 1 }}>
+            <strong>Base Yield</strong>
+            <input
+              type="number"
+              value={baseYield}
+              onChange={(e) => setBaseYield(Number(e.target.value))}
+              style={{ width: '100%', marginTop: 8, padding: '8px', borderRadius: 8, border: '1px solid #ccc' }}
+            />
+          </label>
+          <label style={{ flex: 1 }}>
+            <strong>Target Yield</strong>
+            <input
+              type="number"
+              value={targetYield}
+              onChange={(e) => setTargetYield(Number(e.target.value))}
+              style={{ width: '100%', marginTop: 8, padding: '8px', borderRadius: 8, border: '1px solid #ccc' }}
+            />
+          </label>
+        </div>
+      </section>
+
+      {/* Ingredients */}
+      <section
+        className="card"
+        style={{
+          maxWidth: 1100,
+          margin: '1.5rem auto',
+          padding: 20,
+          borderRadius: 16,
+        }}
+      >
+        <h3>Ingredients</h3>
+        {ingredients.map((ing) => (
+          <div key={ing.id} style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+            <input
+              type="number"
+              value={ing.amount}
+              onChange={(e) => updateIngredient(ing.id, 'amount', e.target.value)}
+              placeholder="Amount"
+              style={{ width: '20%', padding: 6, borderRadius: 6, border: '1px solid #ccc' }}
+            />
+            <input
+              value={ing.unit}
+              onChange={(e) => updateIngredient(ing.id, 'unit', e.target.value)}
+              placeholder="Unit"
+              style={{ width: '20%', padding: 6, borderRadius: 6, border: '1px solid #ccc' }}
+            />
+            <input
+              value={ing.item}
+              onChange={(e) => updateIngredient(ing.id, 'item', e.target.value)}
+              placeholder="Ingredient"
+              style={{ flex: 1, padding: 6, borderRadius: 6, border: '1px solid #ccc' }}
+            />
+            <button onClick={() => removeIngredient(ing.id)} className="btn-ghost">✕</button>
+          </div>
+        ))}
+        <button onClick={addIngredient} className="btn" style={{ marginTop: 10 }}>
+          + Add Ingredient
+        </button>
+      </section>
+
+      {/* Steps */}
+      <section
+        className="card"
+        style={{
+          maxWidth: 1100,
+          margin: '0 auto',
+          padding: 20,
+          borderRadius: 16,
+        }}
+      >
+        <h3>Procedure</h3>
+        {steps.map((s, i) => (
+          <div key={s.id} style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+            <textarea
+              value={s.text}
+              onChange={(e) => updateStep(s.id, e.target.value)}
+              placeholder={`Step ${i + 1}`}
+              style={{
+                flex: 1,
+                padding: 8,
+                borderRadius: 8,
+                border: '1px solid #ccc',
+                minHeight: 60,
+              }}
+            />
+            <button onClick={() => removeStep(s.id)} className="btn-ghost">✕</button>
+          </div>
+        ))}
+        <button onClick={addStep} className="btn" style={{ marginTop: 10 }}>
+          + Add Step
+        </button>
+      </section>
     </main>
   );
 }
