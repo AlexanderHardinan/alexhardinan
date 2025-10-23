@@ -88,21 +88,28 @@ export default function RecipeEditor({
     return targetYield / baseYield;
   }, [baseYield, targetYield]);
 
-  // ===== IMAGE UPLOAD FIX (WITH TOAST) =====
+  // ===== FIXED IMAGE UPLOAD HANDLER =====
   async function onCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
     try {
       const file = e.target.files?.[0];
       if (!file) return;
-      if (!file.type.includes('png')) {
-        alert('Please upload a PNG image only.');
+
+      const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+      if (!validTypes.includes(file.type)) {
+        alert('Please upload a PNG or JPEG image.');
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image too large. Please use a file under 5MB.');
         return;
       }
 
       const reader = new FileReader();
       reader.onloadend = () => {
-        if (reader.result && typeof reader.result === 'string') {
+        if (typeof reader.result === 'string') {
           setCover(reader.result);
-          setToast('Image uploaded successfully ✅');
+          setToast('✅ Image uploaded successfully');
           setTimeout(() => setToast(null), 2500);
         } else {
           alert('Image load failed. Try again.');
@@ -111,7 +118,7 @@ export default function RecipeEditor({
       reader.readAsDataURL(file);
     } catch (err) {
       console.error('Upload error:', err);
-      alert('Upload failed. Try again.');
+      alert('Upload failed. Please try again.');
     }
   }
 
@@ -124,7 +131,7 @@ export default function RecipeEditor({
             position: 'fixed',
             top: 20,
             right: 20,
-            background: 'rgba(0,0,0,0.8)',
+            background: 'rgba(0,0,0,0.85)',
             color: 'white',
             padding: '12px 20px',
             borderRadius: '10px',
@@ -189,10 +196,10 @@ export default function RecipeEditor({
         }}
       >
         <label style={{ fontWeight: 600 }}>
-          Cover Image (PNG)
+          Cover Image (PNG or JPEG)
           <input
             type="file"
-            accept="image/png"
+            accept="image/png, image/jpeg"
             onChange={onCoverChange}
             style={{ display: 'block', marginTop: 8 }}
           />
@@ -212,8 +219,6 @@ export default function RecipeEditor({
           />
         )}
       </section>
-
-      {/* ===== Rest of the recipe fields remain unchanged ===== */}
     </main>
   );
 }
