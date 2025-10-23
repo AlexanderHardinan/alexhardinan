@@ -5,58 +5,82 @@ import { useEffect, useMemo, useState } from 'react';
 type Ingredient = { id: string; amount: number | ''; unit: string; item: string };
 type Step = { id: string; text: string };
 
+export type RecipeData = {
+  id: string;
+  title: string;
+  baseYield: number;
+  targetYield: number;
+  ingredients: Ingredient[];
+  steps: Step[];
+  cover?: string; // data URL (PNG)
+  createdAt: number;
+  updatedAt: number;
+};
+
 function uid() {
   return Math.random().toString(36).slice(2, 9);
 }
 
 export default function RecipeEditor({
-  storageKey,
+  storageNS,   // e.g. "recipe:pastry"
+  recipeId,    // id string from shelf
   heading,
   subtitle,
+  onBack,
+  onMetaUpdate, // update list item title/cover/updatedAt
 }: {
-  storageKey: string;           // unique per page (e.g., 'recipe:pastry')
-  heading: string;              // page title
-  subtitle?: string;            // optional sub heading
+  storageNS: string;
+  recipeId: string;
+  heading: string;
+  subtitle?: string;
+  onBack: () => void;
+  onMetaUpdate: (partial: Partial<Pick<RecipeData, 'title' | 'cover' | 'updatedAt'>>) => void;
 }) {
+  const key = `${storageNS}:item:${recipeId}`;
+
   // ---------- STATE ----------
   const [title, setTitle] = useState('New Recipe');
-  const [baseYield, setBaseYield] = useState<number>(10);     // recipe written for X portions
-  const [targetYield, setTargetYield] = useState<number>(10); // user wants to cook Y portions
+  const [baseYield, setBaseYield] = useState<number>(10);
+  const [targetYield, setTargetYield] = useState<number>(10);
   const [ingredients, setIngredients] = useState<Ingredient[]>([
     { id: uid(), amount: 30, unit: 'g', item: 'Honey' },
     { id: uid(), amount: 70, unit: 'ml', item: 'Water' },
   ]);
-  const [steps, setSteps] = useState<Step[]>([
-    { id: uid(), text: 'Write your first step here…' },
-  ]);
-  const [cover, setCover] = useState<string>(''); // data URL preview (PNG)
+  const [steps, setSteps] = useState<Step[]>([{ id: uid(), text: 'Write your first step here…' }]);
+  const [cover, setCover] = useState<string>('');
 
-  // ---------- LOAD / SAVE ----------
+  // ---------- LOAD ----------
   useEffect(() => {
-    const raw = localStorage.getItem(storageKey);
+    const raw = localStorage.getItem(key);
     if (!raw) return;
     try {
-      const s = JSON.parse(raw);
-      setTitle(s.title ?? 'New Recipe');
-      setBaseYield(s.baseYield ?? 10);
-      setTargetYield(s.targetYield ?? s.baseYield ?? 10);
-      setIngredients(s.ingredients?.length ? s.ingredients : []);
-      setSteps(s.steps?.length ? s.steps : [{ id: uid(), text: '' }]);
-      setCover(s.cover ?? '');
+      const r: RecipeData = JSON.parse(raw);
+      setTitle(r.title ?? 'New Recipe');
+      setBaseYield(r.baseYield ?? 10);
+      setTargetYield(r.targetYield ?? r.baseYield ?? 10);
+      setIngredients(r.ingredients?.length ? r.ingredients : []);
+      setSteps(r.steps?.length ? r.steps : [{ id: uid(), text: '' }]);
+      setCover(r.cover ?? '');
     } catch {}
-  }, [storageKey]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
 
+  // ---------- SAVE ----------
   useEffect(() => {
-    const payload = {
+    const payload: RecipeData = {
+      id: recipeId,
       title,
       baseYield,
       targetYield,
       ingredients,
       steps,
       cover,
+      createdAt: Date.now(), // only used if new
+      updatedAt: Date.now(),
     };
-    localStorage.setItem(storageKey, JSON.stringify(payload));
-  }, [title, baseYield, targetYield, ingredients, steps, cover, storageKey]);
+    localStorage.setItem(key, JSON.stringify(payload));
+    onMetaUpdate({ title, cover, updatedAt: payload.updatedAt });
+  }, [title, baseYield, targetYield, ingredients, steps, cover, key, recipeId, onMetaUpdate]);
 
   // ---------- DERIVED ----------
   const factor = useMemo(() => {
@@ -92,16 +116,17 @@ export default function RecipeEditor({
   // ---------- UI ----------
   return (
     <main className="container" style={{ paddingTop: '112px', paddingBottom: '48px' }}>
-      <section style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-        <h1 className="title" style={{ marginBottom: 8 }}>{heading}</h1>
-        {subtitle && <p className="subtitle">{subtitle}</p>}
+      <section style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1rem' }}>
+        <button className="btn-ghost" onClick={onBack}>← Back</button>
+        <div style={{ flex: 1, textAlign: 'center' }}>
+          <h1 className="title" style={{ marginBottom: 8 }}>{heading}</h1>
+          {subtitle && <p className="subtitle">{subtitle}</p>}
+        </div>
+        <div style={{ width: 84 }} />
       </section>
 
-      {/* Card: Header / Meta */}
-      <section
-        className="card"
-        style={{ maxWidth: 1100, margin: '0 auto 1.25rem', padding: 20, borderRadius: 16 }}
-      >
+      {/* Meta */}
+      <section className="card" style={{ maxWidth: 1100, margin: '0 auto 1.25rem', padding: 20, borderRadius: 16 }}>
         <div style={{ display: 'grid', gap: 12 }}>
           <label style={{ fontWeight: 600 }}>
             Recipe Title
@@ -109,45 +134,27 @@ export default function RecipeEditor({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g., Honey Caviar"
-              style={{
-                width: '100%', padding: 12, marginTop: 6, borderRadius: 10,
-                border: '1px solid rgba(0,0,0,.15)'
-              }}
+              style={{ width: '100%', padding: 12, marginTop: 6, borderRadius: 10, border: '1px solid rgba(0,0,0,.15)' }}
             />
           </label>
 
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-              gap: 12,
-            }}
-          >
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12 }}>
             <label style={{ fontWeight: 600 }}>
               Written For (Base Yield)
               <input
-                type="number"
-                min={1}
+                type="number" min={1}
                 value={baseYield}
                 onChange={(e) => setBaseYield(Number(e.target.value) || 1)}
-                style={{
-                  width: '100%', padding: 12, marginTop: 6, borderRadius: 10,
-                  border: '1px solid rgba(0,0,0,.15)'
-                }}
+                style={{ width: '100%', padding: 12, marginTop: 6, borderRadius: 10, border: '1px solid rgba(0,0,0,.15)' }}
               />
             </label>
-
             <label style={{ fontWeight: 600 }}>
               Cook For (Target Portions)
               <input
-                type="number"
-                min={1}
+                type="number" min={1}
                 value={targetYield}
                 onChange={(e) => setTargetYield(Number(e.target.value) || 1)}
-                style={{
-                  width: '100%', padding: 12, marginTop: 6, borderRadius: 10,
-                  border: '1px solid rgba(0,0,0,.15)'
-                }}
+                style={{ width: '100%', padding: 12, marginTop: 6, borderRadius: 10, border: '1px solid rgba(0,0,0,.15)' }}
               />
             </label>
           </div>
@@ -158,47 +165,29 @@ export default function RecipeEditor({
         </div>
       </section>
 
-      {/* Card: Cover image */}
-      <section
-        className="card"
-        style={{ maxWidth: 1100, margin: '0 auto 1.25rem', padding: 20, borderRadius: 16 }}
-      >
+      {/* Cover */}
+      <section className="card" style={{ maxWidth: 1100, margin: '0 auto 1.25rem', padding: 20, borderRadius: 16 }}>
         <div style={{ display: 'grid', gap: 12 }}>
           <label style={{ fontWeight: 600 }}>
             Cover Image (PNG)
-            <input
-              type="file"
-              accept="image/png"
-              onChange={onCover}
-              style={{ display: 'block', marginTop: 8 }}
-            />
+            <input type="file" accept="image/png" onChange={onCover} style={{ display: 'block', marginTop: 8 }} />
           </label>
           {cover && (
             <img
               src={cover}
               alt="Cover"
-              style={{
-                width: '100%',
-                maxHeight: 420,
-                objectFit: 'cover',
-                borderRadius: 12,
-                border: '1px solid rgba(0,0,0,.08)',
-              }}
+              style={{ width: '100%', maxHeight: 420, objectFit: 'cover', borderRadius: 12, border: '1px solid rgba(0,0,0,.08)' }}
             />
           )}
         </div>
       </section>
 
-      {/* Card: Ingredients */}
-      <section
-        className="card"
-        style={{ maxWidth: 1100, margin: '0 auto 1.25rem', padding: 20, borderRadius: 16 }}
-      >
+      {/* Ingredients */}
+      <section className="card" style={{ maxWidth: 1100, margin: '0 auto 1.25rem', padding: 20, borderRadius: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h2 style={{ margin: 0 }}>Ingredients</h2>
           <button className="btn" onClick={addIngredient}>Add Ingredient</button>
         </div>
-
         <div style={{ marginTop: 12, overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
             <thead>
@@ -220,8 +209,7 @@ export default function RecipeEditor({
                   <tr key={ing.id} style={{ borderTop: '1px solid rgba(0,0,0,.06)' }}>
                     <td style={{ padding: 8, minWidth: 130 }}>
                       <input
-                        type="number"
-                        step="any"
+                        type="number" step="any"
                         value={ing.amount}
                         onChange={(e) =>
                           setIngredients((v) =>
@@ -232,10 +220,7 @@ export default function RecipeEditor({
                             )
                           )
                         }
-                        style={{
-                          width: '100%', padding: 10, borderRadius: 8,
-                          border: '1px solid rgba(0,0,0,.15)'
-                        }}
+                        style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid rgba(0,0,0,.15)' }}
                       />
                     </td>
                     <td style={{ padding: 8, minWidth: 90 }}>
@@ -245,10 +230,7 @@ export default function RecipeEditor({
                           setIngredients((v) => v.map((r) => (r.id === ing.id ? { ...r, unit: e.target.value } : r)))
                         }
                         placeholder="g / ml / tsp"
-                        style={{
-                          width: '100%', padding: 10, borderRadius: 8,
-                          border: '1px solid rgba(0,0,0,.15)'
-                        }}
+                        style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid rgba(0,0,0,.15)' }}
                       />
                     </td>
                     <td style={{ padding: 8 }}>
@@ -258,10 +240,7 @@ export default function RecipeEditor({
                           setIngredients((v) => v.map((r) => (r.id === ing.id ? { ...r, item: e.target.value } : r)))
                         }
                         placeholder="Ingredient name"
-                        style={{
-                          width: '100%', padding: 10, borderRadius: 8,
-                          border: '1px solid rgba(0,0,0,.15)'
-                        }}
+                        style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid rgba(0,0,0,.15)' }}
                       />
                     </td>
                     <td style={{ padding: 8, minWidth: 130, whiteSpace: 'nowrap' }}>
@@ -280,11 +259,8 @@ export default function RecipeEditor({
         </div>
       </section>
 
-      {/* Card: Method */}
-      <section
-        className="card"
-        style={{ maxWidth: 1100, margin: '0 auto', padding: 20, borderRadius: 16 }}
-      >
+      {/* Method */}
+      <section className="card" style={{ maxWidth: 1100, margin: '0 auto', padding: 20, borderRadius: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h2 style={{ margin: 0 }}>Method</h2>
           <button className="btn" onClick={addStep}>Add Step</button>
@@ -296,15 +272,10 @@ export default function RecipeEditor({
               <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 8, alignItems: 'start' }}>
                 <textarea
                   value={s.text}
-                  onChange={(e) =>
-                    setSteps((v) => v.map((r) => (r.id === s.id ? { ...r, text: e.target.value } : r)))
-                  }
+                  onChange={(e) => setSteps((v) => v.map((r) => (r.id === s.id ? { ...r, text: e.target.value } : r)))}
                   placeholder={`Step ${i + 1}…`}
                   rows={3}
-                  style={{
-                    width: '100%', padding: 12, borderRadius: 10,
-                    border: '1px solid rgba(0,0,0,.15)', resize: 'vertical'
-                  }}
+                  style={{ width: '100%', padding: 12, borderRadius: 10, border: '1px solid rgba(0,0,0,.15)', resize: 'vertical' }}
                 />
                 <button className="btn-ghost" onClick={() => delStep(s.id)}>Remove</button>
               </div>

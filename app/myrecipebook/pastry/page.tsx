@@ -1,10 +1,10 @@
 'use client';
-import RecipeBook from '@/components/RecipeBook';
+import RecipeShelf from '../../../components/RecipeShelf';
 
 export default function PastryPage() {
   return (
-    <RecipeBook
-      shelfKey="recipes:pastry"
+    <RecipeShelf
+      ns="recipe:pastry"
       heading="Pastry & Bakery"
       subtitle="Where artistry meets precision — signature desserts and pastry innovations."
     />

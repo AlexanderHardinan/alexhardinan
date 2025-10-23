@@ -1,10 +1,10 @@
 'use client';
-import RecipeBook from '@/components/RecipeBook';
+import RecipeShelf from '../../../components/RecipeShelf';
 
 export default function SaucesPage() {
   return (
-    <RecipeBook
-      shelfKey="recipes:sauces"
+    <RecipeShelf
+      ns="recipe:sauces"
       heading="Sauces"
       subtitle="Emulsions, reductions, and pure culinary craft."
     />
