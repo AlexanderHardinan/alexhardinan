@@ -1,10 +1,10 @@
 'use client';
-import RecipeEditor from '../../../components/RecipeEditor';
+import RecipeBook from '@/components/RecipeBook';
 
 export default function SaucesPage() {
   return (
-    <RecipeEditor
-      storageKey="recipe:sauces"
+    <RecipeBook
+      shelfKey="recipes:sauces"
       heading="Sauces"
       subtitle="Emulsions, reductions, and pure culinary craft."
     />

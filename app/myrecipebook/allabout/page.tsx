@@ -1,10 +1,10 @@
 'use client';
-import RecipeEditor from '../../../components/RecipeEditor';
+import RecipeBook from '@/components/RecipeBook';
 
 export default function AllAboutPage() {
   return (
-    <RecipeEditor
-      storageKey="recipe:allabout"
+    <RecipeBook
+      shelfKey="recipes:allabout"
       heading="All About"
       subtitle="Notes, foundations, preparations, and chef utilities."
     />

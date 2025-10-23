@@ -1,10 +1,10 @@
 'use client';
-import RecipeEditor from '../../../components/RecipeEditor';
+import RecipeBook from '@/components/RecipeBook';
 
 export default function MolecularPage() {
   return (
-    <RecipeEditor
-      storageKey="recipe:molecular"
+    <RecipeBook
+      shelfKey="recipes:molecular"
       heading="Gastronomy & Molecular"
       subtitle="Science meets art — modernist techniques, textures, and transformation."
     />

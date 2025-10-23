@@ -1,10 +1,10 @@
 'use client';
-import RecipeEditor from '../../../components/RecipeEditor';
+import RecipeBook from '@/components/RecipeBook';
 
 export default function PastryPage() {
   return (
-    <RecipeEditor
-      storageKey="recipe:pastry"
+    <RecipeBook
+      shelfKey="recipes:pastry"
       heading="Pastry & Bakery"
       subtitle="Where artistry meets precision — signature desserts and pastry innovations."
     />
