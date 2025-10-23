@@ -1,5 +1,5 @@
 'use client';
-import RecipeEditor from '@/components/RecipeEditor';
+import RecipeEditor from '../../../components/RecipeEditor';
 
 export default function SaucesPage() {
   return (
