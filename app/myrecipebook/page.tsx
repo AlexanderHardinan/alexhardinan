@@ -1,157 +1,158 @@
 'use client';
 
-import { useState } from 'react';
-import { Lock, Unlock } from 'lucide-react';
-import Link from 'next/link';
 import Image from 'next/image';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function MyRecipeBook() {
-  const [pwd, setPwd] = useState('');
-  const [ok, setOk] = useState(false);
-  const [err, setErr] = useState('');
+  const [password, setPassword] = useState('');
+  const [accessGranted, setAccessGranted] = useState(false);
+  const router = useRouter();
 
-  const correct = 'TH9999';
+  const correctPassword = 'TH9999';
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (pwd.trim() === correct) {
-      setOk(true);
-      setErr('');
+  function handleAccess() {
+    if (password === correctPassword) {
+      setAccessGranted(true);
     } else {
-      setErr('Incorrect password. Please try again.');
-      setPwd('');
+      alert('Incorrect password. Please try again.');
     }
   }
 
-  function logout() {
-    setOk(false);
-    setPwd('');
-    setErr('');
-  }
-
-  return (
-    <main className="container" style={{ paddingTop: '112px', paddingBottom: '48px' }}>
-      {!ok ? (
-        <section
+  if (!accessGranted) {
+    return (
+      <main
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          flexDirection: 'column',
+          textAlign: 'center',
+          background: 'white',
+        }}
+      >
+        <h1 className="title" style={{ marginBottom: '1rem' }}>
+          My Recipe Book
+        </h1>
+        <input
+          type="password"
+          placeholder="Enter Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
           style={{
-            maxWidth: 520,
-            margin: '24px auto',
-            padding: '24px',
-            borderRadius: 16,
-            border: '1px solid rgba(0,0,0,0.08)',
-            backdropFilter: 'saturate(140%) blur(6px)',
+            padding: '10px 14px',
+            borderRadius: '8px',
+            border: '1px solid #ccc',
+            marginBottom: '1rem',
+            textAlign: 'center',
+          }}
+        />
+        <button
+          onClick={handleAccess}
+          style={{
+            background: 'linear-gradient(90deg,#c59d5f,#d4af37)',
+            color: 'white',
+            border: 'none',
+            padding: '10px 20px',
+            borderRadius: '999px',
+            cursor: 'pointer',
+            fontSize: '0.95rem',
           }}
         >
-          <h1 className="title" style={{ marginBottom: 8 }}>
-            My Recipe Book
-          </h1>
-          <p className="subtitle" style={{ marginBottom: 20 }}>
-            Enter password to access.
-          </p>
+          Access
+        </button>
+      </main>
+    );
+  }
 
-          <form onSubmit={onSubmit} style={{ display: 'grid', gap: 12 }}>
-            <div style={{ position: 'relative' }}>
-              <Lock
-                aria-hidden
-                style={{
-                  position: 'absolute',
-                  left: 12,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  width: 18,
-                  height: 18,
-                  opacity: 0.8,
-                }}
-              />
-              <input
-                type="password"
-                value={pwd}
-                onChange={(e) => setPwd(e.target.value)}
-                placeholder="Password"
-                aria-label="Password"
-                style={{
-                  width: '100%',
-                  padding: '12px 12px 12px 38px',
-                  borderRadius: 10,
-                  border: '1px solid rgba(0,0,0,0.2)',
-                }}
-                required
-              />
+  const sections = [
+    {
+      title: 'Pastry & Bakery',
+      image: '/pastry.png',
+      link: '/myrecipebook/pastry',
+      desc: 'Where artistry meets precision — signature desserts and pastry innovations.',
+    },
+    {
+      title: 'Sauces',
+      image: '/sauces.png',
+      link: '/myrecipebook/sauces',
+      desc: 'Emulsions, reductions, and pure culinary craft.',
+    },
+    {
+      title: 'Gastronomy & Molecular',
+      image: '/molecular.png',
+      link: '/myrecipebook/molecular',
+      desc: 'Science meets art — modernist techniques, textures, and transformation.',
+    },
+    {
+      title: 'All About',
+      image: '/allabout.png',
+      link: '/myrecipebook/allabout',
+      desc: 'Notes, foundations, preparations, and chef utilities.',
+    },
+  ];
+
+  return (
+    <main style={{ paddingTop: '120px', paddingBottom: '60px' }}>
+      <section style={{ textAlign: 'center', marginBottom: '2rem' }}>
+        <h1 className="title">My Recipe Book</h1>
+        <p className="subtitle">
+          A personal collection of crafted recipes, inspirations, and fine-dining knowledge.
+        </p>
+      </section>
+
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))',
+          gap: '1.5rem',
+          padding: '0 1rem',
+          maxWidth: 1200,
+          margin: '0 auto',
+        }}
+      >
+        {sections.map((s) => (
+          <div
+            key={s.title}
+            onClick={() => router.push(s.link)}
+            style={{
+              cursor: 'pointer',
+              background: 'white',
+              borderRadius: '18px',
+              overflow: 'hidden',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
+              transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+            }}
+            onMouseOver={(e) => {
+              (e.currentTarget as HTMLDivElement).style.transform = 'scale(1.03)';
+              (e.currentTarget as HTMLDivElement).style.boxShadow =
+                '0 6px 20px rgba(212,175,55,0.3)';
+            }}
+            onMouseOut={(e) => {
+              (e.currentTarget as HTMLDivElement).style.transform = 'scale(1)';
+              (e.currentTarget as HTMLDivElement).style.boxShadow =
+                '0 4px 16px rgba(0,0,0,0.1)';
+            }}
+          >
+            <Image
+              src={s.image}
+              alt={s.title}
+              width={600}
+              height={400}
+              style={{
+                width: '100%',
+                height: '240px',
+                objectFit: 'cover',
+              }}
+            />
+            <div style={{ padding: '1rem 1.2rem' }}>
+              <h3 style={{ fontSize: '1.1rem', marginBottom: '0.3rem' }}>{s.title}</h3>
+              <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>{s.desc}</p>
             </div>
-            <button className="btn" type="submit">
-              Access Book
-            </button>
-          </form>
-
-          {err && <p style={{ color: '#e11d48', marginTop: 10, fontSize: 14 }}>{err}</p>}
-        </section>
-      ) : (
-        <section style={{ maxWidth: 1100, margin: '0 auto', padding: '0 1rem' }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '1.5rem',
-            }}
-          >
-            <h1 className="title" style={{ margin: 0 }}>
-              My Recipe Book
-            </h1>
-            <button className="btn" onClick={logout}>
-              <Unlock style={{ width: 16, height: 16 }} /> <span style={{ marginLeft: 6 }}>Logout</span>
-            </button>
           </div>
-
-          <p className="subtitle" style={{ marginBottom: '2rem' }}>
-            A curated collection of Chef Alex’s personal recipes — where passion meets precision.
-          </p>
-
-          <div
-            className="recipe-grid"
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-              gap: '1.5rem',
-            }}
-          >
-            {[
-              { title: 'Pastry & Bakery', image: '/recipes/pastry.jpg', link: '/myrecipebook/pastry' },
-              { title: 'Sauces', image: '/recipes/sauces.jpg', link: '/myrecipebook/sauces' },
-              { title: 'Gastronomy & Molecular', image: '/recipes/molecular.jpg', link: '/myrecipebook/molecular' },
-              { title: 'All About', image: '/recipes/allabout.jpg', link: '/myrecipebook/allabout' },
-            ].map((item, i) => (
-              <Link href={item.link} key={i}>
-                <div
-                  className="recipe-card"
-                  style={{
-                    background: 'rgba(255,255,255,0.8)',
-                    borderRadius: 16,
-                    overflow: 'hidden',
-                    boxShadow: '0 4px 14px rgba(0,0,0,0.1)',
-                    transition: 'transform 0.3s ease',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <Image
-                    src={item.image}
-                    alt={item.title}
-                    width={500}
-                    height={300}
-                    style={{ objectFit: 'cover', width: '100%', height: '200px' }}
-                  />
-                  <div style={{ padding: '1rem' }}>
-                    <h3 style={{ marginBottom: 8, fontSize: '1.2rem' }}>{item.title}</h3>
-                    <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>
-                      Discover the creativity and precision behind {item.title.toLowerCase()}.
-                    </p>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
+        ))}
+      </div>
     </main>
   );
 }
