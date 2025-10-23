@@ -88,28 +88,21 @@ export default function RecipeEditor({
     return targetYield / baseYield;
   }, [baseYield, targetYield]);
 
-  // ===== FIXED IMAGE UPLOAD HANDLER =====
+  // ===== IMAGE UPLOAD =====
   async function onCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
     try {
       const file = e.target.files?.[0];
       if (!file) return;
-
-      const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
-      if (!validTypes.includes(file.type)) {
+      if (!file.type.includes('png') && !file.type.includes('jpeg') && !file.type.includes('jpg')) {
         alert('Please upload a PNG or JPEG image.');
-        return;
-      }
-
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Image too large. Please use a file under 5MB.');
         return;
       }
 
       const reader = new FileReader();
       reader.onloadend = () => {
-        if (typeof reader.result === 'string') {
+        if (reader.result && typeof reader.result === 'string') {
           setCover(reader.result);
-          setToast('✅ Image uploaded successfully');
+          setToast('Image uploaded successfully ✅');
           setTimeout(() => setToast(null), 2500);
         } else {
           alert('Image load failed. Try again.');
@@ -118,7 +111,7 @@ export default function RecipeEditor({
       reader.readAsDataURL(file);
     } catch (err) {
       console.error('Upload error:', err);
-      alert('Upload failed. Please try again.');
+      alert('Upload failed. Try again.');
     }
   }
 
@@ -131,7 +124,7 @@ export default function RecipeEditor({
             position: 'fixed',
             top: 20,
             right: 20,
-            background: 'rgba(0,0,0,0.85)',
+            background: 'rgba(0,0,0,0.8)',
             color: 'white',
             padding: '12px 20px',
             borderRadius: '10px',
@@ -155,7 +148,10 @@ export default function RecipeEditor({
       {/* Back Button */}
       <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
         <button
-          onClick={() => router.push('/myrecipebook')}
+          onClick={() => {
+            if (onBack) onBack();
+            else router.push('/myrecipebook');
+          }}
           style={{
             background: 'linear-gradient(90deg, #c59d5f, #d4af37)',
             color: 'white',
@@ -180,6 +176,7 @@ export default function RecipeEditor({
         </button>
       </div>
 
+      {/* Header */}
       <section style={{ textAlign: 'center', marginBottom: '2rem' }}>
         <h1 className="title">{heading}</h1>
         {subtitle && <p className="subtitle">{subtitle}</p>}
@@ -219,6 +216,8 @@ export default function RecipeEditor({
           />
         )}
       </section>
+
+      {/* More recipe fields will appear below this later */}
     </main>
   );
 }
