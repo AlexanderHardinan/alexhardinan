@@ -1,14 +1,12 @@
 'use client';
-export default function Molecular() {
+import RecipeEditor from '@/components/RecipeEditor';
+
+export default function MolecularPage() {
   return (
-    <main className="container" style={{ paddingTop: '112px', paddingBottom: '48px' }}>
-      <h1 className="title" style={{ textAlign: 'center', marginBottom: '1rem' }}>
-        Gastronomy & Molecular
-      </h1>
-      <p className="subtitle" style={{ textAlign: 'center', marginBottom: '2rem' }}>
-        Exploring the intersection of science and art — molecular mastery.
-      </p>
-      <p style={{ textAlign: 'center' }}>More recipes will be added soon.</p>
-    </main>
+    <RecipeEditor
+      storageKey="recipe:molecular"
+      heading="Gastronomy & Molecular"
+      subtitle="Science meets art — modernist techniques, textures, and transformation."
+    />
   );
 }
