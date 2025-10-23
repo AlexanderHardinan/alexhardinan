@@ -65,8 +65,14 @@ export default function RecipeEditor({
     }
   }, [key]);
 
-  // ===== SAVE =====
-  useEffect(() => {
+  // ===== FACTOR =====
+  const factor = useMemo(() => {
+    if (!baseYield || !targetYield) return 1;
+    return targetYield / baseYield;
+  }, [baseYield, targetYield]);
+
+  // ===== SAVE FUNCTION =====
+  function saveRecipe() {
     const payload: RecipeData = {
       id: recipeId,
       title,
@@ -80,39 +86,33 @@ export default function RecipeEditor({
     };
     localStorage.setItem(key, JSON.stringify(payload));
     onMetaUpdate({ title, cover, updatedAt: payload.updatedAt });
-  }, [title, baseYield, targetYield, ingredients, steps, cover, key, recipeId, onMetaUpdate]);
+    setToast('Recipe saved successfully ✅');
+    setTimeout(() => {
+      setToast(null);
+      onBack();
+    }, 1200);
+  }
 
-  // ===== FACTOR =====
-  const factor = useMemo(() => {
-    if (!baseYield || !targetYield) return 1;
-    return targetYield / baseYield;
-  }, [baseYield, targetYield]);
-
-  // ===== IMAGE UPLOAD =====
+  // ===== IMAGE UPLOAD (FIXED) =====
   async function onCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
-    try {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      if (!file.type.includes('png') && !file.type.includes('jpeg') && !file.type.includes('jpg')) {
-        alert('Please upload a PNG or JPEG image.');
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (reader.result && typeof reader.result === 'string') {
-          setCover(reader.result);
-          setToast('Image uploaded successfully ✅');
-          setTimeout(() => setToast(null), 2500);
-        } else {
-          alert('Image load failed. Try again.');
-        }
-      };
-      reader.readAsDataURL(file);
-    } catch (err) {
-      console.error('Upload error:', err);
-      alert('Upload failed. Try again.');
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!['image/png', 'image/jpeg', 'image/jpg'].includes(file.type)) {
+      alert('Please upload a PNG or JPEG image.');
+      return;
     }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result === 'string') {
+        setCover(result);
+        setToast('Image uploaded successfully ✅');
+        setTimeout(() => setToast(null), 2000);
+      }
+    };
+    reader.onerror = () => alert('Image upload failed. Please try again.');
+    reader.readAsDataURL(file);
   }
 
   // ===== INGREDIENT HANDLERS =====
@@ -184,15 +184,6 @@ export default function RecipeEditor({
             cursor: 'pointer',
             transition: 'transform 0.3s ease, box-shadow 0.3s ease',
           }}
-          onMouseOver={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.05)';
-            (e.currentTarget as HTMLButtonElement).style.boxShadow =
-              '0 4px 12px rgba(212,175,55,0.4)';
-          }}
-          onMouseOut={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)';
-            (e.currentTarget as HTMLButtonElement).style.boxShadow = 'none';
-          }}
         >
           ← Back to My Recipe Book
         </button>
@@ -239,16 +230,8 @@ export default function RecipeEditor({
         )}
       </section>
 
-      {/* Recipe Details */}
-      <section
-        className="card"
-        style={{
-          maxWidth: 1100,
-          margin: '0 auto',
-          padding: 20,
-          borderRadius: 16,
-        }}
-      >
+      {/* Recipe Info */}
+      <section className="card" style={{ maxWidth: 1100, margin: '0 auto', padding: 20, borderRadius: 16 }}>
         <label>
           <strong>Recipe Title</strong>
           <input
@@ -287,15 +270,7 @@ export default function RecipeEditor({
       </section>
 
       {/* Ingredients */}
-      <section
-        className="card"
-        style={{
-          maxWidth: 1100,
-          margin: '1.5rem auto',
-          padding: 20,
-          borderRadius: 16,
-        }}
-      >
+      <section className="card" style={{ maxWidth: 1100, margin: '1.5rem auto', padding: 20, borderRadius: 16 }}>
         <h3>Ingredients</h3>
         {ingredients.map((ing) => (
           <div key={ing.id} style={{ display: 'flex', gap: 10, marginTop: 8 }}>
@@ -321,21 +296,21 @@ export default function RecipeEditor({
             <button onClick={() => removeIngredient(ing.id)} className="btn-ghost">✕</button>
           </div>
         ))}
+
+        {/* Synced quantity display */}
+        {factor !== 1 && (
+          <p style={{ marginTop: 10, fontSize: '0.9rem', color: '#444' }}>
+            Adjusted for yield: ×{factor.toFixed(2)} (quantities scaled automatically)
+          </p>
+        )}
+
         <button onClick={addIngredient} className="btn" style={{ marginTop: 10 }}>
           + Add Ingredient
         </button>
       </section>
 
       {/* Steps */}
-      <section
-        className="card"
-        style={{
-          maxWidth: 1100,
-          margin: '0 auto',
-          padding: 20,
-          borderRadius: 16,
-        }}
-      >
+      <section className="card" style={{ maxWidth: 1100, margin: '0 auto', padding: 20, borderRadius: 16 }}>
         <h3>Procedure</h3>
         {steps.map((s, i) => (
           <div key={s.id} style={{ display: 'flex', gap: 8, marginTop: 8 }}>
@@ -358,6 +333,25 @@ export default function RecipeEditor({
           + Add Step
         </button>
       </section>
+
+      {/* Save Button */}
+      <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+        <button
+          onClick={saveRecipe}
+          style={{
+            background: 'linear-gradient(90deg, #c59d5f, #d4af37)',
+            color: 'white',
+            border: 'none',
+            padding: '12px 28px',
+            fontSize: '1rem',
+            borderRadius: '999px',
+            cursor: 'pointer',
+            transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+          }}
+        >
+          💾 Save Recipe
+        </button>
+      </div>
     </main>
   );
 }
