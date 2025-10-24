@@ -55,7 +55,7 @@ export default function RecipeEditor({
     try {
       const r: RecipeData = JSON.parse(raw);
       setTitle(r.title ?? 'New Recipe');
-      setBaseYield(r.baseYield ?? 1);
+      setBaseYield(Math.max(1, r.baseYield ?? 1)); // default+min 1
       setTargetYield(r.targetYield ?? 1);
       setIngredients(r.ingredients ?? []);
       setSteps(r.steps?.length ? r.steps : [{ id: uid(), text: '' }]);
@@ -67,8 +67,9 @@ export default function RecipeEditor({
 
   // ===== FACTOR =====
   const factor = useMemo(() => {
-    if (!baseYield || !targetYield) return 1;
-    return targetYield / baseYield;
+    const b = Math.max(1, Number(baseYield) || 1);
+    const t = Number(targetYield) || 1;
+    return t / b;
   }, [baseYield, targetYield]);
 
   // ===== SAVE =====
@@ -76,8 +77,8 @@ export default function RecipeEditor({
     const payload: RecipeData = {
       id: recipeId,
       title,
-      baseYield,
-      targetYield,
+      baseYield: Math.max(1, Number(baseYield) || 1),
+      targetYield: Number(targetYield) || 1,
       ingredients,
       steps,
       cover: customCover ?? cover,
@@ -90,9 +91,10 @@ export default function RecipeEditor({
 
   useEffect(() => {
     saveRecipe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title, baseYield, targetYield, ingredients, steps, cover]);
 
-  // ===== IMAGE UPLOAD FIXED =====
+  // ===== IMAGE UPLOAD (ROBUST & PERSISTENT) =====
   const onCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -102,14 +104,38 @@ export default function RecipeEditor({
     }
 
     const reader = new FileReader();
-    reader.onloadend = () => {
-      if (reader.result && typeof reader.result === 'string') {
-        setCover(reader.result);
-        saveRecipe(reader.result);
-        setToast('✅ Image uploaded and saved');
-        setTimeout(() => setToast(null), 2200);
-      } else alert('Upload failed. Try again.');
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          // downscale if huge to avoid localStorage quota issues
+          const MAX_W = 1600;
+          const scale = img.width > MAX_W ? MAX_W / img.width : 1;
+          const w = Math.round(img.width * scale);
+          const h = Math.round(img.height * scale);
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) throw new Error('Canvas unsupported');
+          ctx.drawImage(img, 0, 0, w, h);
+          const dataUrl = canvas.toDataURL('image/png'); // PNG (lossless); size reduced by resize
+          setCover(dataUrl);
+          saveRecipe(dataUrl);
+          setToast('✅ Image uploaded and saved');
+          setTimeout(() => setToast(null), 2200);
+        } catch (err) {
+          console.error(err);
+          alert('Image processing failed. Try a smaller PNG.');
+        }
+      };
+      if (typeof reader.result === 'string') {
+        img.src = reader.result;
+      } else {
+        alert('Upload failed. Try again.');
+      }
     };
+    reader.onerror = () => alert('Upload failed. Try again.');
     reader.readAsDataURL(file);
   };
 
@@ -233,22 +259,21 @@ export default function RecipeEditor({
             style={{
               position: 'relative',
               width: '100%',
-              overflow: 'hidden',
               borderRadius: 12,
               marginTop: 10,
-              transition: 'all 0.3s ease',
-              animation: 'fadeIn 0.4s ease',
+              transition: 'opacity .3s ease',
+              animation: 'fadeIn .4s ease',
             }}
           >
+            {/* No overflow clipping so the rest of the page is fully visible */}
             <img
               src={cover}
               alt="cover"
               style={{
                 width: '100%',
-                maxHeight: 420,
-                objectFit: 'cover',
                 borderRadius: 12,
                 border: '1px solid rgba(0,0,0,.1)',
+                display: 'block',
               }}
             />
 
@@ -317,8 +342,12 @@ export default function RecipeEditor({
             Base Yield:
             <input
               type="number"
+              min={1}
               value={baseYield}
-              onChange={(e) => setBaseYield(+e.target.value)}
+              onChange={(e) => {
+                const v = Math.max(1, Number(e.target.value) || 1);
+                setBaseYield(v);
+              }}
               style={{ marginLeft: 8, width: 80 }}
             />
           </label>
@@ -327,7 +356,7 @@ export default function RecipeEditor({
             <input
               type="number"
               value={targetYield}
-              onChange={(e) => setTargetYield(+e.target.value)}
+              onChange={(e) => setTargetYield(Number(e.target.value) || 1)}
               style={{ marginLeft: 8, width: 80 }}
             />
           </label>
@@ -350,7 +379,11 @@ export default function RecipeEditor({
                 typeof ing.baseAmount === 'number' ? +(ing.baseAmount * factor).toFixed(2) : ''
               }
               onChange={(e) =>
-                updateIngredient(ing.id, 'baseAmount', parseFloat(e.target.value) / factor)
+                updateIngredient(
+                  ing.id,
+                  'baseAmount',
+                  parseFloat(e.target.value || '0') / factor
+                )
               }
               style={{ width: 70 }}
             />
