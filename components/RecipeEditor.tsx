@@ -48,7 +48,7 @@ export default function RecipeEditor({
   const [cover, setCover] = useState<string>('');
   const [toast, setToast] = useState<string | null>(null);
 
-  // ===== LOAD FROM LOCALSTORAGE =====
+  // ===== LOAD =====
   useEffect(() => {
     const raw = localStorage.getItem(key);
     if (!raw) return;
@@ -61,17 +61,17 @@ export default function RecipeEditor({
       setSteps(r.steps?.length ? r.steps : [{ id: uid(), text: '' }]);
       setCover(r.cover ?? '');
     } catch (err) {
-      console.error('Failed to load recipe:', err);
+      console.error('Load error:', err);
     }
   }, [key]);
 
-  // ===== SCALE FACTOR =====
+  // ===== FACTOR =====
   const factor = useMemo(() => {
     if (!baseYield || !targetYield) return 1;
     return targetYield / baseYield;
   }, [baseYield, targetYield]);
 
-  // ===== SAVE RECIPE =====
+  // ===== SAVE =====
   const saveRecipe = (customCover?: string) => {
     const payload: RecipeData = {
       id: recipeId,
@@ -88,12 +88,11 @@ export default function RecipeEditor({
     onMetaUpdate({ title, cover: payload.cover, updatedAt: payload.updatedAt });
   };
 
-  // Auto-save whenever data changes
   useEffect(() => {
     saveRecipe();
   }, [title, baseYield, targetYield, ingredients, steps, cover]);
 
-  // ===== FIXED IMAGE UPLOAD =====
+  // ===== IMAGE UPLOAD FIXED =====
   const onCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -106,12 +105,20 @@ export default function RecipeEditor({
     reader.onloadend = () => {
       if (reader.result && typeof reader.result === 'string') {
         setCover(reader.result);
-        saveRecipe(reader.result); // persist immediately
+        saveRecipe(reader.result);
         setToast('✅ Image uploaded and saved');
         setTimeout(() => setToast(null), 2200);
       } else alert('Upload failed. Try again.');
     };
     reader.readAsDataURL(file);
+  };
+
+  // ===== REMOVE IMAGE =====
+  const removeCover = () => {
+    setCover('');
+    saveRecipe('');
+    setToast('🗑️ Image removed');
+    setTimeout(() => setToast(null), 2000);
   };
 
   // ===== INGREDIENT HANDLERS =====
@@ -189,30 +196,121 @@ export default function RecipeEditor({
         {subtitle && <p className="subtitle">{subtitle}</p>}
       </section>
 
-      {/* Cover Image */}
-      <section className="card" style={{ maxWidth: 1100, margin: '0 auto 1.25rem', padding: 20, borderRadius: 16 }}>
-        <label style={{ fontWeight: 600 }}>
-          Cover Image (PNG)
-          <input type="file" accept="image/png" onChange={onCoverChange} style={{ display: 'block', marginTop: 8 }} />
-        </label>
+      {/* Cover Image Section */}
+      <section
+        className="card"
+        style={{ maxWidth: 1100, margin: '0 auto 1.25rem', padding: 20, borderRadius: 16 }}
+      >
+        <h3 style={{ marginBottom: 10 }}>Cover Image (PNG)</h3>
+
+        {!cover && (
+          <div style={{ textAlign: 'center' }}>
+            <input
+              type="file"
+              accept="image/png"
+              id="upload"
+              onChange={onCoverChange}
+              style={{ display: 'none' }}
+            />
+            <label
+              htmlFor="upload"
+              style={{
+                display: 'inline-block',
+                padding: '10px 20px',
+                borderRadius: 12,
+                background: 'linear-gradient(90deg,#c59d5f,#d4af37)',
+                color: 'white',
+                cursor: 'pointer',
+              }}
+            >
+              📷 Upload Image
+            </label>
+          </div>
+        )}
+
         {cover && (
-          <img
-            src={cover}
-            alt="cover"
+          <div
             style={{
+              position: 'relative',
               width: '100%',
-              maxHeight: 420,
-              objectFit: 'cover',
+              overflow: 'hidden',
               borderRadius: 12,
               marginTop: 10,
-              border: '1px solid rgba(0,0,0,.1)',
+              transition: 'all 0.3s ease',
+              animation: 'fadeIn 0.4s ease',
             }}
-          />
+          >
+            <img
+              src={cover}
+              alt="cover"
+              style={{
+                width: '100%',
+                maxHeight: 420,
+                objectFit: 'cover',
+                borderRadius: 12,
+                border: '1px solid rgba(0,0,0,.1)',
+              }}
+            />
+
+            {/* Replace and Delete Buttons */}
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 10,
+                right: 10,
+                display: 'flex',
+                gap: 8,
+                background: 'rgba(0,0,0,0.55)',
+                padding: '6px 10px',
+                borderRadius: 8,
+              }}
+            >
+              <label
+                htmlFor="replace"
+                style={{
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontSize: 13,
+                  textDecoration: 'underline',
+                }}
+              >
+                Replace
+              </label>
+              <span
+                onClick={removeCover}
+                style={{
+                  color: '#ffbaba',
+                  cursor: 'pointer',
+                  fontSize: 13,
+                  textDecoration: 'underline',
+                }}
+              >
+                Delete
+              </span>
+              <input
+                type="file"
+                accept="image/png"
+                id="replace"
+                onChange={onCoverChange}
+                style={{ display: 'none' }}
+              />
+            </div>
+          </div>
         )}
+
+        <style>{`
+          @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+          }
+        `}</style>
       </section>
 
       {/* Yield Section */}
-      <section className="card" style={{ maxWidth: 1100, margin: '0 auto 1.25rem', padding: 20, borderRadius: 16 }}>
+      <section
+        className="card"
+        style={{ maxWidth: 1100, margin: '0 auto 1.25rem', padding: 20, borderRadius: 16 }}
+      >
         <h3>Yield</h3>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           <label>
@@ -238,7 +336,10 @@ export default function RecipeEditor({
       </section>
 
       {/* Ingredients */}
-      <section className="card" style={{ maxWidth: 1100, margin: '0 auto 1.25rem', padding: 20, borderRadius: 16 }}>
+      <section
+        className="card"
+        style={{ maxWidth: 1100, margin: '0 auto 1.25rem', padding: 20, borderRadius: 16 }}
+      >
         <h3>Ingredients</h3>
         {ingredients.map((ing) => (
           <div key={ing.id} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
@@ -246,11 +347,11 @@ export default function RecipeEditor({
               type="number"
               placeholder="Qty"
               value={
-                typeof ing.baseAmount === 'number'
-                  ? +(ing.baseAmount * factor).toFixed(2)
-                  : ''
+                typeof ing.baseAmount === 'number' ? +(ing.baseAmount * factor).toFixed(2) : ''
               }
-              onChange={(e) => updateIngredient(ing.id, 'baseAmount', parseFloat(e.target.value) / factor)}
+              onChange={(e) =>
+                updateIngredient(ing.id, 'baseAmount', parseFloat(e.target.value) / factor)
+              }
               style={{ width: 70 }}
             />
             <input
@@ -274,7 +375,10 @@ export default function RecipeEditor({
       </section>
 
       {/* Steps */}
-      <section className="card" style={{ maxWidth: 1100, margin: '0 auto 1.25rem', padding: 20, borderRadius: 16 }}>
+      <section
+        className="card"
+        style={{ maxWidth: 1100, margin: '0 auto 1.25rem', padding: 20, borderRadius: 16 }}
+      >
         <h3>Method</h3>
         {steps.map((s) => (
           <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
