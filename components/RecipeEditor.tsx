@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-type Ingredient = { id: string; amount: number | ''; unit: string; item: string };
+type Ingredient = { id: string; baseAmount: number | ''; unit: string; item: string };
 type Step = { id: string; text: string };
 
 export type RecipeData = {
@@ -41,8 +41,8 @@ export default function RecipeEditor({
   const key = `${storageNS}:item:${recipeId}`;
 
   const [title, setTitle] = useState('New Recipe');
-  const [baseYield, setBaseYield] = useState<number>(10);
-  const [targetYield, setTargetYield] = useState<number>(10);
+  const [baseYield, setBaseYield] = useState<number>(1);
+  const [targetYield, setTargetYield] = useState<number>(1);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [steps, setSteps] = useState<Step[]>([{ id: uid(), text: '' }]);
   const [cover, setCover] = useState<string>('');
@@ -55,13 +55,13 @@ export default function RecipeEditor({
     try {
       const r: RecipeData = JSON.parse(raw);
       setTitle(r.title ?? 'New Recipe');
-      setBaseYield(r.baseYield ?? 10);
-      setTargetYield(r.targetYield ?? r.baseYield ?? 10);
+      setBaseYield(r.baseYield ?? 1);
+      setTargetYield(r.targetYield ?? 1);
       setIngredients(r.ingredients ?? []);
       setSteps(r.steps?.length ? r.steps : [{ id: uid(), text: '' }]);
       setCover(r.cover ?? '');
     } catch (err) {
-      console.error('Failed to load recipe:', err);
+      console.error('Load error:', err);
     }
   }, [key]);
 
@@ -71,8 +71,8 @@ export default function RecipeEditor({
     return targetYield / baseYield;
   }, [baseYield, targetYield]);
 
-  // ===== SAVE FUNCTION =====
-  function saveRecipe() {
+  // ===== SAVE =====
+  const saveRecipe = () => {
     const payload: RecipeData = {
       id: recipeId,
       title,
@@ -86,56 +86,59 @@ export default function RecipeEditor({
     };
     localStorage.setItem(key, JSON.stringify(payload));
     onMetaUpdate({ title, cover, updatedAt: payload.updatedAt });
-    setToast('Recipe saved successfully ✅');
-    setTimeout(() => {
-      setToast(null);
-      onBack();
-    }, 1200);
-  }
+  };
 
-  // ===== IMAGE UPLOAD (FIXED) =====
-  async function onCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
+  useEffect(saveRecipe, [title, baseYield, targetYield, ingredients, steps, cover]); // auto save
+
+  // ===== IMAGE UPLOAD FIX (PERSISTENT) =====
+  const onCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!['image/png', 'image/jpeg', 'image/jpg'].includes(file.type)) {
-      alert('Please upload a PNG or JPEG image.');
+    if (!file.type.includes('png')) {
+      alert('Please upload a PNG image only.');
       return;
     }
 
     const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result;
-      if (typeof result === 'string') {
-        setCover(result);
-        setToast('Image uploaded successfully ✅');
-        setTimeout(() => setToast(null), 2000);
-      }
+    reader.onloadend = () => {
+      if (reader.result && typeof reader.result === 'string') {
+        setCover(reader.result);
+        const current = localStorage.getItem(key);
+        if (current) {
+          const data = JSON.parse(current);
+          data.cover = reader.result;
+          data.updatedAt = Date.now();
+          localStorage.setItem(key, JSON.stringify(data));
+          onMetaUpdate({ cover: reader.result, updatedAt: data.updatedAt });
+        }
+        setToast('✅ Image uploaded and saved');
+        setTimeout(() => setToast(null), 2200);
+      } else alert('Upload failed. Try again.');
     };
-    reader.onerror = () => alert('Image upload failed. Please try again.');
     reader.readAsDataURL(file);
-  }
+  };
 
   // ===== INGREDIENT HANDLERS =====
-  function addIngredient() {
-    setIngredients([...ingredients, { id: uid(), amount: '', unit: '', item: '' }]);
-  }
-  function updateIngredient(id: string, field: keyof Ingredient, value: any) {
-    setIngredients((prev) => prev.map((i) => (i.id === id ? { ...i, [field]: value } : i)));
-  }
-  function removeIngredient(id: string) {
-    setIngredients((prev) => prev.filter((i) => i.id !== id));
-  }
+  const addIngredient = () =>
+    setIngredients([...ingredients, { id: uid(), baseAmount: '', unit: '', item: '' }]);
+  const updateIngredient = (id: string, field: keyof Ingredient, value: any) =>
+    setIngredients((prev) => prev.map((ing) => (ing.id === id ? { ...ing, [field]: value } : ing)));
+  const removeIngredient = (id: string) =>
+    setIngredients((prev) => prev.filter((ing) => ing.id !== id));
 
   // ===== STEP HANDLERS =====
-  function addStep() {
-    setSteps([...steps, { id: uid(), text: '' }]);
-  }
-  function updateStep(id: string, text: string) {
+  const addStep = () => setSteps([...steps, { id: uid(), text: '' }]);
+  const updateStep = (id: string, text: string) =>
     setSteps((prev) => prev.map((s) => (s.id === id ? { ...s, text } : s)));
-  }
-  function removeStep(id: string) {
-    setSteps((prev) => prev.filter((s) => s.id !== id));
-  }
+  const removeStep = (id: string) => setSteps((prev) => prev.filter((s) => s.id !== id));
+
+  // ===== FINAL SAVE BUTTON =====
+  const handleSave = () => {
+    saveRecipe();
+    setToast('💾 Recipe saved successfully!');
+    setTimeout(() => setToast(null), 2500);
+    onBack();
+  };
 
   return (
     <main className="container" style={{ paddingTop: '110px', paddingBottom: '60px' }}>
@@ -146,78 +149,60 @@ export default function RecipeEditor({
             position: 'fixed',
             top: 20,
             right: 20,
-            background: 'rgba(0,0,0,0.8)',
-            color: 'white',
-            padding: '12px 20px',
-            borderRadius: '10px',
-            fontSize: '0.9rem',
-            zIndex: 9999,
+            background: 'rgba(0,0,0,0.85)',
+            color: '#fff',
+            padding: '10px 20px',
+            borderRadius: 10,
+            fontSize: '.9rem',
+            zIndex: 10000,
             animation: 'fadeInOut 2.5s ease',
           }}
         >
           {toast}
           <style>{`
             @keyframes fadeInOut {
-              0% { opacity: 0; transform: translateY(-10px); }
-              10% { opacity: 1; transform: translateY(0); }
-              90% { opacity: 1; transform: translateY(0); }
-              100% { opacity: 0; transform: translateY(-10px); }
+              0% {opacity: 0; transform: translateY(-10px);}
+              10% {opacity: 1; transform: translateY(0);}
+              90% {opacity: 1;}
+              100% {opacity: 0; transform: translateY(-10px);}
             }
           `}</style>
         </div>
       )}
 
-      {/* Back Button */}
+      {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
         <button
-          onClick={() => {
-            if (onBack) onBack();
-            else router.push('/myrecipebook');
-          }}
+          onClick={onBack}
           style={{
-            background: 'linear-gradient(90deg, #c59d5f, #d4af37)',
+            background: 'linear-gradient(90deg,#c59d5f,#d4af37)',
             color: 'white',
             border: 'none',
             padding: '10px 22px',
             fontSize: '0.95rem',
             borderRadius: '999px',
             cursor: 'pointer',
-            transition: 'transform 0.3s ease, box-shadow 0.3s ease',
           }}
         >
           ← Back to My Recipe Book
         </button>
       </div>
 
-      {/* Header */}
       <section style={{ textAlign: 'center', marginBottom: '2rem' }}>
         <h1 className="title">{heading}</h1>
         {subtitle && <p className="subtitle">{subtitle}</p>}
       </section>
 
       {/* Cover Image */}
-      <section
-        className="card"
-        style={{
-          maxWidth: 1100,
-          margin: '0 auto 1.25rem',
-          padding: 20,
-          borderRadius: 16,
-        }}
-      >
+      <section className="card" style={{ maxWidth: 1100, margin: '0 auto 1.25rem', padding: 20, borderRadius: 16 }}>
         <label style={{ fontWeight: 600 }}>
-          Cover Image (PNG or JPEG)
-          <input
-            type="file"
-            accept="image/png, image/jpeg"
-            onChange={onCoverChange}
-            style={{ display: 'block', marginTop: 8 }}
-          />
+          Cover Image (PNG)
+          <input type="file" accept="image/png" onChange={onCoverChange} style={{ display: 'block', marginTop: 8 }} />
         </label>
         {cover && (
           <img
             src={cover}
-            alt="Cover"
+            alt="cover"
             style={{
               width: '100%',
               maxHeight: 420,
@@ -230,123 +215,94 @@ export default function RecipeEditor({
         )}
       </section>
 
-      {/* Recipe Info */}
-      <section className="card" style={{ maxWidth: 1100, margin: '0 auto', padding: 20, borderRadius: 16 }}>
-        <label>
-          <strong>Recipe Title</strong>
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            style={{
-              width: '100%',
-              marginTop: 8,
-              padding: '8px',
-              border: '1px solid #ccc',
-              borderRadius: 8,
-            }}
-          />
-        </label>
-
-        <div style={{ display: 'flex', gap: 12, marginTop: 16, flexWrap: 'wrap' }}>
-          <label style={{ flex: 1 }}>
-            <strong>Base Yield</strong>
+      {/* Yield Section */}
+      <section className="card" style={{ maxWidth: 1100, margin: '0 auto 1.25rem', padding: 20, borderRadius: 16 }}>
+        <h3>Yield</h3>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <label>Base Yield:
             <input
               type="number"
               value={baseYield}
-              onChange={(e) => setBaseYield(Number(e.target.value))}
-              style={{ width: '100%', marginTop: 8, padding: '8px', borderRadius: 8, border: '1px solid #ccc' }}
+              onChange={(e) => setBaseYield(+e.target.value)}
+              style={{ marginLeft: 8, width: 80 }}
             />
           </label>
-          <label style={{ flex: 1 }}>
-            <strong>Target Yield</strong>
+          <label>Target Yield:
             <input
               type="number"
               value={targetYield}
-              onChange={(e) => setTargetYield(Number(e.target.value))}
-              style={{ width: '100%', marginTop: 8, padding: '8px', borderRadius: 8, border: '1px solid #ccc' }}
+              onChange={(e) => setTargetYield(+e.target.value)}
+              style={{ marginLeft: 8, width: 80 }}
             />
           </label>
+          <div style={{ alignSelf: 'center' }}>Scaling ×{factor.toFixed(2)}</div>
         </div>
       </section>
 
       {/* Ingredients */}
-      <section className="card" style={{ maxWidth: 1100, margin: '1.5rem auto', padding: 20, borderRadius: 16 }}>
+      <section className="card" style={{ maxWidth: 1100, margin: '0 auto 1.25rem', padding: 20, borderRadius: 16 }}>
         <h3>Ingredients</h3>
         {ingredients.map((ing) => (
-          <div key={ing.id} style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+          <div key={ing.id} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
             <input
               type="number"
-              value={ing.amount}
-              onChange={(e) => updateIngredient(ing.id, 'amount', e.target.value)}
-              placeholder="Amount"
-              style={{ width: '20%', padding: 6, borderRadius: 6, border: '1px solid #ccc' }}
+              placeholder="Qty"
+              value={
+                typeof ing.baseAmount === 'number'
+                  ? +(ing.baseAmount * factor).toFixed(2)
+                  : ''
+              }
+              onChange={(e) => updateIngredient(ing.id, 'baseAmount', parseFloat(e.target.value) / factor)}
+              style={{ width: 70 }}
             />
             <input
+              type="text"
+              placeholder="Unit"
               value={ing.unit}
               onChange={(e) => updateIngredient(ing.id, 'unit', e.target.value)}
-              placeholder="Unit"
-              style={{ width: '20%', padding: 6, borderRadius: 6, border: '1px solid #ccc' }}
+              style={{ width: 80 }}
             />
             <input
+              type="text"
+              placeholder="Ingredient"
               value={ing.item}
               onChange={(e) => updateIngredient(ing.id, 'item', e.target.value)}
-              placeholder="Ingredient"
-              style={{ flex: 1, padding: 6, borderRadius: 6, border: '1px solid #ccc' }}
+              style={{ flex: 1 }}
             />
-            <button onClick={() => removeIngredient(ing.id)} className="btn-ghost">✕</button>
+            <button onClick={() => removeIngredient(ing.id)}>✕</button>
           </div>
         ))}
-
-        {/* Synced quantity display */}
-        {factor !== 1 && (
-          <p style={{ marginTop: 10, fontSize: '0.9rem', color: '#444' }}>
-            Adjusted for yield: ×{factor.toFixed(2)} (quantities scaled automatically)
-          </p>
-        )}
-
-        <button onClick={addIngredient} className="btn" style={{ marginTop: 10 }}>
-          + Add Ingredient
-        </button>
+        <button onClick={addIngredient}>+ Add Ingredient</button>
       </section>
 
       {/* Steps */}
-      <section className="card" style={{ maxWidth: 1100, margin: '0 auto', padding: 20, borderRadius: 16 }}>
-        <h3>Procedure</h3>
-        {steps.map((s, i) => (
-          <div key={s.id} style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+      <section className="card" style={{ maxWidth: 1100, margin: '0 auto 1.25rem', padding: 20, borderRadius: 16 }}>
+        <h3>Method</h3>
+        {steps.map((s) => (
+          <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
             <textarea
               value={s.text}
               onChange={(e) => updateStep(s.id, e.target.value)}
-              placeholder={`Step ${i + 1}`}
-              style={{
-                flex: 1,
-                padding: 8,
-                borderRadius: 8,
-                border: '1px solid #ccc',
-                minHeight: 60,
-              }}
+              style={{ flex: 1, height: 60 }}
             />
-            <button onClick={() => removeStep(s.id)} className="btn-ghost">✕</button>
+            <button onClick={() => removeStep(s.id)}>✕</button>
           </div>
         ))}
-        <button onClick={addStep} className="btn" style={{ marginTop: 10 }}>
-          + Add Step
-        </button>
+        <button onClick={addStep}>+ Add Step</button>
       </section>
 
       {/* Save Button */}
-      <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+      <div style={{ textAlign: 'center', marginTop: 20 }}>
         <button
-          onClick={saveRecipe}
+          onClick={handleSave}
           style={{
-            background: 'linear-gradient(90deg, #c59d5f, #d4af37)',
+            background: 'linear-gradient(90deg,#c59d5f,#d4af37)',
             color: 'white',
             border: 'none',
-            padding: '12px 28px',
+            padding: '12px 30px',
             fontSize: '1rem',
             borderRadius: '999px',
             cursor: 'pointer',
-            transition: 'transform 0.3s ease, box-shadow 0.3s ease',
           }}
         >
           💾 Save Recipe
