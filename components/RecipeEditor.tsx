@@ -48,7 +48,7 @@ export default function RecipeEditor({
   const [cover, setCover] = useState<string>('');
   const [toast, setToast] = useState<string | null>(null);
 
-  // ===== LOAD =====
+  // ===== LOAD FROM LOCALSTORAGE =====
   useEffect(() => {
     const raw = localStorage.getItem(key);
     if (!raw) return;
@@ -61,18 +61,18 @@ export default function RecipeEditor({
       setSteps(r.steps?.length ? r.steps : [{ id: uid(), text: '' }]);
       setCover(r.cover ?? '');
     } catch (err) {
-      console.error('Load error:', err);
+      console.error('Failed to load recipe:', err);
     }
   }, [key]);
 
-  // ===== FACTOR =====
+  // ===== SCALE FACTOR =====
   const factor = useMemo(() => {
     if (!baseYield || !targetYield) return 1;
     return targetYield / baseYield;
   }, [baseYield, targetYield]);
 
-  // ===== SAVE =====
-  const saveRecipe = () => {
+  // ===== SAVE RECIPE =====
+  const saveRecipe = (customCover?: string) => {
     const payload: RecipeData = {
       id: recipeId,
       title,
@@ -80,17 +80,20 @@ export default function RecipeEditor({
       targetYield,
       ingredients,
       steps,
-      cover,
+      cover: customCover ?? cover,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
     localStorage.setItem(key, JSON.stringify(payload));
-    onMetaUpdate({ title, cover, updatedAt: payload.updatedAt });
+    onMetaUpdate({ title, cover: payload.cover, updatedAt: payload.updatedAt });
   };
 
-  useEffect(saveRecipe, [title, baseYield, targetYield, ingredients, steps, cover]); // auto save
+  // Auto-save whenever data changes
+  useEffect(() => {
+    saveRecipe();
+  }, [title, baseYield, targetYield, ingredients, steps, cover]);
 
-  // ===== IMAGE UPLOAD FIX (PERSISTENT) =====
+  // ===== FIXED IMAGE UPLOAD =====
   const onCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -103,14 +106,7 @@ export default function RecipeEditor({
     reader.onloadend = () => {
       if (reader.result && typeof reader.result === 'string') {
         setCover(reader.result);
-        const current = localStorage.getItem(key);
-        if (current) {
-          const data = JSON.parse(current);
-          data.cover = reader.result;
-          data.updatedAt = Date.now();
-          localStorage.setItem(key, JSON.stringify(data));
-          onMetaUpdate({ cover: reader.result, updatedAt: data.updatedAt });
-        }
+        saveRecipe(reader.result); // persist immediately
         setToast('✅ Image uploaded and saved');
         setTimeout(() => setToast(null), 2200);
       } else alert('Upload failed. Try again.');
@@ -132,7 +128,7 @@ export default function RecipeEditor({
     setSteps((prev) => prev.map((s) => (s.id === id ? { ...s, text } : s)));
   const removeStep = (id: string) => setSteps((prev) => prev.filter((s) => s.id !== id));
 
-  // ===== FINAL SAVE BUTTON =====
+  // ===== SAVE BUTTON =====
   const handleSave = () => {
     saveRecipe();
     setToast('💾 Recipe saved successfully!');
@@ -219,7 +215,8 @@ export default function RecipeEditor({
       <section className="card" style={{ maxWidth: 1100, margin: '0 auto 1.25rem', padding: 20, borderRadius: 16 }}>
         <h3>Yield</h3>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <label>Base Yield:
+          <label>
+            Base Yield:
             <input
               type="number"
               value={baseYield}
@@ -227,7 +224,8 @@ export default function RecipeEditor({
               style={{ marginLeft: 8, width: 80 }}
             />
           </label>
-          <label>Target Yield:
+          <label>
+            Target Yield:
             <input
               type="number"
               value={targetYield}
