@@ -5,12 +5,7 @@ import RecipeEditor, { RecipeData } from './RecipeEditor';
 import RecipeModal from './RecipeModal';
 import { db } from '@/lib/firebase';
 import {
-  collection,
-  onSnapshot,
-  deleteDoc,
-  doc,
-  setDoc,
-  getDoc,
+  collection, addDoc, serverTimestamp, doc, setDoc, getDoc
 } from 'firebase/firestore';
 
 type ItemMeta = {
@@ -21,261 +16,147 @@ type ItemMeta = {
   updatedAt: number;
 };
 
-function uid() {
-  return Math.random().toString(36).slice(2, 9);
-}
+function uid(){ return Math.random().toString(36).slice(2,9); }
 
-export default function RecipeShelf({
-  ns,
-  heading,
-  subtitle,
-}: {
-  ns: string;
-  heading: string;
-  subtitle?: string;
-}) {
+export default function RecipeShelf({ ns, heading, subtitle }:{
+  ns: string; heading: string; subtitle?: string;
+}){
+  const indexKey = `${ns}:index`;
   const [items, setItems] = useState<ItemMeta[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [viewerId, setViewerId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
-  // ===== REALTIME LOAD =====
-  useEffect(() => {
-    const unsub = onSnapshot(collection(db, ns), (snap) => {
-      const list: ItemMeta[] = [];
-      snap.forEach((d) => {
-        const data = d.data() as RecipeData;
-        list.push({
-          id: data.id,
-          title: data.title,
-          cover: data.cover,
-          createdAt: data.createdAt,
-          updatedAt: data.updatedAt,
-        });
-      });
-      setItems(
-        list.sort(
-          (a, b) =>
-            (b.updatedAt || b.createdAt) - (a.updatedAt || a.createdAt)
-        )
-      );
-    });
-    return () => unsub();
-  }, [ns]);
+  // load index from localStorage for fast UI
+  useEffect(()=>{
+    const raw = localStorage.getItem(indexKey);
+    if (raw) { try { setItems(JSON.parse(raw)); } catch {} }
+  },[indexKey]);
 
-  // ===== CREATE NEW FIXED =====
-  async function createNew() {
+  // persist index locally
+  useEffect(()=>{
+    localStorage.setItem(indexKey, JSON.stringify(items));
+  },[items, indexKey]);
+
+  const sorted = useMemo(
+    () => [...items].sort((a,b)=>(b.updatedAt||b.createdAt)-(a.updatedAt||a.createdAt)),
+    [items]
+  );
+
+  async function createNew(){
     try {
-      setLoading(true);
       const id = uid();
       const now = Date.now();
 
-      // Check if already exists (failsafe)
-      const docRef = doc(db, ns, id);
-      const existing = await getDoc(docRef);
-      if (existing.exists()) return setActiveId(id);
+      // 1) add to Firestore "index" (so it’s device-sync’d)
+      const idxRef = collection(db, 'recipeIndex');
+      await addDoc(idxRef, {
+        ns,
+        id,
+        title: 'New Recipe',
+        cover: null,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
 
+      // 2) seed the Firestore item doc itself
+      const itemRef = doc(db, 'recipes', `${ns}:${id}`);
       const seed: RecipeData = {
         id,
         title: 'New Recipe',
-        baseYield: 10,
-        targetYield: 10,
+        baseYield: 1,
+        targetYield: 1,
         ingredients: [],
         steps: [],
         createdAt: now,
         updatedAt: now,
       };
+      await setDoc(itemRef, seed);
 
-      await setDoc(docRef, seed);
-      setItems((v) => [
-        { id, title: 'New Recipe', createdAt: now, updatedAt: now },
-        ...v,
-      ]);
+      // 3) also seed local for instant editor load
+      localStorage.setItem(`${ns}:item:${id}`, JSON.stringify(seed));
+      setItems(v => [{ id, title:'New Recipe', createdAt: now, updatedAt: now }, ...v]);
       setActiveId(id);
-    } catch (err) {
-      console.error('Create recipe failed:', err);
-      alert('⚠️ Unable to create a new recipe. Check Firebase config.');
-    } finally {
-      setLoading(false);
+    } catch (err: any) {
+      console.error(err);
+      alert(`⚠️ Unable to create a new recipe.\n${err?.message || 'Check Firebase config/permissions.'}`);
     }
   }
 
-  async function removeItem(id: string) {
-    if (!confirm('Delete this recipe?')) return;
-    try {
-      await deleteDoc(doc(db, ns, id));
-      setItems((v) => v.filter((m) => m.id !== id));
-      if (activeId === id) setActiveId(null);
-      if (viewerId === id) setViewerId(null);
-    } catch (err) {
-      console.error('Delete failed:', err);
-      alert('⚠️ Failed to delete recipe. Check Firebase permissions.');
-    }
+  function openEditor(id:string){ setActiveId(id); }
+  function openViewer(id:string){ setViewerId(id); }
+  function removeItem(id:string){
+    if(!confirm('Delete this recipe?')) return;
+    localStorage.removeItem(`${ns}:item:${id}`);
+    setItems(v=>v.filter(m=>m.id!==id));
+    if(activeId===id) setActiveId(null);
+    if(viewerId===id) setViewerId(null);
+    // (Optional) You can also delete Firestore docs here if desired
   }
 
-  function onMetaUpdate(partial: Partial<ItemMeta>) {
+  function onMetaUpdate(partial: Partial<ItemMeta>){
     if (!activeId) return;
-    setItems((v) =>
-      v.map((m) =>
-        m.id === activeId
-          ? { ...m, ...partial, updatedAt: partial.updatedAt ?? Date.now() }
-          : m
-      )
-    );
+    setItems(v=>v.map(m=>m.id===activeId?{...m,...partial,updatedAt:partial.updatedAt??Date.now()}:m));
   }
 
-  // ===== VIEW =====
-  if (activeId) {
+  if (activeId){
     return (
       <RecipeEditor
         storageNS={ns}
         recipeId={activeId}
         heading={heading}
         subtitle={subtitle}
-        onBack={() => setActiveId(null)}
+        onBack={()=>setActiveId(null)}
         onMetaUpdate={onMetaUpdate}
       />
     );
   }
 
   return (
-    <main className="container" style={{ paddingTop: '112px', paddingBottom: '48px' }}>
-      <section style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
-        <h1 className="title" style={{ marginBottom: 8 }}>
-          {heading}
-        </h1>
+    <main className="container" style={{ paddingTop:'112px', paddingBottom:'48px' }}>
+      <section style={{ textAlign:'center', marginBottom:'1.25rem' }}>
+        <h1 className="title" style={{ marginBottom:8 }}>{heading}</h1>
         {subtitle && <p className="subtitle">{subtitle}</p>}
       </section>
 
-      <section className="card" style={{ padding: 16, borderRadius: 16 }}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: 12,
-          }}
-        >
-          <h2 style={{ margin: 0 }}>Your Recipes</h2>
-          <button
-            className="btn"
-            onClick={createNew}
-            disabled={loading}
-            style={{
-              opacity: loading ? 0.6 : 1,
-              cursor: loading ? 'wait' : 'pointer',
-            }}
-          >
-            {loading ? 'Creating...' : '+ New Recipe'}
-          </button>
+      <section className="card" style={{ padding:16, borderRadius:16 }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:12 }}>
+          <h2 style={{ margin:0 }}>Your Recipes</h2>
+          <button className="btn" onClick={createNew}>+ New Recipe</button>
         </div>
 
-        {items.length === 0 ? (
-          <p style={{ margin: '16px 0 0', opacity: 0.8 }}>
-            No recipes yet. Create your first one.
-          </p>
+        {sorted.length===0 ? (
+          <p style={{ margin:'16px 0 0', opacity:.8 }}>No recipes yet. Create your first one.</p>
         ) : (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(12, 1fr)',
-              gap: 12,
-              marginTop: 12,
-            }}
-          >
-            {items.map((m) => (
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(12,1fr)', gap:12, marginTop:12 }}>
+            {sorted.map(m=>(
               <article
                 key={m.id}
                 className="card"
-                style={{
-                  gridColumn: 'span 3',
-                  padding: 12,
-                  borderRadius: 12,
-                  display: 'grid',
-                  gap: 10,
-                  cursor: 'pointer',
-                  overflow: 'hidden',
-                  transition: 'transform .2s ease, box-shadow .2s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-4px)';
-                  e.currentTarget.style.boxShadow =
-                    '0 8px 20px rgba(0,0,0,0.15)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'none';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
+                style={{ gridColumn:'span 3', padding:12, borderRadius:12, display:'grid', gap:10 }}
               >
-                {/* COVER */}
-                <div onClick={() => setViewerId(m.id)}>
-                  <div
-                    style={{
-                      position: 'relative',
-                      width: '100%',
-                      aspectRatio: '16/9',
-                      borderRadius: 10,
-                      overflow: 'hidden',
-                      background: 'var(--muted,#f3f4f6)',
-                    }}
-                  >
+                <div onClick={()=>openViewer(m.id)} style={{ cursor:'pointer' }}>
+                  <div style={{
+                    position:'relative', width:'100%', paddingTop:'62%', borderRadius:10, overflow:'hidden', background:'var(--muted,#f3f4f6)'
+                  }}>
                     {m.cover ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={m.cover}
-                        alt={m.title}
-                        style={{
-                          position: 'absolute',
-                          inset: 0,
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                          opacity: 0,
-                          animation: 'fadeInImage .6s forwards ease-out',
-                        }}
-                      />
-                    ) : (
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          height: '100%',
-                          color: '#aaa',
-                          fontSize: '0.9rem',
-                        }}
-                      >
-                        No image
-                      </div>
-                    )}
+                      <img src={m.cover} alt={m.title} style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}/>
+                    ) : null}
                   </div>
-                  <h3 style={{ margin: '10px 2px 0', fontSize: '1rem' }}>
-                    {m.title}
-                  </h3>
-                  <div style={{ fontSize: 12, opacity: 0.7 }}>
-                    Updated {new Date(m.updatedAt).toLocaleString()}
+                  <h3 style={{ margin:'10px 2px 0', fontSize:'1rem' }}>{m.title}</h3>
+                  <div style={{ fontSize:12, opacity:.7 }}>
+                    Updated {new Date(m.updatedAt || m.createdAt).toLocaleString()}
                   </div>
                 </div>
-
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button className="btn-ghost" onClick={() => setViewerId(m.id)} style={{ flex: 1 }}>
-                    View
-                  </button>
-                  <button className="btn-ghost" onClick={() => setActiveId(m.id)}>
-                    Edit
-                  </button>
-                  <button className="btn-ghost" onClick={() => removeItem(m.id)}>
-                    Delete
-                  </button>
+                <div style={{ display:'flex', gap:8 }}>
+                  <button className="btn-ghost" onClick={()=>openViewer(m.id)} style={{ flex:1 }}>View</button>
+                  <button className="btn-ghost" onClick={()=>openEditor(m.id)}>Edit</button>
+                  <button className="btn-ghost" onClick={()=>removeItem(m.id)}>Delete</button>
                 </div>
               </article>
             ))}
 
             <style>{`
-              @keyframes fadeInImage {
-                from { opacity: 0; transform: scale(1.05); }
-                to { opacity: 1; transform: scale(1); }
-              }
               @media (max-width:1280px){ article.card{ grid-column:span 4; } }
               @media (max-width:900px){  article.card{ grid-column:span 6; } }
               @media (max-width:640px){  article.card{ grid-column:span 12; } }
@@ -288,8 +169,8 @@ export default function RecipeShelf({
         <RecipeModal
           ns={ns}
           id={viewerId}
-          onClose={() => setViewerId(null)}
-          onEdit={() => {
+          onClose={()=>setViewerId(null)}
+          onEdit={()=>{
             setActiveId(viewerId);
             setViewerId(null);
           }}
