@@ -1,14 +1,23 @@
-import { initializeApp, getApps } from "firebase/app";
+// lib/firebase.ts
+import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
+// Firebase configuration using your verified environment variables
 const firebaseConfig = {
-  apiKey: "AIzaSyAJIreinPiiUSN97CQ6rRtgtFgiOIA1LwI",
-  authDomain: "alexhardinan-recipebook.firebaseapp.com",
-  projectId: "alexhardinan-recipebook",
-  storageBucket: "alexhardinan-recipebook.firebasestorage.app",
-  messagingSenderId: "817611791799",
-  appId: "1:817611791799:web:debcdacccb7a99c7781c32",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
+// Prevent duplicate initialization
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+
+// Firestore and Storage exports
 export const db = getFirestore(app);
+export const storage = getStorage(app);
+
+export default app;
