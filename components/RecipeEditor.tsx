@@ -2,6 +2,19 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { db } from '@/lib/firebase';
+import {
+  doc,
+  setDoc,
+  onSnapshot,
+} from 'firebase/firestore';
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+} from 'firebase/storage';
 
 type Ingredient = { id: string; baseAmount: number | ''; unit: string; item: string };
 type Step = { id: string; text: string };
@@ -39,6 +52,7 @@ export default function RecipeEditor({
 }) {
   const router = useRouter();
   const key = `${storageNS}:item:${recipeId}`;
+  const storage = getStorage();
 
   const [title, setTitle] = useState('New Recipe');
   const [baseYield, setBaseYield] = useState<number>(1);
@@ -48,32 +62,31 @@ export default function RecipeEditor({
   const [cover, setCover] = useState<string>('');
   const [toast, setToast] = useState<string | null>(null);
 
-  // ===== LOAD =====
+  // ===== REALTIME LOAD =====
   useEffect(() => {
-    const raw = localStorage.getItem(key);
-    if (!raw) return;
-    try {
-      const r: RecipeData = JSON.parse(raw);
+    const refDoc = doc(db, storageNS, recipeId);
+    const unsub = onSnapshot(refDoc, (snap) => {
+      if (!snap.exists()) return;
+      const r = snap.data() as RecipeData;
       setTitle(r.title ?? 'New Recipe');
-      setBaseYield(Math.max(1, r.baseYield ?? 1)); // default+min 1
+      setBaseYield(Math.max(1, r.baseYield ?? 1));
       setTargetYield(r.targetYield ?? 1);
       setIngredients(r.ingredients ?? []);
       setSteps(r.steps?.length ? r.steps : [{ id: uid(), text: '' }]);
       setCover(r.cover ?? '');
-    } catch (err) {
-      console.error('Load error:', err);
-    }
-  }, [key]);
+    });
+    return () => unsub();
+  }, [storageNS, recipeId]);
 
-  // ===== FACTOR =====
+  // ===== SCALING =====
   const factor = useMemo(() => {
     const b = Math.max(1, Number(baseYield) || 1);
     const t = Number(targetYield) || 1;
     return t / b;
   }, [baseYield, targetYield]);
 
-  // ===== SAVE =====
-  const saveRecipe = (customCover?: string) => {
+  // ===== SAVE TO FIRESTORE =====
+  const saveRecipe = async (customCover?: string) => {
     const payload: RecipeData = {
       id: recipeId,
       title,
@@ -87,6 +100,12 @@ export default function RecipeEditor({
     };
     localStorage.setItem(key, JSON.stringify(payload));
     onMetaUpdate({ title, cover: payload.cover, updatedAt: payload.updatedAt });
+
+    try {
+      await setDoc(doc(db, storageNS, recipeId), payload);
+    } catch (err) {
+      console.error('Firestore save failed:', err);
+    }
   };
 
   useEffect(() => {
@@ -94,60 +113,47 @@ export default function RecipeEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title, baseYield, targetYield, ingredients, steps, cover]);
 
-  // ===== IMAGE UPLOAD (ROBUST & PERSISTENT) =====
-  const onCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.includes('png')) {
-      alert('Please upload a PNG image only.');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const img = new Image();
-      img.onload = () => {
-        try {
-          // downscale if huge to avoid localStorage quota issues
-          const MAX_W = 1600;
-          const scale = img.width > MAX_W ? MAX_W / img.width : 1;
-          const w = Math.round(img.width * scale);
-          const h = Math.round(img.height * scale);
-          const canvas = document.createElement('canvas');
-          canvas.width = w;
-          canvas.height = h;
-          const ctx = canvas.getContext('2d');
-          if (!ctx) throw new Error('Canvas unsupported');
-          ctx.drawImage(img, 0, 0, w, h);
-          const dataUrl = canvas.toDataURL('image/png'); // PNG (lossless); size reduced by resize
-          setCover(dataUrl);
-          saveRecipe(dataUrl);
-          setToast('✅ Image uploaded and saved');
-          setTimeout(() => setToast(null), 2200);
-        } catch (err) {
-          console.error(err);
-          alert('Image processing failed. Try a smaller PNG.');
-        }
-      };
-      if (typeof reader.result === 'string') {
-        img.src = reader.result;
-      } else {
-        alert('Upload failed. Try again.');
+  // ===== FIREBASE STORAGE IMAGE UPLOAD =====
+  const onCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      if (!file.type.includes('png')) {
+        alert('Please upload a PNG image only.');
+        return;
       }
-    };
-    reader.onerror = () => alert('Upload failed. Try again.');
-    reader.readAsDataURL(file);
+
+      const storageRef = ref(storage, `${storageNS}/${recipeId}.png`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+
+      setCover(url);
+      await saveRecipe(url);
+      setToast('✅ Image uploaded and saved to cloud');
+      setTimeout(() => setToast(null), 2500);
+    } catch (err) {
+      console.error('Upload failed:', err);
+      alert('Image upload failed. Try again.');
+    }
   };
 
-  // ===== REMOVE IMAGE =====
-  const removeCover = () => {
-    setCover('');
-    saveRecipe('');
-    setToast('🗑️ Image removed');
-    setTimeout(() => setToast(null), 2000);
+  // ===== REMOVE CLOUD IMAGE =====
+  const removeCover = async () => {
+    try {
+      if (cover) {
+        const fileRef = ref(storage, `${storageNS}/${recipeId}.png`);
+        await deleteObject(fileRef);
+      }
+      setCover('');
+      await saveRecipe('');
+      setToast('🗑️ Image removed');
+      setTimeout(() => setToast(null), 2000);
+    } catch (err) {
+      console.error('Delete failed:', err);
+    }
   };
 
-  // ===== INGREDIENT HANDLERS =====
+  // ===== INGREDIENT & STEP HANDLERS =====
   const addIngredient = () =>
     setIngredients([...ingredients, { id: uid(), baseAmount: '', unit: '', item: '' }]);
   const updateIngredient = (id: string, field: keyof Ingredient, value: any) =>
@@ -155,7 +161,6 @@ export default function RecipeEditor({
   const removeIngredient = (id: string) =>
     setIngredients((prev) => prev.filter((ing) => ing.id !== id));
 
-  // ===== STEP HANDLERS =====
   const addStep = () => setSteps([...steps, { id: uid(), text: '' }]);
   const updateStep = (id: string, text: string) =>
     setSteps((prev) => prev.map((s) => (s.id === id ? { ...s, text } : s)));
@@ -171,7 +176,6 @@ export default function RecipeEditor({
 
   return (
     <main className="container" style={{ paddingTop: '110px', paddingBottom: '60px' }}>
-      {/* Toast */}
       {toast && (
         <div
           style={{
@@ -199,7 +203,6 @@ export default function RecipeEditor({
         </div>
       )}
 
-      {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
         <button
           onClick={onBack}
@@ -222,7 +225,7 @@ export default function RecipeEditor({
         {subtitle && <p className="subtitle">{subtitle}</p>}
       </section>
 
-      {/* Cover Image Section */}
+      {/* COVER IMAGE */}
       <section
         className="card"
         style={{ maxWidth: 1100, margin: '0 auto 1.25rem', padding: 20, borderRadius: 16 }}
@@ -231,13 +234,7 @@ export default function RecipeEditor({
 
         {!cover && (
           <div style={{ textAlign: 'center' }}>
-            <input
-              type="file"
-              accept="image/png"
-              id="upload"
-              onChange={onCoverChange}
-              style={{ display: 'none' }}
-            />
+            <input type="file" accept="image/png" id="upload" onChange={onCoverChange} style={{ display: 'none' }} />
             <label
               htmlFor="upload"
               style={{
@@ -255,17 +252,7 @@ export default function RecipeEditor({
         )}
 
         {cover && (
-          <div
-            style={{
-              position: 'relative',
-              width: '100%',
-              borderRadius: 12,
-              marginTop: 10,
-              transition: 'opacity .3s ease',
-              animation: 'fadeIn .4s ease',
-            }}
-          >
-            {/* No overflow clipping so the rest of the page is fully visible */}
+          <div style={{ position: 'relative', borderRadius: 12, marginTop: 10 }}>
             <img
               src={cover}
               alt="cover"
@@ -276,8 +263,6 @@ export default function RecipeEditor({
                 display: 'block',
               }}
             />
-
-            {/* Replace and Delete Buttons */}
             <div
               style={{
                 position: 'absolute',
@@ -290,15 +275,7 @@ export default function RecipeEditor({
                 borderRadius: 8,
               }}
             >
-              <label
-                htmlFor="replace"
-                style={{
-                  color: 'white',
-                  cursor: 'pointer',
-                  fontSize: 13,
-                  textDecoration: 'underline',
-                }}
-              >
+              <label htmlFor="replace" style={{ color: 'white', cursor: 'pointer', fontSize: 13, textDecoration: 'underline' }}>
                 Replace
               </label>
               <span
@@ -312,26 +289,13 @@ export default function RecipeEditor({
               >
                 Delete
               </span>
-              <input
-                type="file"
-                accept="image/png"
-                id="replace"
-                onChange={onCoverChange}
-                style={{ display: 'none' }}
-              />
+              <input type="file" accept="image/png" id="replace" onChange={onCoverChange} style={{ display: 'none' }} />
             </div>
           </div>
         )}
-
-        <style>{`
-          @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.98); }
-            to { opacity: 1; transform: scale(1); }
-          }
-        `}</style>
       </section>
 
-      {/* Yield Section */}
+      {/* YIELD */}
       <section
         className="card"
         style={{ maxWidth: 1100, margin: '0 auto 1.25rem', padding: 20, borderRadius: 16 }}
@@ -344,10 +308,7 @@ export default function RecipeEditor({
               type="number"
               min={1}
               value={baseYield}
-              onChange={(e) => {
-                const v = Math.max(1, Number(e.target.value) || 1);
-                setBaseYield(v);
-              }}
+              onChange={(e) => setBaseYield(Math.max(1, Number(e.target.value) || 1))}
               style={{ marginLeft: 8, width: 80 }}
             />
           </label>
@@ -364,7 +325,7 @@ export default function RecipeEditor({
         </div>
       </section>
 
-      {/* Ingredients */}
+      {/* INGREDIENTS */}
       <section
         className="card"
         style={{ maxWidth: 1100, margin: '0 auto 1.25rem', padding: 20, borderRadius: 16 }}
@@ -375,15 +336,9 @@ export default function RecipeEditor({
             <input
               type="number"
               placeholder="Qty"
-              value={
-                typeof ing.baseAmount === 'number' ? +(ing.baseAmount * factor).toFixed(2) : ''
-              }
+              value={typeof ing.baseAmount === 'number' ? +(ing.baseAmount * factor).toFixed(2) : ''}
               onChange={(e) =>
-                updateIngredient(
-                  ing.id,
-                  'baseAmount',
-                  parseFloat(e.target.value || '0') / factor
-                )
+                updateIngredient(ing.id, 'baseAmount', parseFloat(e.target.value || '0') / factor)
               }
               style={{ width: 70 }}
             />
@@ -407,7 +362,7 @@ export default function RecipeEditor({
         <button onClick={addIngredient}>+ Add Ingredient</button>
       </section>
 
-      {/* Steps */}
+      {/* STEPS */}
       <section
         className="card"
         style={{ maxWidth: 1100, margin: '0 auto 1.25rem', padding: 20, borderRadius: 16 }}
@@ -426,7 +381,7 @@ export default function RecipeEditor({
         <button onClick={addStep}>+ Add Step</button>
       </section>
 
-      {/* Save Button */}
+      {/* SAVE BUTTON */}
       <div style={{ textAlign: 'center', marginTop: 20 }}>
         <button
           onClick={handleSave}
