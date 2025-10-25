@@ -10,6 +10,7 @@ import {
   deleteDoc,
   doc,
   setDoc,
+  getDoc,
 } from 'firebase/firestore';
 
 type ItemMeta = {
@@ -36,12 +37,22 @@ export default function RecipeShelf({
   const [items, setItems] = useState<ItemMeta[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [viewerId, setViewerId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  // ===== REALTIME SYNC WITH FIRESTORE =====
+  // ===== REALTIME LOAD =====
   useEffect(() => {
     const unsub = onSnapshot(collection(db, ns), (snap) => {
       const list: ItemMeta[] = [];
-      snap.forEach((d) => list.push(d.data() as ItemMeta));
+      snap.forEach((d) => {
+        const data = d.data() as RecipeData;
+        list.push({
+          id: data.id,
+          title: data.title,
+          cover: data.cover,
+          createdAt: data.createdAt,
+          updatedAt: data.updatedAt,
+        });
+      });
       setItems(
         list.sort(
           (a, b) =>
@@ -52,40 +63,41 @@ export default function RecipeShelf({
     return () => unsub();
   }, [ns]);
 
-  // ===== CREATE NEW RECIPE =====
+  // ===== CREATE NEW FIXED =====
   async function createNew() {
-    const id = uid();
-    const now = Date.now();
-    const meta: ItemMeta = {
-      id,
-      title: 'New Recipe',
-      createdAt: now,
-      updatedAt: now,
-    };
-    const seed: RecipeData = {
-      id,
-      title: 'New Recipe',
-      baseYield: 10,
-      targetYield: 10,
-      ingredients: [],
-      steps: [],
-      createdAt: now,
-      updatedAt: now,
-    };
     try {
-      await setDoc(doc(db, ns, id), seed);
-      setItems((v) => [meta, ...v]);
+      setLoading(true);
+      const id = uid();
+      const now = Date.now();
+
+      // Check if already exists (failsafe)
+      const docRef = doc(db, ns, id);
+      const existing = await getDoc(docRef);
+      if (existing.exists()) return setActiveId(id);
+
+      const seed: RecipeData = {
+        id,
+        title: 'New Recipe',
+        baseYield: 10,
+        targetYield: 10,
+        ingredients: [],
+        steps: [],
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      await setDoc(docRef, seed);
+      setItems((v) => [
+        { id, title: 'New Recipe', createdAt: now, updatedAt: now },
+        ...v,
+      ]);
       setActiveId(id);
     } catch (err) {
-      console.error('Error creating recipe:', err);
+      console.error('Create recipe failed:', err);
+      alert('⚠️ Unable to create a new recipe. Check Firebase config.');
+    } finally {
+      setLoading(false);
     }
-  }
-
-  function openEditor(id: string) {
-    setActiveId(id);
-  }
-  function openViewer(id: string) {
-    setViewerId(id);
   }
 
   async function removeItem(id: string) {
@@ -97,6 +109,7 @@ export default function RecipeShelf({
       if (viewerId === id) setViewerId(null);
     } catch (err) {
       console.error('Delete failed:', err);
+      alert('⚠️ Failed to delete recipe. Check Firebase permissions.');
     }
   }
 
@@ -111,7 +124,7 @@ export default function RecipeShelf({
     );
   }
 
-  // ===== RENDER EDITOR =====
+  // ===== VIEW =====
   if (activeId) {
     return (
       <RecipeEditor
@@ -125,12 +138,8 @@ export default function RecipeShelf({
     );
   }
 
-  // ===== SHELF UI =====
   return (
-    <main
-      className="container"
-      style={{ paddingTop: '112px', paddingBottom: '48px' }}
-    >
+    <main className="container" style={{ paddingTop: '112px', paddingBottom: '48px' }}>
       <section style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
         <h1 className="title" style={{ marginBottom: 8 }}>
           {heading}
@@ -138,10 +147,7 @@ export default function RecipeShelf({
         {subtitle && <p className="subtitle">{subtitle}</p>}
       </section>
 
-      <section
-        className="card"
-        style={{ padding: 16, borderRadius: 16, overflow: 'hidden' }}
-      >
+      <section className="card" style={{ padding: 16, borderRadius: 16 }}>
         <div
           style={{
             display: 'flex',
@@ -151,8 +157,16 @@ export default function RecipeShelf({
           }}
         >
           <h2 style={{ margin: 0 }}>Your Recipes</h2>
-          <button className="btn" onClick={createNew}>
-            + New Recipe
+          <button
+            className="btn"
+            onClick={createNew}
+            disabled={loading}
+            style={{
+              opacity: loading ? 0.6 : 1,
+              cursor: loading ? 'wait' : 'pointer',
+            }}
+          >
+            {loading ? 'Creating...' : '+ New Recipe'}
           </button>
         </div>
 
@@ -183,18 +197,18 @@ export default function RecipeShelf({
                   overflow: 'hidden',
                   transition: 'transform .2s ease, box-shadow .2s ease',
                 }}
-                onMouseEnter={(e) =>
-                  ((e.currentTarget.style.transform = 'translateY(-4px)'),
-                  (e.currentTarget.style.boxShadow =
-                    '0 8px 20px rgba(0,0,0,0.15)'))
-                }
-                onMouseLeave={(e) =>
-                  ((e.currentTarget.style.transform = 'none'),
-                  (e.currentTarget.style.boxShadow = 'none'))
-                }
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-4px)';
+                  e.currentTarget.style.boxShadow =
+                    '0 8px 20px rgba(0,0,0,0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'none';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
               >
-                {/* IMAGE PREVIEW */}
-                <div onClick={() => openViewer(m.id)}>
+                {/* COVER */}
+                <div onClick={() => setViewerId(m.id)}>
                   <div
                     style={{
                       position: 'relative',
@@ -216,10 +230,8 @@ export default function RecipeShelf({
                           width: '100%',
                           height: '100%',
                           objectFit: 'cover',
-                          filter: 'brightness(0.98)',
-                          transition: 'transform 0.5s ease, opacity 0.3s ease',
                           opacity: 0,
-                          animation: 'fadeInImage 0.5s forwards',
+                          animation: 'fadeInImage .6s forwards ease-out',
                         }}
                       />
                     ) : (
@@ -246,23 +258,13 @@ export default function RecipeShelf({
                 </div>
 
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button
-                    className="btn-ghost"
-                    onClick={() => openViewer(m.id)}
-                    style={{ flex: 1 }}
-                  >
+                  <button className="btn-ghost" onClick={() => setViewerId(m.id)} style={{ flex: 1 }}>
                     View
                   </button>
-                  <button
-                    className="btn-ghost"
-                    onClick={() => openEditor(m.id)}
-                  >
+                  <button className="btn-ghost" onClick={() => setActiveId(m.id)}>
                     Edit
                   </button>
-                  <button
-                    className="btn-ghost"
-                    onClick={() => removeItem(m.id)}
-                  >
+                  <button className="btn-ghost" onClick={() => removeItem(m.id)}>
                     Delete
                   </button>
                 </div>
