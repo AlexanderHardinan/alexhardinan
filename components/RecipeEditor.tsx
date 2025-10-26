@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadString, getDownloadURL } from 'firebase/storage';
+import { doc, setDoc, getDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '@/lib/firebase';
 
 type Ingredient = { id: string; baseAmount: number | ''; unit: string; item: string };
@@ -48,24 +48,24 @@ export default function RecipeEditor({
   const [steps, setSteps] = useState<Step[]>([{ id: uid(), text: '' }]);
   const [cover, setCover] = useState<string>('');
   const [toast, setToast] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  // ===== LOAD FROM FIREBASE FIRST =====
+  // ===== LIVE FIREBASE SYNC =====
   useEffect(() => {
-    async function loadRecipe() {
-      try {
-        const docRef = doc(db, storageNS, recipeId);
-        const snap = await getDoc(docRef);
+    const docRef = doc(db, storageNS, recipeId);
+    const unsub = onSnapshot(
+      docRef,
+      (snap) => {
         if (snap.exists()) {
-          const r = snap.data() as RecipeData;
-          setTitle(r.title ?? 'New Recipe');
-          setBaseYield(Math.max(1, r.baseYield ?? 1));
-          setTargetYield(r.targetYield ?? 1);
-          setIngredients(r.ingredients ?? []);
-          setSteps(r.steps?.length ? r.steps : [{ id: uid(), text: '' }]);
-          setCover(r.cover ?? '');
-          localStorage.setItem(key, JSON.stringify(r));
+          const data = snap.data() as RecipeData;
+          setTitle(data.title || 'New Recipe');
+          setBaseYield(Math.max(1, data.baseYield || 1));
+          setTargetYield(data.targetYield || 1);
+          setIngredients(data.ingredients || []);
+          setSteps(data.steps?.length ? data.steps : [{ id: uid(), text: '' }]);
+          setCover(data.cover || '');
+          localStorage.setItem(key, JSON.stringify(data));
         } else {
           const raw = localStorage.getItem(key);
           if (raw) {
@@ -78,23 +78,23 @@ export default function RecipeEditor({
             setCover(r.cover ?? '');
           }
         }
-      } catch (err) {
-        console.error('Load failed:', err);
-      } finally {
+        setLoading(false);
+      },
+      (err) => {
+        console.error('Sync error:', err);
         setLoading(false);
       }
-    }
-    loadRecipe();
+    );
+
+    return () => unsub();
   }, [key, recipeId, storageNS]);
 
-  // ===== SCALING FACTOR =====
   const factor = useMemo(() => {
     const b = Math.max(1, Number(baseYield) || 1);
     const t = Number(targetYield) || 1;
     return t / b;
   }, [baseYield, targetYield]);
 
-  // ===== SAVE TO FIRESTORE =====
   async function saveToFirebase(customCover?: string) {
     setSaving(true);
     try {
@@ -115,7 +115,7 @@ export default function RecipeEditor({
       });
       localStorage.setItem(key, JSON.stringify(payload));
       onMetaUpdate({ title, cover: payload.cover, updatedAt: payload.updatedAt });
-      setToast('💾 Saved to Firebase');
+      setToast('💾 Synced to Firebase');
     } catch (err) {
       console.error(err);
       alert('⚠️ Firebase save failed. Check config or network.');
@@ -125,41 +125,58 @@ export default function RecipeEditor({
     }
   }
 
-  // ===== IMAGE UPLOAD FIXED =====
+  // ===== FAST IMAGE UPLOAD =====
   async function onCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.includes('png')) {
-      alert('Please upload a PNG image.');
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload a valid image.');
       return;
     }
 
     try {
-      // 1. Preview immediately
-      const reader = new FileReader();
-      reader.onload = async () => {
-        if (!reader.result || typeof reader.result !== 'string') return;
-        setCover(reader.result);
-        localStorage.setItem(key, reader.result);
+      // 1. Preview instantly
+      const previewUrl = URL.createObjectURL(file);
+      setCover(previewUrl);
 
-        // 2. Upload to Firebase Storage
-        const path = `${storageNS}/${recipeId}/cover.png`;
-        const storageRef = ref(storage, path);
-        await uploadString(storageRef, reader.result, 'data_url');
-        const url = await getDownloadURL(storageRef);
+      // 2. Resize before upload to optimize speed
+      const resized = await resizeImage(file, 1280); // max width 1280px
+      const storageRef = ref(storage, `${storageNS}/${recipeId}/cover.png`);
+      await uploadBytes(storageRef, resized, { contentType: 'image/png' });
+      const downloadURL = await getDownloadURL(storageRef);
 
-        // 3. Update cover URL + save
-        setCover(url);
-        await saveToFirebase(url);
-
-        setToast('✅ Image uploaded');
-        setTimeout(() => setToast(null), 1800);
-      };
-      reader.readAsDataURL(file);
+      // 3. Update and save
+      setCover(downloadURL);
+      await saveToFirebase(downloadURL);
+      setToast('✅ Image uploaded');
+      setTimeout(() => setToast(null), 1800);
     } catch (err) {
-      console.error(err);
-      alert('❌ Image upload failed. Check Firebase Storage permissions.');
+      console.error('Upload error:', err);
+      alert('❌ Upload failed. Try again.');
     }
+  }
+
+  async function resizeImage(file: File, maxWidth: number): Promise<Blob> {
+    const img = document.createElement('img');
+    const reader = new FileReader();
+    return new Promise((resolve, reject) => {
+      reader.onload = () => {
+        if (typeof reader.result !== 'string') return reject('Invalid image');
+        img.src = reader.result;
+      };
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const scale = Math.min(1, maxWidth / img.width);
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return reject('No canvas');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => (blob ? resolve(blob) : reject('Blob error')), 'image/png', 0.9);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   }
 
   const removeCover = async () => {
@@ -169,13 +186,11 @@ export default function RecipeEditor({
     setTimeout(() => setToast(null), 1800);
   };
 
-  // ===== INGREDIENTS =====
   const addIngredient = () => setIngredients([...ingredients, { id: uid(), baseAmount: '', unit: '', item: '' }]);
   const updateIngredient = (id: string, field: keyof Ingredient, value: any) =>
     setIngredients((prev) => prev.map((ing) => (ing.id === id ? { ...ing, [field]: value } : ing)));
   const removeIngredient = (id: string) => setIngredients((prev) => prev.filter((ing) => ing.id !== id));
 
-  // ===== STEPS =====
   const addStep = () => setSteps([...steps, { id: uid(), text: '' }]);
   const updateStep = (id: string, text: string) =>
     setSteps((prev) => prev.map((s) => (s.id === id ? { ...s, text } : s)));
@@ -208,7 +223,7 @@ export default function RecipeEditor({
         </div>
       )}
 
-      {/* Back button */}
+      {/* Back */}
       <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
         <button
           onClick={onBack}
@@ -225,7 +240,7 @@ export default function RecipeEditor({
         </button>
       </div>
 
-      {/* Editable title */}
+      {/* Editable Title */}
       <section className="card" style={{ maxWidth: 1100, margin: '0 auto 1rem', padding: 20, borderRadius: 16 }}>
         <label style={{ fontWeight: 600, display: 'block', marginBottom: 8 }}>Recipe Title</label>
         <input
@@ -243,10 +258,10 @@ export default function RecipeEditor({
 
       {/* Cover Image */}
       <section className="card" style={{ maxWidth: 1100, margin: '0 auto 1.25rem', padding: 20, borderRadius: 16 }}>
-        <h3>Cover Image (PNG)</h3>
+        <h3>Cover Image</h3>
         {!cover && (
           <div style={{ textAlign: 'center' }}>
-            <input type="file" accept="image/png" id="upload" onChange={onCoverChange} style={{ display: 'none' }} />
+            <input type="file" accept="image/*" id="upload" onChange={onCoverChange} style={{ display: 'none' }} />
             <label
               htmlFor="upload"
               style={{
@@ -278,7 +293,7 @@ export default function RecipeEditor({
                 gap: 8,
               }}
             >
-              <input type="file" accept="image/png" id="replace" onChange={onCoverChange} style={{ display: 'none' }} />
+              <input type="file" accept="image/*" id="replace" onChange={onCoverChange} style={{ display: 'none' }} />
               <label htmlFor="replace" style={{ color: 'white', cursor: 'pointer', fontSize: 13, textDecoration: 'underline' }}>
                 Replace
               </label>
@@ -290,7 +305,7 @@ export default function RecipeEditor({
         )}
       </section>
 
-      {/* YIELD */}
+      {/* Yield */}
       <section className="card" style={{ maxWidth: 1100, margin: '0 auto 1rem', padding: 20, borderRadius: 16 }}>
         <h3>Yield</h3>
         <div style={{ display: 'flex', gap: 12 }}>
@@ -317,7 +332,7 @@ export default function RecipeEditor({
         </div>
       </section>
 
-      {/* INGREDIENTS */}
+      {/* Ingredients */}
       <section className="card" style={{ maxWidth: 1100, margin: '0 auto 1rem', padding: 20, borderRadius: 16 }}>
         <h3>Ingredients</h3>
         {ingredients.map((ing) => (
@@ -349,7 +364,7 @@ export default function RecipeEditor({
         <button onClick={addIngredient}>+ Add Ingredient</button>
       </section>
 
-      {/* STEPS */}
+      {/* Steps */}
       <section className="card" style={{ maxWidth: 1100, margin: '0 auto 1rem', padding: 20, borderRadius: 16 }}>
         <h3>Method</h3>
         {steps.map((s) => (
@@ -365,7 +380,7 @@ export default function RecipeEditor({
         <button onClick={addStep}>+ Add Step</button>
       </section>
 
-      {/* SAVE */}
+      {/* Save */}
       <div style={{ textAlign: 'center', marginTop: 20 }}>
         <button
           onClick={handleSave}
