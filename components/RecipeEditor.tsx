@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { doc, setDoc, getDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '@/lib/firebase';
 
@@ -51,7 +51,7 @@ export default function RecipeEditor({
   const [saving, setSaving] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // ===== LIVE FIREBASE SYNC =====
+  // ===== LIVE FIREBASE SYNC (fast + cached) =====
   useEffect(() => {
     const docRef = doc(db, storageNS, recipeId);
     const unsub = onSnapshot(
@@ -89,13 +89,41 @@ export default function RecipeEditor({
     return () => unsub();
   }, [key, recipeId, storageNS]);
 
+  // ===== SCALING =====
   const factor = useMemo(() => {
     const b = Math.max(1, Number(baseYield) || 1);
     const t = Number(targetYield) || 1;
     return t / b;
   }, [baseYield, targetYield]);
 
+  // ===== SAVE TO FIRESTORE =====
   async function saveToFirebase(customCover?: string) {
+    // ✅ DRAFT CHECK: only save when valid
+    const hasIngredients = ingredients.length > 0 && ingredients.some(i => i.item.trim());
+    const hasSteps = steps.length > 0 && steps.some(s => s.text.trim());
+    const hasTitle = title.trim().length > 0;
+
+    if (!hasTitle || !hasIngredients || !hasSteps) {
+      console.log('Draft only — recipe not uploaded.');
+      localStorage.setItem(
+        key,
+        JSON.stringify({
+          id: recipeId,
+          title,
+          baseYield,
+          targetYield,
+          ingredients,
+          steps,
+          cover,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        })
+      );
+      setToast('💾 Draft saved locally');
+      setTimeout(() => setToast(null), 1800);
+      return;
+    }
+
     setSaving(true);
     try {
       const payload: RecipeData = {
@@ -125,7 +153,7 @@ export default function RecipeEditor({
     }
   }
 
-  // ===== FAST IMAGE UPLOAD =====
+  // ===== FAST IMAGE UPLOAD (optimized speed) =====
   async function onCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -135,17 +163,14 @@ export default function RecipeEditor({
     }
 
     try {
-      // 1. Preview instantly
       const previewUrl = URL.createObjectURL(file);
       setCover(previewUrl);
 
-      // 2. Resize before upload to optimize speed
-      const resized = await resizeImage(file, 1280); // max width 1280px
+      const resized = await resizeImage(file, 1280);
       const storageRef = ref(storage, `${storageNS}/${recipeId}/cover.png`);
       await uploadBytes(storageRef, resized, { contentType: 'image/png' });
       const downloadURL = await getDownloadURL(storageRef);
 
-      // 3. Update and save
       setCover(downloadURL);
       await saveToFirebase(downloadURL);
       setToast('✅ Image uploaded');
@@ -279,7 +304,6 @@ export default function RecipeEditor({
         )}
         {cover && (
           <div style={{ position: 'relative', marginTop: 10 }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={cover} alt="cover" style={{ width: '100%', borderRadius: 12, border: '1px solid #ccc' }} />
             <div
               style={{
