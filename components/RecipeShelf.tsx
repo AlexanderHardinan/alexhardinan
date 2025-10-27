@@ -1,12 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import RecipeEditor, { RecipeData } from './RecipeEditor';
 import RecipeModal from './RecipeModal';
-import { db } from '@/lib/firebase';
-import {
-  collection, addDoc, serverTimestamp, doc, setDoc, getDoc
-} from 'firebase/firestore';
 
 type ItemMeta = {
   id: string;
@@ -14,153 +12,199 @@ type ItemMeta = {
   cover?: string;
   createdAt: number;
   updatedAt: number;
+  status?: 'draft' | 'published';
 };
 
-function uid(){ return Math.random().toString(36).slice(2,9); }
+function uid() {
+  return Math.random().toString(36).slice(2, 9);
+}
 
-export default function RecipeShelf({ ns, heading, subtitle }:{
-  ns: string; heading: string; subtitle?: string;
-}){
-  const indexKey = `${ns}:index`;
+export default function RecipeShelf({
+  ns,
+  heading,
+  subtitle,
+}: {
+  ns: string;
+  heading: string;
+  subtitle?: string;
+}) {
   const [items, setItems] = useState<ItemMeta[]>([]);
+  const [drafts, setDrafts] = useState<ItemMeta[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [viewerId, setViewerId] = useState<string | null>(null);
 
-  // load index from localStorage for fast UI
-  useEffect(()=>{
-    const raw = localStorage.getItem(indexKey);
-    if (raw) { try { setItems(JSON.parse(raw)); } catch {} }
-  },[indexKey]);
-
-  // persist index locally
-  useEffect(()=>{
-    localStorage.setItem(indexKey, JSON.stringify(items));
-  },[items, indexKey]);
-
-  const sorted = useMemo(
-    () => [...items].sort((a,b)=>(b.updatedAt||b.createdAt)-(a.updatedAt||a.createdAt)),
-    [items]
-  );
-
-  async function createNew(){
-    try {
-      const id = uid();
-      const now = Date.now();
-
-      // 1) add to Firestore "index" (so it’s device-sync’d)
-      const idxRef = collection(db, 'recipeIndex');
-      await addDoc(idxRef, {
-        ns,
-        id,
-        title: 'New Recipe',
-        cover: null,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+  // ---- Firestore listener (published recipes)
+  useEffect(() => {
+    const q = query(collection(db, ns), orderBy('updatedAt', 'desc'));
+    const unsub = onSnapshot(q, (snap) => {
+      const list: ItemMeta[] = [];
+      snap.forEach((doc) => {
+        const d = doc.data() as any;
+        if (!d || d.status === 'draft') return; // only published
+        list.push({
+          id: doc.id,
+          title: d.title || 'Untitled',
+          cover: d.cover,
+          createdAt: d.createdAt?._seconds ? d.createdAt._seconds * 1000 : d.createdAt ?? Date.now(),
+          updatedAt: d.updatedAt?._seconds ? d.updatedAt._seconds * 1000 : d.updatedAt ?? Date.now(),
+          status: 'published',
+        });
       });
+      setItems(list);
+    });
+    return () => unsub();
+  }, [ns]);
 
-      // 2) seed the Firestore item doc itself
-      const itemRef = doc(db, 'recipes', `${ns}:${id}`);
-      const seed: RecipeData = {
-        id,
-        title: 'New Recipe',
-        baseYield: 1,
-        targetYield: 1,
-        ingredients: [],
-        steps: [],
-        createdAt: now,
-        updatedAt: now,
-      };
-      await setDoc(itemRef, seed);
-
-      // 3) also seed local for instant editor load
-      localStorage.setItem(`${ns}:item:${id}`, JSON.stringify(seed));
-      setItems(v => [{ id, title:'New Recipe', createdAt: now, updatedAt: now }, ...v]);
-      setActiveId(id);
-    } catch (err: any) {
-      console.error(err);
-      alert(`⚠️ Unable to create a new recipe.\n${err?.message || 'Check Firebase config/permissions.'}`);
+  // ---- Load local drafts only
+  useEffect(() => {
+    const prefix = `${ns}:item:`;
+    const list: ItemMeta[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)!;
+      if (!key.startsWith(prefix)) continue;
+      try {
+        const r: RecipeData = JSON.parse(localStorage.getItem(key)!);
+        if (r.status === 'draft') {
+          list.push({
+            id: r.id,
+            title: r.title || 'Untitled',
+            cover: r.cover,
+            createdAt: r.createdAt ?? Date.now(),
+            updatedAt: r.updatedAt ?? Date.now(),
+            status: 'draft',
+          });
+        }
+      } catch {}
     }
+    list.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+    setDrafts(list);
+  }, [ns, activeId]);
+
+  const combined = useMemo(() => {
+    // remove drafts that were already published
+    const publishedIds = new Set(items.map((i) => i.id));
+    return [...drafts.filter((d) => !publishedIds.has(d.id)), ...items];
+  }, [drafts, items]);
+
+  function createNew() {
+    const id = uid();
+    const now = Date.now();
+    const payload: RecipeData & { status: 'draft' } = {
+      id,
+      title: 'New Recipe',
+      baseYield: 1,
+      targetYield: 1,
+      ingredients: [],
+      steps: [{ id: uid(), text: '' }],
+      cover: '',
+      createdAt: now,
+      updatedAt: now,
+      status: 'draft',
+    };
+    localStorage.setItem(`${ns}:item:${id}`, JSON.stringify(payload));
+    setActiveId(id);
   }
 
-  function openEditor(id:string){ setActiveId(id); }
-  function openViewer(id:string){ setViewerId(id); }
-  function removeItem(id:string){
-    if(!confirm('Delete this recipe?')) return;
+  function openEditor(id: string) {
+    setActiveId(id);
+  }
+
+  function openViewer(id: string) {
+    setViewerId(id);
+  }
+
+  function removeItem(id: string) {
+    if (!confirm('Delete this recipe?')) return;
     localStorage.removeItem(`${ns}:item:${id}`);
-    setItems(v=>v.filter(m=>m.id!==id));
-    if(activeId===id) setActiveId(null);
-    if(viewerId===id) setViewerId(null);
-    // (Optional) You can also delete Firestore docs here if desired
+    setDrafts((prev) => prev.filter((d) => d.id !== id));
+    setItems((prev) => prev.filter((i) => i.id !== id));
   }
 
-  function onMetaUpdate(partial: Partial<ItemMeta>){
-    if (!activeId) return;
-    setItems(v=>v.map(m=>m.id===activeId?{...m,...partial,updatedAt:partial.updatedAt??Date.now()}:m));
-  }
-
-  if (activeId){
+  if (activeId) {
     return (
       <RecipeEditor
         storageNS={ns}
         recipeId={activeId}
         heading={heading}
         subtitle={subtitle}
-        onBack={()=>setActiveId(null)}
-        onMetaUpdate={onMetaUpdate}
+        onBack={() => setActiveId(null)}
+        onMetaUpdate={() => {}}
       />
     );
   }
 
   return (
-    <main className="container" style={{ paddingTop:'112px', paddingBottom:'48px' }}>
-      <section style={{ textAlign:'center', marginBottom:'1.25rem' }}>
-        <h1 className="title" style={{ marginBottom:8 }}>{heading}</h1>
+    <main className="container" style={{ paddingTop: '112px', paddingBottom: '48px' }}>
+      <section style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
+        <h1 className="title" style={{ marginBottom: 8 }}>{heading}</h1>
         {subtitle && <p className="subtitle">{subtitle}</p>}
       </section>
 
-      <section className="card" style={{ padding:16, borderRadius:16 }}>
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:12 }}>
-          <h2 style={{ margin:0 }}>Your Recipes</h2>
+      <section className="card" style={{ padding: 16, borderRadius: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h2>Your Recipes</h2>
           <button className="btn" onClick={createNew}>+ New Recipe</button>
         </div>
 
-        {sorted.length===0 ? (
-          <p style={{ margin:'16px 0 0', opacity:.8 }}>No recipes yet. Create your first one.</p>
+        {combined.length === 0 ? (
+          <p style={{ marginTop: 20, opacity: 0.7 }}>No recipes yet. Create one.</p>
         ) : (
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(12,1fr)', gap:12, marginTop:12 }}>
-            {sorted.map(m=>(
-              <article
-                key={m.id}
-                className="card"
-                style={{ gridColumn:'span 3', padding:12, borderRadius:12, display:'grid', gap:10 }}
-              >
-                <div onClick={()=>openViewer(m.id)} style={{ cursor:'pointer' }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+            gap: 12,
+            marginTop: 16,
+          }}>
+            {combined.map((m) => (
+              <article key={m.id} className="card" style={{ padding: 12, borderRadius: 12 }}>
+                <div onClick={() => openViewer(m.id)} style={{ cursor: 'pointer' }}>
                   <div style={{
-                    position:'relative', width:'100%', paddingTop:'62%', borderRadius:10, overflow:'hidden', background:'var(--muted,#f3f4f6)'
+                    position: 'relative',
+                    width: '100%',
+                    paddingTop: '62%',
+                    borderRadius: 10,
+                    overflow: 'hidden',
+                    background: '#f3f4f6',
                   }}>
-                    {m.cover ? (
+                    {m.cover && (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={m.cover} alt={m.title} style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}/>
-                    ) : null}
+                      <img
+                        src={m.cover}
+                        alt={m.title}
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                        }}
+                      />
+                    )}
                   </div>
-                  <h3 style={{ margin:'10px 2px 0', fontSize:'1rem' }}>{m.title}</h3>
-                  <div style={{ fontSize:12, opacity:.7 }}>
+                  <h3 style={{ margin: '10px 2px 0', fontSize: '1rem' }}>
+                    {m.title}{' '}
+                    {m.status === 'draft' && (
+                      <span style={{
+                        fontSize: 12,
+                        marginLeft: 6,
+                        padding: '2px 8px',
+                        borderRadius: 999,
+                        background: '#fde68a',
+                        color: '#78350f',
+                      }}>Draft</span>
+                    )}
+                  </h3>
+                  <div style={{ fontSize: 12, opacity: 0.7 }}>
                     Updated {new Date(m.updatedAt || m.createdAt).toLocaleString()}
                   </div>
                 </div>
-                <div style={{ display:'flex', gap:8 }}>
-                  <button className="btn-ghost" onClick={()=>openViewer(m.id)} style={{ flex:1 }}>View</button>
-                  <button className="btn-ghost" onClick={()=>openEditor(m.id)}>Edit</button>
-                  <button className="btn-ghost" onClick={()=>removeItem(m.id)}>Delete</button>
+                <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+                  <button className="btn-ghost" onClick={() => openViewer(m.id)}>View</button>
+                  <button className="btn-ghost" onClick={() => openEditor(m.id)}>Edit</button>
+                  <button className="btn-ghost" onClick={() => removeItem(m.id)}>Delete</button>
                 </div>
               </article>
             ))}
-
-            <style>{`
-              @media (max-width:1280px){ article.card{ grid-column:span 4; } }
-              @media (max-width:900px){  article.card{ grid-column:span 6; } }
-              @media (max-width:640px){  article.card{ grid-column:span 12; } }
-            `}</style>
           </div>
         )}
       </section>
@@ -169,8 +213,8 @@ export default function RecipeShelf({ ns, heading, subtitle }:{
         <RecipeModal
           ns={ns}
           id={viewerId}
-          onClose={()=>setViewerId(null)}
-          onEdit={()=>{
+          onClose={() => setViewerId(null)}
+          onEdit={() => {
             setActiveId(viewerId);
             setViewerId(null);
           }}
