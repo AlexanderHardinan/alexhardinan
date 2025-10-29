@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import PasswordModal from './PasswordModal';
 import RecipeEditor from './RecipeEditor';
+import RecipeModal from './RecipeModal';
 import { collection, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
@@ -24,6 +25,7 @@ export default function RecipeShelf({
 }) {
   const [recipes, setRecipes] = useState<RecipeMeta[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [viewerId, setViewerId] = useState<string | null>(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [pendingAction, setPendingAction] = useState<null | (() => void)>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -69,6 +71,11 @@ export default function RecipeShelf({
   // === Edit ===
   const handleEditRecipe = (id: string) => {
     requirePassword(() => setSelectedId(id));
+  };
+
+  // === View ===
+  const handleViewRecipe = (id: string) => {
+    setViewerId(id);
   };
 
   // === Delete ===
@@ -184,7 +191,20 @@ export default function RecipeShelf({
             </div>
             <div style={{ padding: '14px 16px' }}>
               <h3 style={{ marginBottom: 6 }}>{r.title}</h3>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 6 }}>
+                <button
+                  onClick={() => handleViewRecipe(r.id)}
+                  style={{
+                    background: 'white',
+                    border: '1px solid #d4af37',
+                    color: '#d4af37',
+                    borderRadius: 999,
+                    padding: '6px 14px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  View
+                </button>
                 <button
                   onClick={() => handleEditRecipe(r.id)}
                   style={{
@@ -215,6 +235,19 @@ export default function RecipeShelf({
           </div>
         ))}
       </section>
+
+      {/* View Recipe Modal */}
+      {viewerId && (
+        <RecipeModal
+          storageNS={storageNS}
+          id={viewerId}
+          onClose={() => setViewerId(null)}
+          onEdit={() => {
+            setSelectedId(viewerId);
+            setViewerId(null);
+          }}
+        />
+      )}
 
       {/* Password Modal */}
       <PasswordModal
