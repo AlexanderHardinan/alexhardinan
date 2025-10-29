@@ -1,160 +1,111 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { collection, onSnapshot, orderBy, query, deleteDoc, doc } from 'firebase/firestore';
+import { useState, useEffect } from 'react';
+import PasswordModal from './PasswordModal';
+import RecipeEditor from './RecipeEditor';
+import { collection, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import RecipeEditor, { RecipeData } from './RecipeEditor';
-import RecipeModal from './RecipeModal';
 
-type ItemMeta = {
+type RecipeMeta = {
   id: string;
   title: string;
   cover?: string;
-  createdAt: number;
-  updatedAt: number;
-  status?: 'draft' | 'published';
+  updatedAt?: number;
 };
 
-function uid() {
-  return Math.random().toString(36).slice(2, 9);
-}
-
 export default function RecipeShelf({
-  ns,
+  storageNS,
   heading,
   subtitle,
 }: {
-  ns: string;
+  storageNS: string;
   heading: string;
   subtitle?: string;
 }) {
-  const [items, setItems] = useState<ItemMeta[]>([]);
-  const [drafts, setDrafts] = useState<ItemMeta[]>([]);
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [viewerId, setViewerId] = useState<string | null>(null);
+  const [recipes, setRecipes] = useState<RecipeMeta[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [pendingAction, setPendingAction] = useState<null | (() => void)>(null);
   const [toast, setToast] = useState<string | null>(null);
 
-  // ---- Firestore listener (published recipes)
+  // === Fetch live recipes ===
   useEffect(() => {
-    const q = query(collection(db, ns), orderBy('updatedAt', 'desc'));
-    const unsub = onSnapshot(q, (snap) => {
-      const list: ItemMeta[] = [];
-      snap.forEach((docSnap) => {
-        const d = docSnap.data() as any;
-        if (!d || d.status === 'draft') return; // only published
-        list.push({
-          id: docSnap.id,
-          title: d.title || 'Untitled',
-          cover: d.cover,
-          createdAt: d.createdAt?._seconds ? d.createdAt._seconds * 1000 : d.createdAt ?? Date.now(),
-          updatedAt: d.updatedAt?._seconds ? d.updatedAt._seconds * 1000 : d.updatedAt ?? Date.now(),
-          status: 'published',
-        });
-      });
-      setItems(list);
+    const unsub = onSnapshot(collection(db, storageNS), (snap) => {
+      const items = snap.docs.map((d) => ({
+        id: d.id,
+        ...(d.data() as any),
+      })) as RecipeMeta[];
+      setRecipes(items.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)));
     });
     return () => unsub();
-  }, [ns]);
+  }, [storageNS]);
 
-  // ---- Load local drafts only
-  useEffect(() => {
-    const prefix = `${ns}:item:`;
-    const list: ItemMeta[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i)!;
-      if (!key.startsWith(prefix)) continue;
-      try {
-        const r: RecipeData = JSON.parse(localStorage.getItem(key)!);
-        if (r.status === 'draft') {
-          list.push({
-            id: r.id,
-            title: r.title || 'Untitled',
-            cover: r.cover,
-            createdAt: r.createdAt ?? Date.now(),
-            updatedAt: r.updatedAt ?? Date.now(),
-            status: 'draft',
-          });
-        }
-      } catch {}
-    }
-    list.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
-    setDrafts(list);
-  }, [ns, activeId]);
+  // === PASSWORD CONTROL ===
+  const requirePassword = (action: () => void) => {
+    setPendingAction(() => action);
+    setShowPasswordModal(true);
+  };
 
-  const combined = useMemo(() => {
-    // remove drafts that were already published
-    const publishedIds = new Set(items.map((i) => i.id));
-    return [...drafts.filter((d) => !publishedIds.has(d.id)), ...items];
-  }, [drafts, items]);
+  const handlePasswordSuccess = () => {
+    if (pendingAction) pendingAction();
+    setPendingAction(null);
+  };
 
-  // ---- Create a new recipe
-  function createNew() {
-    const id = uid();
-    const now = Date.now();
-    const payload: RecipeData & { status: 'draft' } = {
-      id,
-      title: 'New Recipe',
-      baseYield: 1,
-      targetYield: 1,
-      ingredients: [],
-      steps: [{ id: uid(), text: '' }],
-      cover: '',
-      createdAt: now,
-      updatedAt: now,
-      status: 'draft',
-    };
-    localStorage.setItem(`${ns}:item:${id}`, JSON.stringify(payload));
-    setActiveId(id);
-  }
+  // === Toast helper ===
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 1800);
+  };
 
-  // ---- Open editor / viewer
-  function openEditor(id: string) {
-    setActiveId(id);
-  }
-  function openViewer(id: string) {
-    setViewerId(id);
-  }
+  // === Create ===
+  const handleNewRecipe = () => {
+    requirePassword(() => {
+      const id = Math.random().toString(36).slice(2, 9);
+      localStorage.removeItem(`${storageNS}:item:${id}`);
+      setSelectedId(id);
+    });
+  };
 
-  // ---- Delete recipe (cloud + local)
-  async function removeItem(id: string) {
-    if (!confirm('Delete this recipe permanently?')) return;
+  // === Edit ===
+  const handleEditRecipe = (id: string) => {
+    requirePassword(() => setSelectedId(id));
+  };
 
-    try {
-      // 1️⃣ Remove from Firestore
-      await deleteDoc(doc(db, ns, id));
+  // === Delete ===
+  const handleDeleteRecipe = (id: string) => {
+    requirePassword(async () => {
+      if (!confirm('Delete this recipe?')) return;
+      await deleteDoc(doc(db, storageNS, id));
+      showToast('🗑️ Deleted');
+    });
+  };
 
-      // 2️⃣ Remove from local storage
-      localStorage.removeItem(`${ns}:item:${id}`);
+  // === Back ===
+  const handleBack = () => setSelectedId(null);
 
-      // 3️⃣ Update UI
-      setDrafts((prev) => prev.filter((d) => d.id !== id));
-      setItems((prev) => prev.filter((i) => i.id !== id));
+  // === Meta update ===
+  const handleMetaUpdate = (partial: Partial<RecipeMeta>) => {
+    setRecipes((prev) =>
+      prev.map((r) => (r.id === selectedId ? { ...r, ...partial } : r))
+    );
+  };
 
-      // 4️⃣ Show toast feedback
-      setToast('🗑️ Deleted permanently');
-      setTimeout(() => setToast(null), 2200);
-    } catch (err) {
-      console.error('Delete failed:', err);
-      alert('⚠️ Failed to delete recipe. Please check your network or Firebase.');
-    }
-  }
-
-  if (activeId) {
+  // === Render ===
+  if (selectedId) {
     return (
       <RecipeEditor
-        storageNS={ns}
-        recipeId={activeId}
+        storageNS={storageNS}
+        recipeId={selectedId}
         heading={heading}
         subtitle={subtitle}
-        onBack={() => setActiveId(null)}
-        onMetaUpdate={() => {}}
+        onBack={handleBack}
+        onMetaUpdate={handleMetaUpdate}
       />
     );
   }
 
   return (
-    <main className="container" style={{ paddingTop: '112px', paddingBottom: '48px' }}>
-      {/* Toast notification */}
+    <main className="container" style={{ paddingTop: '110px', paddingBottom: '60px' }}>
       {toast && (
         <div
           style={{
@@ -162,120 +113,115 @@ export default function RecipeShelf({
             top: 20,
             right: 20,
             background: 'rgba(0,0,0,0.85)',
-            color: '#fff',
+            color: 'white',
             padding: '10px 20px',
             borderRadius: 10,
             fontSize: '.9rem',
             zIndex: 9999,
-            animation: 'fadeInOut 2.5s ease',
           }}
         >
           {toast}
-          <style>{`
-            @keyframes fadeInOut {
-              0% {opacity: 0; transform: translateY(-10px);}
-              10% {opacity: 1; transform: translateY(0);}
-              90% {opacity: 1;}
-              100% {opacity: 0; transform: translateY(-10px);}
-            }
-          `}</style>
         </div>
       )}
 
-      <section style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
-        <h1 className="title" style={{ marginBottom: 8 }}>{heading}</h1>
-        {subtitle && <p className="subtitle">{subtitle}</p>}
-      </section>
+      <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+        <h1 style={{ fontSize: '2rem', marginBottom: '.3rem' }}>{heading}</h1>
+        {subtitle && <p style={{ color: 'rgba(0,0,0,0.6)' }}>{subtitle}</p>}
+        <button
+          onClick={handleNewRecipe}
+          style={{
+            marginTop: '1rem',
+            background: 'linear-gradient(90deg,#c59d5f,#d4af37)',
+            color: 'white',
+            border: 'none',
+            padding: '10px 22px',
+            borderRadius: '999px',
+            cursor: 'pointer',
+          }}
+        >
+          ➕ New Recipe
+        </button>
+      </div>
 
-      <section className="card" style={{ padding: 16, borderRadius: 16 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2>Your Recipes</h2>
-          <button className="btn" onClick={createNew}>+ New Recipe</button>
-        </div>
-
-        {combined.length === 0 ? (
-          <p style={{ marginTop: 20, opacity: 0.7 }}>No recipes yet. Create one.</p>
-        ) : (
+      <section
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(270px, 1fr))',
+          gap: '1.5rem',
+          maxWidth: 1100,
+          margin: '0 auto',
+        }}
+      >
+        {recipes.map((r) => (
           <div
+            key={r.id}
             style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-              gap: 12,
-              marginTop: 16,
+              borderRadius: 16,
+              overflow: 'hidden',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.08)',
+              background: 'white',
+              transition: 'transform 0.2s ease',
             }}
           >
-            {combined.map((m) => (
-              <article key={m.id} className="card" style={{ padding: 12, borderRadius: 12 }}>
-                <div onClick={() => openViewer(m.id)} style={{ cursor: 'pointer' }}>
-                  <div
-                    style={{
-                      position: 'relative',
-                      width: '100%',
-                      paddingTop: '62%',
-                      borderRadius: 10,
-                      overflow: 'hidden',
-                      background: '#f3f4f6',
-                    }}
-                  >
-                    {m.cover && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={m.cover}
-                        alt={m.title}
-                        style={{
-                          position: 'absolute',
-                          inset: 0,
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                        }}
-                      />
-                    )}
-                  </div>
-                  <h3 style={{ margin: '10px 2px 0', fontSize: '1rem' }}>
-                    {m.title}{' '}
-                    {m.status === 'draft' && (
-                      <span
-                        style={{
-                          fontSize: 12,
-                          marginLeft: 6,
-                          padding: '2px 8px',
-                          borderRadius: 999,
-                          background: '#fde68a',
-                          color: '#78350f',
-                        }}
-                      >
-                        Draft
-                      </span>
-                    )}
-                  </h3>
-                  <div style={{ fontSize: 12, opacity: 0.7 }}>
-                    Updated {new Date(m.updatedAt || m.createdAt).toLocaleString()}
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-                  <button className="btn-ghost" onClick={() => openViewer(m.id)}>View</button>
-                  <button className="btn-ghost" onClick={() => openEditor(m.id)}>Edit</button>
-                  <button className="btn-ghost" onClick={() => removeItem(m.id)}>Delete</button>
-                </div>
-              </article>
-            ))}
+            <div
+              style={{
+                position: 'relative',
+                overflow: 'hidden',
+                height: 180,
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={r.cover || '/placeholder.png'}
+                alt={r.title}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  transition: 'transform 0.3s ease',
+                }}
+              />
+            </div>
+            <div style={{ padding: '14px 16px' }}>
+              <h3 style={{ marginBottom: 6 }}>{r.title}</h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
+                <button
+                  onClick={() => handleEditRecipe(r.id)}
+                  style={{
+                    background: 'linear-gradient(90deg,#c59d5f,#d4af37)',
+                    border: 'none',
+                    color: 'white',
+                    borderRadius: 999,
+                    padding: '6px 14px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDeleteRecipe(r.id)}
+                  style={{
+                    background: '#ffbaba',
+                    border: 'none',
+                    borderRadius: 999,
+                    padding: '6px 14px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
           </div>
-        )}
+        ))}
       </section>
 
-      {viewerId && (
-        <RecipeModal
-          ns={ns}
-          id={viewerId}
-          onClose={() => setViewerId(null)}
-          onEdit={() => {
-            setActiveId(viewerId);
-            setViewerId(null);
-          }}
-        />
-      )}
+      {/* Password Modal */}
+      <PasswordModal
+        isOpen={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
+        onSuccess={handlePasswordSuccess}
+      />
     </main>
   );
 }
