@@ -126,7 +126,7 @@ export default function RecipeEditor({
     }
   }
 
-  // === Image Upload (fixed) ===
+  // === Image Upload (fixed permanent URL) ===
   async function onCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -135,32 +135,20 @@ export default function RecipeEditor({
       return;
     }
 
-    // 1️⃣ Instant preview (temporary)
     const previewUrl = URL.createObjectURL(file);
     setCover(previewUrl);
 
     try {
-      // 2️⃣ Upload to Firebase Storage
       const storageRef = ref(storage, `${storageNS}/${recipeId}/cover-${Date.now()}.png`);
       await uploadBytes(storageRef, file);
-
-      // 3️⃣ Get permanent download URL
       const downloadURL = await getDownloadURL(storageRef);
-
-      // 4️⃣ Replace local preview with permanent URL
       setCover(downloadURL);
       persistDraft(downloadURL);
-
-      // 5️⃣ Save to Firestore immediately (so other devices get it)
       await setDoc(
         doc(db, storageNS, recipeId),
-        {
-          cover: downloadURL,
-          updatedAt: serverTimestamp(),
-        },
+        { cover: downloadURL, updatedAt: serverTimestamp() },
         { merge: true }
       );
-
       setToast('✅ Image uploaded & synced');
     } catch (err) {
       console.error(err);
@@ -187,6 +175,18 @@ export default function RecipeEditor({
     localStorage.setItem(key, JSON.stringify(draft));
   }
 
+  const addIngredient = () =>
+    setIngredients([...ingredients, { id: uid(), baseAmount: '', unit: '', item: '' }]);
+  const updateIngredient = (id: string, field: keyof Ingredient, value: any) =>
+    setIngredients((prev) => prev.map((ing) => (ing.id === id ? { ...ing, [field]: value } : ing)));
+  const removeIngredient = (id: string) =>
+    setIngredients((prev) => prev.filter((ing) => ing.id !== id));
+
+  const addStep = () => setSteps([...steps, { id: uid(), text: '' }]);
+  const updateStep = (id: string, text: string) =>
+    setSteps((prev) => prev.map((s) => (s.id === id ? { ...s, text } : s)));
+  const removeStep = (id: string) => setSteps((prev) => prev.filter((s) => s.id !== id));
+
   const handleSave = async () => {
     await publishToFirebase();
     onBack();
@@ -196,9 +196,10 @@ export default function RecipeEditor({
     persistDraft();
   }, [title, baseYield, targetYield, ingredients, steps, cover]);
 
-  return loading ? (
-    <p style={{ textAlign: 'center', marginTop: 100 }}>Loading recipe...</p>
-  ) : (
+  if (loading)
+    return <p style={{ textAlign: 'center', marginTop: 100 }}>Loading recipe...</p>;
+
+  return (
     <main className="container" style={{ paddingTop: '110px', paddingBottom: '60px' }}>
       {toast && (
         <div
@@ -273,14 +274,90 @@ export default function RecipeEditor({
           </div>
         ) : (
           <div style={{ position: 'relative', marginTop: 10 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={cover} alt="cover" style={{ width: '100%', borderRadius: 12, border: '1px solid #ccc' }} />
           </div>
         )}
       </section>
 
-      {/* Ingredients & Method (unchanged) */}
-      {/* ... keep your ingredient and step sections exactly as before ... */}
+      {/* Yield */}
+      <section className="card" style={{ maxWidth: 1100, margin: '0 auto 1rem', padding: 20, borderRadius: 16 }}>
+        <h3>Yield</h3>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <label>
+            Base Yield:
+            <input
+              type="number"
+              min={1}
+              value={baseYield}
+              onChange={(e) => setBaseYield(Math.max(1, Number(e.target.value) || 1))}
+              style={{ marginLeft: 8, width: 80 }}
+            />
+          </label>
+          <label>
+            Target Yield:
+            <input
+              type="number"
+              value={targetYield}
+              onChange={(e) => setTargetYield(Number(e.target.value) || 1)}
+              style={{ marginLeft: 8, width: 80 }}
+            />
+          </label>
+          <div style={{ alignSelf: 'center' }}>Scaling ×{factor.toFixed(2)}</div>
+        </div>
+      </section>
 
+      {/* Ingredients */}
+      <section className="card" style={{ maxWidth: 1100, margin: '0 auto 1rem', padding: 20, borderRadius: 16 }}>
+        <h3>Ingredients</h3>
+        {ingredients.map((ing) => (
+          <div key={ing.id} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+            <input
+              type="number"
+              placeholder="Qty"
+              value={typeof ing.baseAmount === 'number' ? +(ing.baseAmount * factor).toFixed(2) : ''}
+              onChange={(e) =>
+                updateIngredient(ing.id, 'baseAmount', parseFloat(e.target.value || '0') / factor)
+              }
+              style={{ width: 70 }}
+            />
+            <input
+              type="text"
+              placeholder="Unit"
+              value={ing.unit}
+              onChange={(e) => updateIngredient(ing.id, 'unit', e.target.value)}
+              style={{ width: 80 }}
+            />
+            <input
+              type="text"
+              placeholder="Ingredient"
+              value={ing.item}
+              onChange={(e) => updateIngredient(ing.id, 'item', e.target.value)}
+              style={{ flex: 1 }}
+            />
+            <button onClick={() => removeIngredient(ing.id)}>✕</button>
+          </div>
+        ))}
+        <button onClick={addIngredient}>+ Add Ingredient</button>
+      </section>
+
+      {/* Steps */}
+      <section className="card" style={{ maxWidth: 1100, margin: '0 auto 1rem', padding: 20, borderRadius: 16 }}>
+        <h3>Method</h3>
+        {steps.map((s) => (
+          <div key={s.id} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+            <textarea
+              value={s.text}
+              onChange={(e) => updateStep(s.id, e.target.value)}
+              style={{ flex: 1, height: 80 }}
+            />
+            <button onClick={() => removeStep(s.id)}>✕</button>
+          </div>
+        ))}
+        <button onClick={addStep}>+ Add Step</button>
+      </section>
+
+      {/* Save */}
       <div style={{ textAlign: 'center', marginTop: 20 }}>
         <button
           onClick={handleSave}
