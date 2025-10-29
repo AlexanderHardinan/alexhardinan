@@ -52,7 +52,7 @@ export default function RecipeEditor({
   const [saving, setSaving] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // LIVE SYNC from Firestore, fallback to local draft
+  // === LIVE SYNC FIRESTORE READER ===
   useEffect(() => {
     const docRef = doc(db, storageNS, recipeId);
     const unsub = onSnapshot(
@@ -109,12 +109,13 @@ export default function RecipeEditor({
     return t / b;
   }, [baseYield, targetYield]);
 
-  // PUBLISH to Firestore
+  // === SAVE / PUBLISH TO FIRESTORE ===
   async function publishToFirebase(customCover?: string) {
     if (!title.trim()) {
       alert('Please add a title before saving.');
       return;
     }
+
     setSaving(true);
     try {
       const payload: RecipeData = {
@@ -129,11 +130,13 @@ export default function RecipeEditor({
         updatedAt: Date.now(),
         status: 'published',
       };
+
       await setDoc(doc(db, storageNS, recipeId), {
         ...payload,
         updatedAt: serverTimestamp(),
         createdAt: payload.createdAt,
       });
+
       localStorage.setItem(key, JSON.stringify(payload));
       onMetaUpdate({ title: payload.title, cover: payload.cover, updatedAt: payload.updatedAt });
       setToast('💾 Saved & synced to cloud');
@@ -146,7 +149,7 @@ export default function RecipeEditor({
     }
   }
 
-  // FAST image upload: instant preview (ObjectURL) → resize → upload → switch to CDN URL
+  // === FAST IMAGE UPLOAD ===
   async function onCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -154,7 +157,8 @@ export default function RecipeEditor({
       alert('Please upload a valid image.');
       return;
     }
-    const objectUrl = URL.createObjectURL(file); // instant preview
+
+    const objectUrl = URL.createObjectURL(file);
     setCover(objectUrl);
     try {
       const resized = await resizeImage(file, 1280);
@@ -162,14 +166,14 @@ export default function RecipeEditor({
       await uploadBytes(storageRef, resized, { contentType: 'image/png' });
       const url = await getDownloadURL(storageRef);
       setCover(url);
-      persistDraft(url); // keep draft locally
+      persistDraft(url);
       setToast('✅ Image uploaded (remember to Save)');
       setTimeout(() => setToast(null), 1800);
     } catch (err) {
       console.error('Upload error:', err);
       alert('❌ Upload failed. Try again.');
     } finally {
-      URL.revokeObjectURL(objectUrl); // free preview URL
+      URL.revokeObjectURL(objectUrl);
     }
   }
 
@@ -219,21 +223,17 @@ export default function RecipeEditor({
     setTimeout(() => setToast(null), 1600);
   };
 
-  // INGREDIENT / STEP handlers
+  // === INGREDIENT / STEP HANDLERS ===
   const addIngredient = () =>
-    setIngredients((prev) => [...prev, { id: uid(), baseAmount: '', unit: '', item: '' }]);
-
+    setIngredients([...ingredients, { id: uid(), baseAmount: '', unit: '', item: '' }]);
   const updateIngredient = (id: string, field: keyof Ingredient, value: any) =>
     setIngredients((prev) => prev.map((ing) => (ing.id === id ? { ...ing, [field]: value } : ing)));
-
   const removeIngredient = (id: string) =>
     setIngredients((prev) => prev.filter((ing) => ing.id !== id));
 
-  const addStep = () => setSteps((prev) => [...prev, { id: uid(), text: '' }]);
-
+  const addStep = () => setSteps([...steps, { id: uid(), text: '' }]);
   const updateStep = (id: string, text: string) =>
     setSteps((prev) => prev.map((s) => (s.id === id ? { ...s, text } : s)));
-
   const removeStep = (id: string) => setSteps((prev) => prev.filter((s) => s.id !== id));
 
   const handleSave = async () => {
@@ -241,13 +241,11 @@ export default function RecipeEditor({
     onBack();
   };
 
-  // keep local draft updated while editing
   useEffect(() => {
     persistDraft();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title, baseYield, targetYield, ingredients, steps, cover]);
 
-  // SINGLE RETURN to avoid JSX parser confusion
   return loading ? (
     <p style={{ textAlign: 'center', marginTop: 100 }}>Loading recipe...</p>
   ) : (
@@ -385,7 +383,7 @@ export default function RecipeEditor({
       <section className="card" style={{ maxWidth: 1100, margin: '0 auto 1rem', padding: 20, borderRadius: 16 }}>
         <h3>Ingredients</h3>
         {ingredients.map((ing) => (
-          <div key={ig.id} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+          <div key={ing.id} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
             <input
               type="number"
               placeholder="Qty"
