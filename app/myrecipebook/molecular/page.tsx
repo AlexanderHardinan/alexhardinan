@@ -4,7 +4,7 @@ import RecipeShelf from '../../../components/RecipeShelf';
 export default function MolecularPage() {
   return (
     <RecipeShelf
-      ns="recipe:molecular"
+      storageNS="recipe:molecular"
       heading="Gastronomy & Molecular"
       subtitle="Spherification, foams, gels, and modernist cuisine innovations."
     />
