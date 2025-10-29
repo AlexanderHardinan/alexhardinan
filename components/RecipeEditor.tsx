@@ -149,7 +149,7 @@ export default function RecipeEditor({
     }
   }
 
-  // === FIXED FAST IMAGE UPLOAD ===
+  // === ULTRA FAST IMAGE UPLOAD ===
   async function onCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -158,28 +158,32 @@ export default function RecipeEditor({
       return;
     }
 
-    // Step 1: Instant preview
     const previewUrl = URL.createObjectURL(file);
     setCover(previewUrl);
 
     try {
-      // Step 2: Upload original image fast
       const storageRef = ref(storage, `${storageNS}/${recipeId}/cover-${Date.now()}.png`);
-      const snapshot = await uploadBytes(storageRef, file, { contentType: file.type });
-      console.log('✅ Uploaded bytes:', snapshot.totalBytes);
+      await uploadBytes(storageRef, file, { contentType: file.type });
 
-      // Step 3: Get permanent HTTPS URL
       const downloadURL = await getDownloadURL(storageRef);
       console.log('🌐 Permanent URL:', downloadURL);
 
-      // Step 4: Save to Firestore
       setCover(downloadURL);
       persistDraft(downloadURL);
+
       await setDoc(
         doc(db, storageNS, recipeId),
         { cover: downloadURL, updatedAt: serverTimestamp() },
         { merge: true }
       );
+
+      // overwrite local blob immediately with permanent URL
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        parsed.cover = downloadURL;
+        localStorage.setItem(key, JSON.stringify(parsed));
+      }
 
       setToast('✅ Image uploaded & synced');
     } catch (err) {
@@ -228,7 +232,6 @@ export default function RecipeEditor({
     setSteps((prev) => prev.map((s) => (s.id === id ? { ...s, text } : s)));
   const removeStep = (id: string) => setSteps((prev) => prev.filter((s) => s.id !== id));
 
-  // === SAVE BUTTON ===
   const handleSave = async () => {
     await publishToFirebase();
     onBack();
@@ -236,7 +239,6 @@ export default function RecipeEditor({
 
   useEffect(() => {
     persistDraft();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title, baseYield, targetYield, ingredients, steps, cover]);
 
   if (loading) return <p style={{ textAlign: 'center', marginTop: 100 }}>Loading recipe...</p>;
@@ -260,7 +262,6 @@ export default function RecipeEditor({
           {toast}
         </div>
       )}
-
       {/* Back */}
       <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
         <button
