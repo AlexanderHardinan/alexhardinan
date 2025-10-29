@@ -6,12 +6,12 @@ import { db } from '@/lib/firebase';
 import type { RecipeData } from './RecipeEditor';
 
 export default function RecipeModal({
-  ns,
+  StorageNS,
   id,
   onClose,
   onEdit,
 }: {
-  ns: string;
+  StorageNS: string;
   id: string;
   onClose: () => void;
   onEdit: () => void;
@@ -20,7 +20,7 @@ export default function RecipeModal({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const ref = doc(db, ns, id);
+    const ref = doc(db, StorageNS, id);
     const unsub = onSnapshot(ref, (snap) => {
       if (snap.exists()) {
         const d = snap.data() as any;
@@ -42,7 +42,7 @@ export default function RecipeModal({
     });
 
     return () => unsub();
-  }, [id, ns]);
+  }, [id, StorageNS]);
 
   if (loading)
     return (
