@@ -49,38 +49,59 @@ export default function RecipeEditor({
   const [steps, setSteps] = useState<Step[]>([{ id: uid(), text: '' }]);
   const [cover, setCover] = useState<string>('');
   const [toast, setToast] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  // === Real-time Firestore sync ===
+  // === LIVE SYNC FROM FIRESTORE ===
   useEffect(() => {
-    const refDoc = doc(db, storageNS, recipeId);
-    const unsub = onSnapshot(refDoc, (snap) => {
-      if (snap.exists()) {
-        const d = snap.data() as any;
-        setTitle(d.title || 'New Recipe');
-        setBaseYield(d.baseYield || 1);
-        setTargetYield(d.targetYield || 1);
-        setIngredients(d.ingredients || []);
-        setSteps(d.steps || [{ id: uid(), text: '' }]);
-        setCover(d.cover || '');
-        localStorage.setItem(key, JSON.stringify(d));
-      } else {
-        const raw = localStorage.getItem(key);
-        if (raw) {
-          const r = JSON.parse(raw);
-          setTitle(r.title);
-          setBaseYield(r.baseYield);
-          setTargetYield(r.targetYield);
-          setIngredients(r.ingredients);
-          setSteps(r.steps);
-          setCover(r.cover ?? '');
+    const docRef = doc(db, storageNS, recipeId);
+    const unsub = onSnapshot(
+      docRef,
+      (snap) => {
+        if (snap.exists()) {
+          const d = snap.data() as any;
+          setTitle(d.title || 'New Recipe');
+          setBaseYield(Math.max(1, d.baseYield || 1));
+          setTargetYield(d.targetYield || 1);
+          setIngredients(d.ingredients || []);
+          setSteps(d.steps?.length ? d.steps : [{ id: uid(), text: '' }]);
+          setCover(d.cover || '');
+          localStorage.setItem(
+            key,
+            JSON.stringify({
+              id: recipeId,
+              title: d.title || 'New Recipe',
+              baseYield: Math.max(1, d.baseYield || 1),
+              targetYield: d.targetYield || 1,
+              ingredients: d.ingredients || [],
+              steps: d.steps?.length ? d.steps : [{ id: uid(), text: '' }],
+              cover: d.cover || '',
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+              status: 'published',
+            })
+          );
+        } else {
+          const raw = localStorage.getItem(key);
+          if (raw) {
+            const r: RecipeData = JSON.parse(raw);
+            setTitle(r.title);
+            setBaseYield(r.baseYield);
+            setTargetYield(r.targetYield);
+            setIngredients(r.ingredients);
+            setSteps(r.steps);
+            setCover(r.cover ?? '');
+          }
         }
+        setLoading(false);
+      },
+      (err) => {
+        console.error('Sync error:', err);
+        setLoading(false);
       }
-      setLoading(false);
-    });
+    );
     return () => unsub();
-  }, [storageNS, recipeId]);
+  }, [key, recipeId, storageNS]);
 
   const factor = useMemo(() => {
     const b = Math.max(1, Number(baseYield) || 1);
@@ -88,7 +109,7 @@ export default function RecipeEditor({
     return t / b;
   }, [baseYield, targetYield]);
 
-  // === Save / Publish ===
+  // === SAVE TO FIRESTORE ===
   async function publishToFirebase(customCover?: string) {
     if (!title.trim()) {
       alert('Please add a title before saving.');
@@ -96,52 +117,62 @@ export default function RecipeEditor({
     }
 
     setSaving(true);
-    const payload: RecipeData = {
-      id: recipeId,
-      title: title.trim(),
-      baseYield,
-      targetYield,
-      ingredients,
-      steps,
-      cover: customCover ?? cover,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      status: 'published',
-    };
-
     try {
+      const payload: RecipeData = {
+        id: recipeId,
+        title: title.trim() || 'Untitled Recipe',
+        baseYield: Math.max(1, Number(baseYield) || 1),
+        targetYield: Number(targetYield) || 1,
+        ingredients,
+        steps,
+        cover: customCover ?? cover,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        status: 'published',
+      };
+
       await setDoc(doc(db, storageNS, recipeId), {
         ...payload,
         updatedAt: serverTimestamp(),
+        createdAt: payload.createdAt,
       });
+
       localStorage.setItem(key, JSON.stringify(payload));
       onMetaUpdate({ title: payload.title, cover: payload.cover, updatedAt: payload.updatedAt });
-      setToast('💾 Saved & Synced');
+      setToast('💾 Saved & synced to cloud');
     } catch (err) {
-      console.error('Save error:', err);
-      alert('⚠️ Firebase connection failed.');
+      console.error(err);
+      alert('⚠️ Save failed. Check Firebase connection.');
     } finally {
       setSaving(false);
       setTimeout(() => setToast(null), 2000);
     }
   }
 
-  // === Image Upload (fixed permanent URL) ===
+  // === FIXED FAST IMAGE UPLOAD ===
   async function onCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      alert('Please upload an image file.');
+      alert('Please upload a valid image.');
       return;
     }
 
+    // Step 1: Instant preview
     const previewUrl = URL.createObjectURL(file);
     setCover(previewUrl);
 
     try {
+      // Step 2: Upload original image fast
       const storageRef = ref(storage, `${storageNS}/${recipeId}/cover-${Date.now()}.png`);
-      await uploadBytes(storageRef, file);
+      const snapshot = await uploadBytes(storageRef, file, { contentType: file.type });
+      console.log('✅ Uploaded bytes:', snapshot.totalBytes);
+
+      // Step 3: Get permanent HTTPS URL
       const downloadURL = await getDownloadURL(storageRef);
+      console.log('🌐 Permanent URL:', downloadURL);
+
+      // Step 4: Save to Firestore
       setCover(downloadURL);
       persistDraft(downloadURL);
       await setDoc(
@@ -149,22 +180,24 @@ export default function RecipeEditor({
         { cover: downloadURL, updatedAt: serverTimestamp() },
         { merge: true }
       );
+
       setToast('✅ Image uploaded & synced');
     } catch (err) {
-      console.error(err);
-      alert('❌ Upload failed. Check Firebase Storage rules.');
+      console.error('❌ Upload error:', err);
+      alert('Upload failed: ' + (err as any).message);
     } finally {
       URL.revokeObjectURL(previewUrl);
       setTimeout(() => setToast(null), 2000);
     }
   }
 
+  // === LOCAL DRAFT PERSIST ===
   function persistDraft(customCover?: string) {
     const draft: RecipeData & { status: 'draft' } = {
       id: recipeId,
-      title,
-      baseYield,
-      targetYield,
+      title: title || 'New Recipe',
+      baseYield: Math.max(1, Number(baseYield) || 1),
+      targetYield: Number(targetYield) || 1,
       ingredients,
       steps,
       cover: customCover ?? cover,
@@ -175,6 +208,14 @@ export default function RecipeEditor({
     localStorage.setItem(key, JSON.stringify(draft));
   }
 
+  const removeCover = () => {
+    setCover('');
+    persistDraft('');
+    setToast('🗑️ Image removed (draft)');
+    setTimeout(() => setToast(null), 1600);
+  };
+
+  // === INGREDIENT / STEP HANDLERS ===
   const addIngredient = () =>
     setIngredients([...ingredients, { id: uid(), baseAmount: '', unit: '', item: '' }]);
   const updateIngredient = (id: string, field: keyof Ingredient, value: any) =>
@@ -187,6 +228,7 @@ export default function RecipeEditor({
     setSteps((prev) => prev.map((s) => (s.id === id ? { ...s, text } : s)));
   const removeStep = (id: string) => setSteps((prev) => prev.filter((s) => s.id !== id));
 
+  // === SAVE BUTTON ===
   const handleSave = async () => {
     await publishToFirebase();
     onBack();
@@ -194,10 +236,10 @@ export default function RecipeEditor({
 
   useEffect(() => {
     persistDraft();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title, baseYield, targetYield, ingredients, steps, cover]);
 
-  if (loading)
-    return <p style={{ textAlign: 'center', marginTop: 100 }}>Loading recipe...</p>;
+  if (loading) return <p style={{ textAlign: 'center', marginTop: 100 }}>Loading recipe...</p>;
 
   return (
     <main className="container" style={{ paddingTop: '110px', paddingBottom: '60px' }}>
@@ -274,8 +316,30 @@ export default function RecipeEditor({
           </div>
         ) : (
           <div style={{ position: 'relative', marginTop: 10 }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={cover} alt="cover" style={{ width: '100%', borderRadius: 12, border: '1px solid #ccc' }} />
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 10,
+                right: 10,
+                background: 'rgba(0,0,0,0.55)',
+                padding: '6px 10px',
+                borderRadius: 8,
+                display: 'flex',
+                gap: 8,
+              }}
+            >
+              <input type="file" accept="image/*" id="replace" onChange={onCoverChange} style={{ display: 'none' }} />
+              <label htmlFor="replace" style={{ color: 'white', cursor: 'pointer', fontSize: 13, textDecoration: 'underline' }}>
+                Replace
+              </label>
+              <span
+                onClick={removeCover}
+                style={{ color: '#ffbaba', cursor: 'pointer', fontSize: 13, textDecoration: 'underline' }}
+              >
+                Delete
+              </span>
+            </div>
           </div>
         )}
       </section>
@@ -316,9 +380,7 @@ export default function RecipeEditor({
               type="number"
               placeholder="Qty"
               value={typeof ing.baseAmount === 'number' ? +(ing.baseAmount * factor).toFixed(2) : ''}
-              onChange={(e) =>
-                updateIngredient(ing.id, 'baseAmount', parseFloat(e.target.value || '0') / factor)
-              }
+              onChange={(e) => updateIngredient(ing.id, 'baseAmount', parseFloat(e.target.value || '0') / factor)}
               style={{ width: 70 }}
             />
             <input
