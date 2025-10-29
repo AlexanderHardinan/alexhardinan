@@ -149,7 +149,7 @@ export default function RecipeEditor({
     }
   }
 
-  // === FAST IMAGE UPLOAD ===
+  // === FIXED IMAGE UPLOAD (instant + persistent + ultra fast) ===
   async function onCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -158,16 +158,35 @@ export default function RecipeEditor({
       return;
     }
 
-    setCover(URL.createObjectURL(file));
     try {
+      // 1️⃣ Show instant local preview
+      const localPreview = URL.createObjectURL(file);
+      setCover(localPreview);
+
+      // 2️⃣ Resize image (speed optimization)
       const resized = await resizeImage(file, 1280);
+
+      // 3️⃣ Upload to Firebase Storage
       const storageRef = ref(storage, `${storageNS}/${recipeId}/cover.png`);
       await uploadBytes(storageRef, resized, { contentType: 'image/png' });
-      const url = await getDownloadURL(storageRef);
-      setCover(url);
-      persistDraft(url);
-      setToast('✅ Image uploaded (remember to Save)');
-      setTimeout(() => setToast(null), 1800);
+
+      // 4️⃣ Get permanent Firebase URL
+      const downloadURL = await getDownloadURL(storageRef);
+      setCover(downloadURL);
+
+      // 5️⃣ Save the correct URL instantly to localStorage
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        const recipe = JSON.parse(raw);
+        recipe.cover = downloadURL;
+        localStorage.setItem(key, JSON.stringify(recipe));
+      }
+
+      // 6️⃣ Clean up the temporary blob URL
+      URL.revokeObjectURL(localPreview);
+
+      setToast('✅ Image uploaded successfully');
+      setTimeout(() => setToast(null), 1500);
     } catch (err) {
       console.error('Upload error:', err);
       alert('❌ Upload failed. Try again.');
