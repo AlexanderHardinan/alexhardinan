@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { doc, setDoc, serverTimestamp, onSnapshot, updateDoc } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '@/lib/firebase';
 
@@ -52,7 +52,7 @@ export default function RecipeEditor({
   const [saving, setSaving] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // === LIVE SYNC FIRESTORE READER ===
+  // LIVE SYNC from Firestore, fallback to local draft
   useEffect(() => {
     const docRef = doc(db, storageNS, recipeId);
     const unsub = onSnapshot(
@@ -109,13 +109,12 @@ export default function RecipeEditor({
     return t / b;
   }, [baseYield, targetYield]);
 
-  // === SAVE / PUBLISH TO FIRESTORE ===
+  // PUBLISH to Firestore
   async function publishToFirebase(customCover?: string) {
     if (!title.trim()) {
       alert('Please add a title before saving.');
       return;
     }
-
     setSaving(true);
     try {
       const payload: RecipeData = {
@@ -130,13 +129,11 @@ export default function RecipeEditor({
         updatedAt: Date.now(),
         status: 'published',
       };
-
       await setDoc(doc(db, storageNS, recipeId), {
         ...payload,
         updatedAt: serverTimestamp(),
         createdAt: payload.createdAt,
       });
-
       localStorage.setItem(key, JSON.stringify(payload));
       onMetaUpdate({ title: payload.title, cover: payload.cover, updatedAt: payload.updatedAt });
       setToast('💾 Saved & synced to cloud');
@@ -149,7 +146,7 @@ export default function RecipeEditor({
     }
   }
 
-  // === FIXED IMAGE UPLOAD (FAST + PERSISTENT) ===
+  // FAST image upload: instant preview (ObjectURL) → resize → upload → switch to CDN URL
   async function onCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -157,34 +154,22 @@ export default function RecipeEditor({
       alert('Please upload a valid image.');
       return;
     }
-
+    const objectUrl = URL.createObjectURL(file); // instant preview
+    setCover(objectUrl);
     try {
-      const localPreview = URL.createObjectURL(file);
-      setCover(localPreview);
-
       const resized = await resizeImage(file, 1280);
       const storageRef = ref(storage, `${storageNS}/${recipeId}/cover.png`);
       await uploadBytes(storageRef, resized, { contentType: 'image/png' });
       const url = await getDownloadURL(storageRef);
-
-      // persist the new image to Firestore immediately
-      await updateDoc(doc(db, storageNS, recipeId), { cover: url, updatedAt: serverTimestamp() });
-
-      // update state + local cache
       setCover(url);
-      const raw = localStorage.getItem(key);
-      if (raw) {
-        const data = JSON.parse(raw);
-        data.cover = url;
-        localStorage.setItem(key, JSON.stringify(data));
-      }
-
-      URL.revokeObjectURL(localPreview);
-      setToast('✅ Image uploaded & saved');
-      setTimeout(() => setToast(null), 1500);
+      persistDraft(url); // keep draft locally
+      setToast('✅ Image uploaded (remember to Save)');
+      setTimeout(() => setToast(null), 1800);
     } catch (err) {
       console.error('Upload error:', err);
       alert('❌ Upload failed. Try again.');
+    } finally {
+      URL.revokeObjectURL(objectUrl); // free preview URL
     }
   }
 
@@ -234,16 +219,21 @@ export default function RecipeEditor({
     setTimeout(() => setToast(null), 1600);
   };
 
+  // INGREDIENT / STEP handlers
   const addIngredient = () =>
-    setIngredients([...ingredients, { id: uid(), baseAmount: '', unit: '', item: '' }]);
+    setIngredients((prev) => [...prev, { id: uid(), baseAmount: '', unit: '', item: '' }]);
+
   const updateIngredient = (id: string, field: keyof Ingredient, value: any) =>
     setIngredients((prev) => prev.map((ing) => (ing.id === id ? { ...ing, [field]: value } : ing)));
+
   const removeIngredient = (id: string) =>
     setIngredients((prev) => prev.filter((ing) => ing.id !== id));
 
-  const addStep = () => setSteps([...steps, { id: uid(), text: '' }]);
+  const addStep = () => setSteps((prev) => [...prev, { id: uid(), text: '' }]);
+
   const updateStep = (id: string, text: string) =>
     setSteps((prev) => prev.map((s) => (s.id === id ? { ...s, text } : s)));
+
   const removeStep = (id: string) => setSteps((prev) => prev.filter((s) => s.id !== id));
 
   const handleSave = async () => {
@@ -251,15 +241,16 @@ export default function RecipeEditor({
     onBack();
   };
 
+  // keep local draft updated while editing
   useEffect(() => {
     persistDraft();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title, baseYield, targetYield, ingredients, steps, cover]);
 
-  if (loading)
-    return <p style={{ textAlign: 'center', marginTop: 100 }}>Loading recipe...</p>;
-
-  return (
+  // SINGLE RETURN to avoid JSX parser confusion
+  return loading ? (
+    <p style={{ textAlign: 'center', marginTop: 100 }}>Loading recipe...</p>
+  ) : (
     <main className="container" style={{ paddingTop: '110px', paddingBottom: '60px' }}>
       {toast && (
         <div
@@ -279,7 +270,7 @@ export default function RecipeEditor({
         </div>
       )}
 
-      {/* Back Button */}
+      {/* Back */}
       <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
         <button
           onClick={onBack}
@@ -296,7 +287,7 @@ export default function RecipeEditor({
         </button>
       </div>
 
-      {/* Title Field */}
+      {/* Title */}
       <section className="card" style={{ maxWidth: 1100, margin: '0 auto 1rem', padding: 20, borderRadius: 16 }}>
         <label style={{ fontWeight: 600, display: 'block', marginBottom: 8 }}>Recipe Title</label>
         <input
@@ -312,7 +303,7 @@ export default function RecipeEditor({
         />
       </section>
 
-      {/* Cover Image */}
+      {/* Cover */}
       <section className="card" style={{ maxWidth: 1100, margin: '0 auto 1.25rem', padding: 20, borderRadius: 16 }}>
         <h3>Cover Image</h3>
         {!cover ? (
@@ -334,6 +325,7 @@ export default function RecipeEditor({
           </div>
         ) : (
           <div style={{ position: 'relative', marginTop: 10 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={cover} alt="cover" style={{ width: '100%', borderRadius: 12, border: '1px solid #ccc' }} />
             <div
               style={{
@@ -361,3 +353,101 @@ export default function RecipeEditor({
           </div>
         )}
       </section>
+
+      {/* Yield */}
+      <section className="card" style={{ maxWidth: 1100, margin: '0 auto 1rem', padding: 20, borderRadius: 16 }}>
+        <h3>Yield</h3>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <label>
+            Base Yield:
+            <input
+              type="number"
+              min={1}
+              value={baseYield}
+              onChange={(e) => setBaseYield(Math.max(1, Number(e.target.value) || 1))}
+              style={{ marginLeft: 8, width: 80 }}
+            />
+          </label>
+          <label>
+            Target Yield:
+            <input
+              type="number"
+              value={targetYield}
+              onChange={(e) => setTargetYield(Number(e.target.value) || 1)}
+              style={{ marginLeft: 8, width: 80 }}
+            />
+          </label>
+          <div style={{ alignSelf: 'center' }}>Scaling ×{factor.toFixed(2)}</div>
+        </div>
+      </section>
+
+      {/* Ingredients */}
+      <section className="card" style={{ maxWidth: 1100, margin: '0 auto 1rem', padding: 20, borderRadius: 16 }}>
+        <h3>Ingredients</h3>
+        {ingredients.map((ing) => (
+          <div key={ig.id} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+            <input
+              type="number"
+              placeholder="Qty"
+              value={typeof ing.baseAmount === 'number' ? +(ing.baseAmount * factor).toFixed(2) : ''}
+              onChange={(e) => updateIngredient(ing.id, 'baseAmount', parseFloat(e.target.value || '0') / factor)}
+              style={{ width: 70 }}
+            />
+            <input
+              type="text"
+              placeholder="Unit"
+              value={ing.unit}
+              onChange={(e) => updateIngredient(ing.id, 'unit', e.target.value)}
+              style={{ width: 80 }}
+            />
+            <input
+              type="text"
+              placeholder="Ingredient"
+              value={ing.item}
+              onChange={(e) => updateIngredient(ing.id, 'item', e.target.value)}
+              style={{ flex: 1 }}
+            />
+            <button onClick={() => removeIngredient(ing.id)}>✕</button>
+          </div>
+        ))}
+        <button onClick={addIngredient}>+ Add Ingredient</button>
+      </section>
+
+      {/* Steps */}
+      <section className="card" style={{ maxWidth: 1100, margin: '0 auto 1rem', padding: 20, borderRadius: 16 }}>
+        <h3>Method</h3>
+        {steps.map((s) => (
+          <div key={s.id} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+            <textarea
+              value={s.text}
+              onChange={(e) => updateStep(s.id, e.target.value)}
+              style={{ flex: 1, height: 80 }}
+            />
+            <button onClick={() => removeStep(s.id)}>✕</button>
+          </div>
+        ))}
+        <button onClick={addStep}>+ Add Step</button>
+      </section>
+
+      {/* Save */}
+      <div style={{ textAlign: 'center', marginTop: 20 }}>
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          style={{
+            background: 'linear-gradient(90deg,#c59d5f,#d4af37)',
+            color: 'white',
+            border: 'none',
+            padding: '12px 30px',
+            fontSize: '1rem',
+            borderRadius: '999px',
+            cursor: 'pointer',
+            opacity: saving ? 0.7 : 1,
+          }}
+        >
+          {saving ? 'Saving...' : '💾 Save Recipe'}
+        </button>
+      </div>
+    </main>
+  );
+}
