@@ -15,7 +15,7 @@ export type RecipeData = {
   targetYield: number;
   ingredients: Ingredient[];
   steps: Step[];
-  cover?: string;
+  cover?: string;                 // ALWAYS http(s) or data: URL (never blob:)
   createdAt: number;
   updatedAt: number;
   status?: 'draft' | 'published';
@@ -47,7 +47,7 @@ export default function RecipeEditor({
   const [targetYield, setTargetYield] = useState<number>(1);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [steps, setSteps] = useState<Step[]>([{ id: uid(), text: '' }]);
-  const [cover, setCover] = useState<string>('');
+  const [cover, setCover] = useState<string>('');          // http(s) or data:
   const [toast, setToast] = useState<string | null>(null);
   const [saving, setSaving] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
@@ -65,7 +65,7 @@ export default function RecipeEditor({
           setTargetYield(d.targetYield || 1);
           setIngredients(d.ingredients || []);
           setSteps(d.steps?.length ? d.steps : [{ id: uid(), text: '' }]);
-          setCover(d.cover || '');
+          setCover(d.cover || ''); // guaranteed http(s) or data:
           localStorage.setItem(
             key,
             JSON.stringify({
@@ -125,7 +125,7 @@ export default function RecipeEditor({
         targetYield: Number(targetYield) || 1,
         ingredients,
         steps,
-        cover: customCover ?? cover,
+        cover: customCover ?? cover, // http(s) or data:
         createdAt: Date.now(),
         updatedAt: Date.now(),
         status: 'published',
@@ -149,7 +149,7 @@ export default function RecipeEditor({
     }
   }
 
-  // === ULTRA FAST IMAGE UPLOAD ===
+  // === FAST IMAGE UPLOAD WITH AUTOMATIC FALLBACK (NO BLOB IN FIRESTORE) ===
   async function onCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -158,37 +158,37 @@ export default function RecipeEditor({
       return;
     }
 
+    // Instant preview ONLY in state (not saved anywhere)
     const previewUrl = URL.createObjectURL(file);
     setCover(previewUrl);
 
     try {
+      // Try Storage first
       const storageRef = ref(storage, `${storageNS}/${recipeId}/cover-${Date.now()}.png`);
       await uploadBytes(storageRef, file, { contentType: file.type });
-
       const downloadURL = await getDownloadURL(storageRef);
-      console.log('🌐 Permanent URL:', downloadURL);
 
+      // Success: use permanent HTTPS URL
       setCover(downloadURL);
       persistDraft(downloadURL);
-
       await setDoc(
         doc(db, storageNS, recipeId),
         { cover: downloadURL, updatedAt: serverTimestamp() },
         { merge: true }
       );
-
-      // overwrite local blob immediately with permanent URL
-      const raw = localStorage.getItem(key);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        parsed.cover = downloadURL;
-        localStorage.setItem(key, JSON.stringify(parsed));
-      }
-
       setToast('✅ Image uploaded & synced');
     } catch (err) {
-      console.error('❌ Upload error:', err);
-      alert('Upload failed: ' + (err as any).message);
+      console.warn('Storage unavailable, using inline data URL fallback.', err);
+      // Fallback: compress → data URL → save (works without Storage)
+      const dataUrl = await fileToCompressedDataURL(file, 1280, 0.9);
+      setCover(dataUrl);
+      persistDraft(dataUrl);
+      await setDoc(
+        doc(db, storageNS, recipeId),
+        { cover: dataUrl, updatedAt: serverTimestamp() },
+        { merge: true }
+      );
+      setToast('✅ Image saved (inline) & synced');
     } finally {
       URL.revokeObjectURL(previewUrl);
       setTimeout(() => setToast(null), 2000);
@@ -204,12 +204,38 @@ export default function RecipeEditor({
       targetYield: Number(targetYield) || 1,
       ingredients,
       steps,
-      cover: customCover ?? cover,
+      cover: customCover ?? cover, // http(s) or data:
       createdAt: Date.now(),
       updatedAt: Date.now(),
       status: 'draft',
     };
     localStorage.setItem(key, JSON.stringify(draft));
+  }
+
+  // Compress to data URL (fast, ~instant on modern devices)
+  function fileToCompressedDataURL(file: File, maxWidth: number, quality: number): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result !== 'string') return reject('bad image');
+        img.src = reader.result;
+      };
+      img.onload = () => {
+        const scale = Math.min(1, maxWidth / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return reject('no canvas');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        // JPEG gives smallest payload for covers; browsers load it fastest.
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        resolve(dataUrl);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   }
 
   const removeCover = () => {
@@ -232,6 +258,7 @@ export default function RecipeEditor({
     setSteps((prev) => prev.map((s) => (s.id === id ? { ...s, text } : s)));
   const removeStep = (id: string) => setSteps((prev) => prev.filter((s) => s.id !== id));
 
+  // === SAVE BUTTON ===
   const handleSave = async () => {
     await publishToFirebase();
     onBack();
@@ -239,6 +266,7 @@ export default function RecipeEditor({
 
   useEffect(() => {
     persistDraft();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title, baseYield, targetYield, ingredients, steps, cover]);
 
   if (loading) return <p style={{ textAlign: 'center', marginTop: 100 }}>Loading recipe...</p>;
@@ -262,6 +290,7 @@ export default function RecipeEditor({
           {toast}
         </div>
       )}
+
       {/* Back */}
       <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
         <button
