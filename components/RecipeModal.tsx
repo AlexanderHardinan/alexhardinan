@@ -1,9 +1,26 @@
+// /components/RecipeModal.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { RecipeData } from './RecipeEditor';
+import PasswordModal from './PasswordModal';
+
+type Ingredient = { id: string; baseAmount: number | ''; unit: string; item: string };
+type Step = { id: string; text: string };
+
+type RecipeDoc = {
+  id: string;
+  title: string;
+  baseYield: number;
+  targetYield: number;
+  ingredients: Ingredient[];
+  steps: Step[];
+  cover?: string;
+  createdAt?: number;
+  updatedAt?: number;
+  status?: 'draft' | 'published';
+};
 
 export default function RecipeModal({
   storageNS,
@@ -16,188 +33,107 @@ export default function RecipeModal({
   onClose: () => void;
   onEdit: () => void;
 }) {
-  const [data, setData] = useState<RecipeData | null>(null);
+  const [recipe, setRecipe] = useState<RecipeDoc | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Password gate
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [pendingEdit, setPendingEdit] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+
+  // === Fetch recipe live ===
   useEffect(() => {
     const ref = doc(db, storageNS, id);
-    const unsub = onSnapshot(ref, (snap) => {
-      if (snap.exists()) {
-        const d = snap.data() as any;
-        setData({
-          id: id,
-          title: d.title || 'Untitled Recipe',
-          baseYield: d.baseYield || 1,
-          targetYield: d.targetYield || 1,
-          ingredients: d.ingredients || [],
-          steps: d.steps || [],
-          cover: d.cover || '',
-          createdAt: d.createdAt?._seconds ? d.createdAt._seconds * 1000 : d.createdAt ?? Date.now(),
-          updatedAt: d.updatedAt?._seconds ? d.updatedAt._seconds * 1000 : d.updatedAt ?? Date.now(),
-        });
-      } else {
-        setData(null);
-      }
-      setLoading(false);
-    });
-
+    const unsub = onSnapshot(
+      ref,
+      (snap) => {
+        if (snap.exists()) {
+          const d = snap.data() as any;
+          setRecipe({
+            id,
+            title: d.title || 'Untitled',
+            baseYield: d.baseYield ?? 1,
+            targetYield: d.targetYield ?? 1,
+            ingredients: Array.isArray(d.ingredients) ? d.ingredients : [],
+            steps: Array.isArray(d.steps) ? d.steps : [],
+            cover: d.cover || '',
+            createdAt: d.createdAt?._seconds ? d.createdAt._seconds * 1000 : d.createdAt,
+            updatedAt: d.updatedAt?._seconds ? d.updatedAt._seconds * 1000 : d.updatedAt,
+            status: d.status,
+          });
+        } else {
+          setRecipe(null);
+        }
+        setLoading(false);
+      },
+      () => setLoading(false)
+    );
     return () => unsub();
-  }, [id, storageNS]);
+  }, [storageNS, id]);
 
-  if (loading)
+  // === Password success handler ===
+  const handlePasswordSuccess = () => {
+    setShowPasswordModal(false);
+    if (pendingEdit) {
+      setPendingEdit(false);
+      onEdit();
+    }
+  };
+
+  // === Password fail handler ===
+  const handlePasswordFail = () => {
+    setToast('❌ Incorrect password');
+    setTimeout(() => setToast(null), 2000);
+  };
+
+  // === Require password ===
+  const handleEditClick = () => {
+    setPendingEdit(true);
+    setShowPasswordModal(true);
+  };
+
+  if (loading) {
     return (
       <div
+        role="dialog"
+        aria-modal="true"
         style={{
           position: 'fixed',
           inset: 0,
-          background: 'rgba(0,0,0,0.55)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 9999,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'grid',
+          placeItems: 'center',
+          zIndex: 10000,
         }}
       >
-        <div style={{ background: 'white', borderRadius: 12, padding: 40 }}>
-          <p>Loading recipe...</p>
-        </div>
+        <div style={{ background: '#fff', padding: 20, borderRadius: 12 }}>Loading…</div>
       </div>
     );
+  }
 
-  if (!data)
+  if (!recipe) {
     return (
       <div
+        role="dialog"
+        aria-modal="true"
         style={{
           position: 'fixed',
           inset: 0,
-          background: 'rgba(0,0,0,0.55)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 9999,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'grid',
+          placeItems: 'center',
+          zIndex: 10000,
         }}
       >
-        <div style={{ background: 'white', borderRadius: 12, padding: 40 }}>
+        <div style={{ background: '#fff', padding: 20, borderRadius: 12 }}>
           <p>Recipe not found.</p>
-          <button onClick={onClose} style={{ marginTop: 10 }}>Close</button>
-        </div>
-      </div>
-    );
-
-  const { title, cover, ingredients, steps } = data;
-
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.6)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 20,
-        zIndex: 9999,
-      }}
-      onClick={onClose}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: 'white',
-          borderRadius: 16,
-          width: 'min(90%, 900px)',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          boxShadow: '0 8px 20px rgba(0,0,0,0.2)',
-          animation: 'fadeIn 0.3s ease',
-        }}
-      >
-        {/* Cover Image */}
-        {cover && (
-          <div style={{ position: 'relative' }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={cover}
-              alt={title}
-              style={{
-                width: '100%',
-                height: '300px',
-                objectFit: 'cover',
-                borderTopLeftRadius: 16,
-                borderTopRightRadius: 16,
-              }}
-            />
-          </div>
-        )}
-
-        {/* Content */}
-        <div style={{ padding: '24px 28px' }}>
-          <h2 style={{ marginBottom: 10 }}>{title}</h2>
-          <p style={{ fontSize: 13, opacity: 0.6 }}>
-            Updated {new Date(data.updatedAt || Date.now()).toLocaleString()}
-          </p>
-
-          <hr style={{ margin: '16px 0' }} />
-
-          {/* Ingredients */}
-          <section style={{ marginBottom: 20 }}>
-            <h3>Ingredients</h3>
-            {ingredients.length > 0 ? (
-              <ul style={{ marginTop: 8 }}>
-                {ingredients.map((ing) => (
-                  <li key={ing.id} style={{ lineHeight: '1.6' }}>
-                    {ing.baseAmount ? `${ing.baseAmount} ` : ''}
-                    {ing.unit} {ing.item}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p style={{ opacity: 0.6 }}>No ingredients yet.</p>
-            )}
-          </section>
-
-          {/* Method */}
-          <section>
-            <h3>Method</h3>
-            {steps.length > 0 ? (
-              <ol style={{ marginTop: 8, paddingLeft: 22 }}>
-                {steps.map((s) => (
-                  <li key={s.id} style={{ marginBottom: 10, lineHeight: '1.6' }}>
-                    {s.text}
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <p style={{ opacity: 0.6 }}>No steps yet.</p>
-            )}
-          </section>
-
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              marginTop: 24,
-              gap: 10,
-            }}
-          >
-            <button
-              onClick={onEdit}
-              style={{
-                background: 'linear-gradient(90deg,#c59d5f,#d4af37)',
-                color: 'white',
-                border: 'none',
-                padding: '10px 20px',
-                borderRadius: 999,
-                cursor: 'pointer',
-              }}
-            >
-              Edit
-            </button>
+          <div style={{ textAlign: 'right' }}>
             <button
               onClick={onClose}
               style={{
-                background: 'rgba(0,0,0,0.1)',
+                background: '#eee',
                 border: 'none',
-                padding: '10px 20px',
+                padding: '8px 14px',
                 borderRadius: 999,
                 cursor: 'pointer',
               }}
@@ -207,13 +143,170 @@ export default function RecipeModal({
           </div>
         </div>
       </div>
+    );
+  }
 
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
+  const factor =
+    Math.max(1, Number(recipe.baseYield) || 1) > 0
+      ? (Number(recipe.targetYield) || 1) / Math.max(1, Number(recipe.baseYield) || 1)
+      : 1;
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.5)',
+        display: 'grid',
+        placeItems: 'center',
+        padding: 16,
+        zIndex: 10000,
+      }}
+    >
+      {toast && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 20,
+            right: 20,
+            background: 'rgba(0,0,0,0.85)',
+            color: 'white',
+            padding: '10px 20px',
+            borderRadius: 10,
+            fontSize: '.9rem',
+            zIndex: 11000,
+          }}
+        >
+          {toast}
+        </div>
+      )}
+
+      <article
+        className="card"
+        style={{
+          width: 'min(100%, 1000px)',
+          maxHeight: '90vh',
+          overflow: 'auto',
+          background: '#fff',
+          borderRadius: 16,
+          boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+        }}
+      >
+        {/* Header */}
+        <header style={{ padding: '16px 18px', borderBottom: '1px solid rgba(0,0,0,.08)' }}>
+          <h2 style={{ margin: 0 }}>{recipe.title}</h2>
+          <div style={{ fontSize: 12, opacity: 0.7, marginTop: 4 }}>
+            Updated{' '}
+            {recipe.updatedAt
+              ? new Date(recipe.updatedAt).toLocaleString()
+              : recipe.createdAt
+              ? new Date(recipe.createdAt).toLocaleString()
+              : ''}
+          </div>
+        </header>
+
+        {/* Cover */}
+        {recipe.cover ? (
+          <div style={{ position: 'relative' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={recipe.cover}
+              alt={recipe.title}
+              style={{ width: '100%', maxHeight: 420, objectFit: 'cover' }}
+            />
+          </div>
+        ) : null}
+
+        {/* Body */}
+        <div style={{ display: 'grid', gap: 18, padding: 18 }}>
+          <section>
+            <h3 style={{ margin: '0 0 8px' }}>Yield</h3>
+            <div style={{ fontSize: 14 }}>
+              Base: <strong>{recipe.baseYield}</strong> &nbsp;|&nbsp; Target:{' '}
+              <strong>{recipe.targetYield}</strong> &nbsp;|&nbsp; Scaling ×
+              {factor.toFixed(2)}
+            </div>
+          </section>
+
+          <section>
+            <h3 style={{ margin: '0 0 8px' }}>Ingredients</h3>
+            <ul style={{ margin: 0, paddingLeft: 18 }}>
+              {recipe.ingredients?.map((ing) => {
+                const qty =
+                  typeof ing.baseAmount === 'number'
+                    ? +(ing.baseAmount * factor).toFixed(2)
+                    : '';
+                return (
+                  <li key={ing.id} style={{ marginBottom: 6 }}>
+                    {qty !== '' && <strong>{qty}</strong>} {ing.unit && `${ing.unit} `}
+                    {ing.item}
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+
+          <section>
+            <h3 style={{ margin: '0 0 8px' }}>Method</h3>
+            <ol style={{ margin: 0, paddingLeft: 18 }}>
+              {recipe.steps?.map((s) => (
+                <li key={s.id} style={{ marginBottom: 8, lineHeight: 1.45 }}>
+                  {s.text}
+                </li>
+              ))}
+            </ol>
+          </section>
+        </div>
+
+        {/* Footer actions */}
+        <footer
+          style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: 10,
+            padding: 16,
+            borderTop: '1px solid rgba(0,0,0,.08)',
+          }}
+        >
+          <button
+            onClick={handleEditClick}
+            style={{
+              background: 'linear-gradient(90deg,#c59d5f,#d4af37)',
+              color: 'white',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: 999,
+              cursor: 'pointer',
+            }}
+          >
+            Edit
+          </button>
+          <button
+            onClick={onClose}
+            style={{
+              background: '#eee',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: 999,
+              cursor: 'pointer',
+            }}
+          >
+            Close
+          </button>
+        </footer>
+      </article>
+
+      <PasswordModal
+        isOpen={showPasswordModal}
+        onClose={() => {
+          setShowPasswordModal(false);
+          setPendingEdit(false);
+        }}
+        onSuccess={handlePasswordSuccess}
+        onFail={handlePasswordFail}
+      />
     </div>
   );
 }
