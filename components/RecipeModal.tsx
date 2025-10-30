@@ -36,12 +36,12 @@ export default function RecipeModal({
   const [recipe, setRecipe] = useState<RecipeDoc | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Password gate
+  // Password gating
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [pendingEdit, setPendingEdit] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
-  // === Fetch recipe live ===
+  // === Live Firestore sync ===
   useEffect(() => {
     const ref = doc(db, storageNS, id);
     const unsub = onSnapshot(
@@ -71,7 +71,7 @@ export default function RecipeModal({
     return () => unsub();
   }, [storageNS, id]);
 
-  // === Password success handler ===
+  // === Password handlers ===
   const handlePasswordSuccess = () => {
     setShowPasswordModal(false);
     if (pendingEdit) {
@@ -80,18 +80,17 @@ export default function RecipeModal({
     }
   };
 
-  // === Password fail handler ===
   const handlePasswordFail = () => {
     setToast('❌ Incorrect password');
     setTimeout(() => setToast(null), 2000);
   };
 
-  // === Require password ===
   const handleEditClick = () => {
     setPendingEdit(true);
     setShowPasswordModal(true);
   };
 
+  // === Loading state ===
   if (loading) {
     return (
       <div
@@ -111,6 +110,7 @@ export default function RecipeModal({
     );
   }
 
+  // === Missing recipe ===
   if (!recipe) {
     return (
       <div
@@ -192,10 +192,16 @@ export default function RecipeModal({
           background: '#fff',
           borderRadius: 16,
           boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+          animation: 'fadeIn 0.25s ease',
         }}
       >
         {/* Header */}
-        <header style={{ padding: '16px 18px', borderBottom: '1px solid rgba(0,0,0,.08)' }}>
+        <header
+          style={{
+            padding: '16px 18px',
+            borderBottom: '1px solid rgba(0,0,0,.08)',
+          }}
+        >
           <h2 style={{ margin: 0 }}>{recipe.title}</h2>
           <div style={{ fontSize: 12, opacity: 0.7, marginTop: 4 }}>
             Updated{' '}
@@ -214,7 +220,11 @@ export default function RecipeModal({
             <img
               src={recipe.cover}
               alt={recipe.title}
-              style={{ width: '100%', maxHeight: 420, objectFit: 'cover' }}
+              style={{
+                width: '100%',
+                maxHeight: 420,
+                objectFit: 'cover',
+              }}
             />
           </div>
         ) : null}
@@ -279,6 +289,7 @@ export default function RecipeModal({
               padding: '8px 16px',
               borderRadius: 999,
               cursor: 'pointer',
+              transition: 'opacity 0.2s ease',
             }}
           >
             Edit
@@ -291,6 +302,7 @@ export default function RecipeModal({
               padding: '8px 16px',
               borderRadius: 999,
               cursor: 'pointer',
+              transition: 'opacity 0.2s ease',
             }}
           >
             Close
@@ -298,6 +310,7 @@ export default function RecipeModal({
         </footer>
       </article>
 
+      {/* Password modal */}
       <PasswordModal
         isOpen={showPasswordModal}
         onClose={() => {
