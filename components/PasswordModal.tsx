@@ -1,122 +1,140 @@
+// /components/PasswordModal.tsx
 'use client';
-import { useState, useEffect } from 'react';
+
+import { useState } from 'react';
 
 export default function PasswordModal({
   isOpen,
   onClose,
   onSuccess,
+  onFail, // ✅ optional failure handler
 }: {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  onFail?: () => void;
 }) {
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState(false);
-  const [visible, setVisible] = useState(false);
+  const [input, setInput] = useState('');
+  const [toast, setToast] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (isOpen) {
-      setVisible(true);
-      setPassword('');
-      setError(false);
-    } else {
-      setVisible(false);
-    }
-  }, [isOpen]);
-
-  if (!isOpen && !visible) return null;
+  if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'CAlex') {
+    if (input.trim() === 'CAlex') {
+      setInput('');
       onSuccess();
-      onClose();
     } else {
-      setError(true);
-      setTimeout(() => setError(false), 500);
+      if (onFail) onFail();
+      setToast('❌ Incorrect password');
+      setTimeout(() => setToast(null), 2000);
+      setInput('');
     }
   };
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
       style={{
         position: 'fixed',
         inset: 0,
-        backdropFilter: 'blur(8px)',
-        background: 'rgba(0,0,0,0.45)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 99999,
-        opacity: isOpen ? 1 : 0,
-        transition: 'opacity 0.25s ease-in-out',
+        background: 'rgba(0,0,0,0.55)',
+        display: 'grid',
+        placeItems: 'center',
+        zIndex: 9999,
       }}
     >
+      {toast && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 20,
+            right: 20,
+            background: 'rgba(0,0,0,0.85)',
+            color: 'white',
+            padding: '10px 20px',
+            borderRadius: 10,
+            fontSize: '.9rem',
+            zIndex: 10000,
+          }}
+        >
+          {toast}
+        </div>
+      )}
+
       <form
         onSubmit={handleSubmit}
         style={{
-          background: 'rgba(255,255,255,0.1)',
-          border: '1px solid rgba(255,255,255,0.2)',
-          borderRadius: 16,
-          padding: '30px 40px',
-          backdropFilter: 'blur(16px)',
-          color: 'white',
+          background: 'white',
+          padding: '2rem',
+          borderRadius: '16px',
+          width: 'min(90%, 400px)',
+          boxShadow: '0 10px 25px rgba(0,0,0,0.25)',
           textAlign: 'center',
-          transform: error ? 'translateX(-5px)' : 'translateX(0)',
-          transition: 'transform 0.2s ease-in-out',
-          boxShadow: '0 0 20px rgba(0,0,0,0.4)',
+          animation: 'fadeIn 0.25s ease',
         }}
       >
-        <h3 style={{ marginBottom: 16, fontSize: '1.3rem' }}>🔒 Secure Access</h3>
-        <p style={{ marginBottom: 20, opacity: 0.85 }}>Enter the password to continue</p>
+        <h2
+          style={{
+            marginBottom: '1.5rem',
+            fontSize: '1.4rem',
+            background: 'linear-gradient(90deg,#c59d5f,#d4af37)',
+            WebkitBackgroundClip: 'text',
+            color: 'transparent',
+          }}
+        >
+          Enter Password
+        </h2>
+
         <input
           type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Enter password"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Password"
+          autoFocus
           style={{
-            padding: '10px 12px',
-            borderRadius: 8,
-            border: 'none',
-            outline: 'none',
-            width: '220px',
-            textAlign: 'center',
-            marginBottom: 14,
+            width: '100%',
+            padding: '12px 14px',
+            borderRadius: '10px',
+            border: '1px solid rgba(0,0,0,0.15)',
+            marginBottom: '1.5rem',
+            fontSize: '1rem',
           }}
         />
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 10 }}>
+
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem' }}>
           <button
             type="submit"
             style={{
               background: 'linear-gradient(90deg,#c59d5f,#d4af37)',
-              border: 'none',
-              padding: '8px 20px',
-              borderRadius: 999,
-              cursor: 'pointer',
               color: 'white',
-              fontWeight: 600,
+              border: 'none',
+              borderRadius: '999px',
+              padding: '10px 24px',
+              fontSize: '1rem',
+              cursor: 'pointer',
+              transition: 'opacity 0.2s ease',
             }}
           >
-            Continue
+            Confirm
           </button>
           <button
             type="button"
             onClick={onClose}
             style={{
-              background: 'rgba(255,255,255,0.2)',
+              background: '#eee',
               border: 'none',
-              padding: '8px 20px',
-              borderRadius: 999,
+              borderRadius: '999px',
+              padding: '10px 24px',
+              fontSize: '1rem',
               cursor: 'pointer',
-              color: 'white',
+              transition: 'opacity 0.2s ease',
             }}
           >
             Cancel
           </button>
         </div>
-        {error && (
-          <p style={{ color: '#ffbaba', marginTop: 12, fontSize: 13 }}>Access denied</p>
-        )}
       </form>
     </div>
   );
