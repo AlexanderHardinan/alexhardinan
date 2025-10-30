@@ -25,7 +25,7 @@ export default function Header() {
             <Link href="/stories-on-a-plate">Stories on a Plate</Link>
             <Link href="/in-the-glass">In the Glass</Link>
             <Link href="/press-release">Press Release</Link>
-            <Link href="/my-recipe-book">My Recipe Book</Link>
+            <Link href="/myrecipebook">My Recipe Book</Link>
             <Link href="/food-ethos">Food Ethos</Link>
             <Link href="/off-duty">Off Duty</Link>
           </nav>
@@ -59,7 +59,7 @@ export default function Header() {
             <Link href="/press-release" onClick={() => setOpen(false)}>
               Press Release
             </Link>
-            <Link href="/my-recipe-book" onClick={() => setOpen(false)}>
+            <Link href="/myrecipebook" onClick={() => setOpen(false)}>
               My Recipe Book
             </Link>
             <Link href="/food-ethos" onClick={() => setOpen(false)}>
