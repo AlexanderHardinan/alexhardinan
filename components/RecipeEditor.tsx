@@ -384,7 +384,11 @@ export default function RecipeEditor({
               type="number"
               min={1}
               value={baseYield}
-              onChange={(e) => setBaseYield(Math.max(1, Number(e.target.value) || 1))}
+              onChange={(e) => {
+                const val = e.target.value === '' ? '' : Math.max(1,
+            Number(e.target.value));
+                setBaseYield(val as number);
+              }}
               style={{ marginLeft: 8, width: 80 }}
             />
           </label>
@@ -393,7 +397,11 @@ export default function RecipeEditor({
             <input
               type="number"
               value={targetYield}
-              onChange={(e) => setTargetYield(Number(e.target.value) || 1)}
+              onChange={(e) => {
+                const val = e.target.value === '' ? '' : Math.max(1,
+            Number(e.target.value));
+                setTargetYield(val as number);
+              }}
               style={{ marginLeft: 8, width: 80 }}
             />
           </label>
