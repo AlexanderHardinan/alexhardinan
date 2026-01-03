@@ -662,3 +662,25 @@ a{color:inherit;text-decoration:none}
     border-color:rgba(255,255,255,.22);
   }
 }
+
+/* =========================================================
+   PAGE MODE: light pages need dark nav/button text
+   Apply by adding .page-light-header on the page container
+   ========================================================= */
+.page-light-header ~ * {}
+
+/* Header links readable on light backgrounds */
+.page-light-header .nav-desktop a{
+  color: rgba(15,23,42,.88);
+}
+.page-light-header .nav-desktop a:hover{
+  color: rgba(15,23,42,.95);
+  background: rgba(0,0,0,.06);
+  box-shadow: 0 10px 28px rgba(0,0,0,.10);
+}
+
+/* Glass buttons readable on light backgrounds */
+.page-light-header .btn{
+  color: rgba(15,23,42,.92);
+  border-color: rgba(255,255,255,.55);
+}

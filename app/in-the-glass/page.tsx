@@ -8,7 +8,6 @@ type Drink = {
 };
 
 export default function InTheGlass() {
-  // ===== Edit this array anytime =====
   const drinks: Drink[] = [
     { src: '/glass/americano-1.png', caption: 'A refreshing blend of Campari and Martini Rosso, topped with soda water and served over ice.' },
     { src: '/glass/emerald-yakuza.png', caption: 'Savor Japan with our Emerald Yakuza cocktail, a blend of premium sake, Roku gin, wasabi, and crisp apple. Each sip balances acidity and sweetness, finishing smoothly. Paired with Wagyu A5 Kagoshima tartare bites and dramatic dry ice, it immerses you in Japanese culinary artistry.' },
@@ -32,13 +31,10 @@ export default function InTheGlass() {
     { src: '/glass/watermelon-margarita.png', caption: 'Dive into the summer vibes with this refreshing Watermelon Margarita! Crafted with smooth Don Julio Blanco tequila and zesty Cointreau, it features watermelon syrup and fresh lime juice for a deliciously fruity twist. This cocktail is half-rimmed with a mix of salt and chili powder for a perfect balance of sweet and spicy.' },
     { src: '/glass/whiskey-sour.png', caption: 'Indulge in a delightful Whiskey Sour featuring smooth Jim Beam bourbon whiskey, zesty lime juice, and a touch of yuzu syrup for a unique twist. Whipped to perfection with egg white and a pinch of cream of tartar, this cocktail is beautifully frothy. Garnished with fresh orange and a cherry, it offers a refreshing balance of sweet and sour.' },
     { src: '/glass/white-cadillac.png', caption: 'Indulge in the luxurious White Cadillac, a vibrant blend of Galliano yellow and cacao white, elegantly swirled with rich whipping cream. Topped with a delicate dusting of ground cinnamon and adorned with an edible flower, this cocktail is a sophisticated celebration of flavors that will transport you to a sun-soaked paradise. Perfectly balanced and visually stunning.' },
-    // continue to drink40.png later
-    // { src: '/glass/drink6.png', caption: '...' },
   ];
-  // ==================================
 
   return (
-    <main className="container" style={{ padding: '2rem 0' }}>
+    <main className="container page-light-header" style={{ padding: '2rem 0' }}>
       <section style={{ textAlign: 'center', marginBottom: '2rem' }}>
         <h1 className="title">In the Glass</h1>
         <p className="subtitle">
