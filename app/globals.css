@@ -1440,3 +1440,190 @@ body{
     border-color: rgba(255,255,255,.22);
   }
 }
+
+/* =========================================================
+   LIQUID GLASS (iPhone-style) — FINAL OVERRIDES
+   Paste at END of app/globals.css
+   ========================================================= */
+
+:root{
+  --lg-blur: 26px;
+  --lg-sat: 210%;
+  --lg-tint-top: rgba(255,255,255,.22);
+  --lg-tint-bot: rgba(255,255,255,.10);
+  --lg-border: rgba(255,255,255,.40);
+  --lg-border-soft: rgba(255,255,255,.22);
+  --lg-shadow: 0 22px 70px rgba(0,0,0,.18);
+  --lg-shadow-soft: 0 12px 34px rgba(0,0,0,.12);
+}
+
+/* Header glass bar (structure unchanged) */
+body .site-header__inner{
+  background: linear-gradient(180deg, var(--lg-tint-top), var(--lg-tint-bot));
+  border: 1px solid var(--lg-border);
+  box-shadow: var(--lg-shadow-soft);
+  backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat));
+  -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat));
+}
+
+/* Mobile sidebar glass */
+body .sidebar{
+  background: linear-gradient(180deg, rgba(255,255,255,.26), rgba(255,255,255,.12));
+  border-left: 1px solid rgba(255,255,255,.30);
+  box-shadow: -18px 0 70px rgba(0,0,0,.18);
+  backdrop-filter: blur(30px) saturate(220%);
+  -webkit-backdrop-filter: blur(30px) saturate(220%);
+}
+
+/* Liquid glass buttons (clear + premium) */
+body .btn{
+  background: linear-gradient(180deg, rgba(255,255,255,.20), rgba(255,255,255,.08));
+  border: 1px solid var(--lg-border);
+  box-shadow: var(--lg-shadow-soft);
+  backdrop-filter: blur(22px) saturate(220%);
+  -webkit-backdrop-filter: blur(22px) saturate(220%);
+}
+
+/* Keep your existing hover motion, add premium depth */
+body .btn:hover{
+  box-shadow: var(--lg-shadow);
+  border-color: rgba(212,175,55,.34);
+}
+
+/* Specular highlight sweep (iOS “liquid” edge) */
+body .btn::before{
+  content:"";
+  position:absolute;
+  inset:-170% -80%;
+  transform: rotate(22deg);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,255,255,.40),
+    rgba(255,255,255,.12),
+    transparent
+  );
+  opacity: 0;
+  transition: opacity .22s ease, transform .9s ease;
+  pointer-events:none;
+}
+body .btn:hover::before{
+  opacity: 1;
+  transform: translateX(44%) rotate(22deg);
+}
+
+/* Optional: liquid rim highlight on header + sidebar */
+body .site-header__inner,
+body .sidebar,
+body .btn{
+  position: relative;
+}
+body .site-header__inner::before,
+body .sidebar::before,
+body .btn::after{
+  /* Only add a subtle rim if it doesn't conflict with your existing ::after on .btn */
+}
+
+/* Fallback (no blur support) */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  body .site-header__inner,
+  body .sidebar,
+  body .btn{
+    background: rgba(0,0,0,.65);
+    border-color: rgba(255,255,255,.22);
+  }
+}
+
+/* =========================================================
+   FINAL OVERRIDE — LIQUID GLASS BUTTONS (stable across routes)
+   Keep structure, do not remove earlier blocks now.
+   ========================================================= */
+
+:root{
+  --lg-blur: 30px;
+  --lg-sat: 230%;
+  --lg-top: rgba(255,255,255,.18);
+  --lg-bot: rgba(255,255,255,.08);
+  --lg-border: rgba(255,255,255,.42);
+  --lg-border2: rgba(255,255,255,.22);
+  --lg-shadow: 0 26px 90px rgba(0,0,0,.20);
+  --lg-shadow-soft: 0 14px 40px rgba(0,0,0,.12);
+}
+
+/* IMPORTANT: higher specificity so duplicates never win */
+body .btn{
+  background: linear-gradient(180deg, var(--lg-top), var(--lg-bot)) !important;
+  border: 1px solid var(--lg-border) !important;
+  box-shadow: var(--lg-shadow-soft) !important;
+
+  /* frosted glass */
+  backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) !important;
+  -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) !important;
+
+  /* keep your baseline sizing/layout; do NOT change display/padding/radius */
+  color: rgba(255,255,255,.94) !important;
+}
+
+body .btn:hover{
+  box-shadow: var(--lg-shadow) !important;
+  border-color: rgba(212,175,55,.34) !important;
+}
+
+/* Liquid specular sweep (uses ::before so it doesn't fight your gold ::after) */
+body .btn::before{
+  content:"" !important;
+  position:absolute !important;
+  inset:-180% -85% !important;
+  transform: rotate(22deg) !important;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,255,255,.44),
+    rgba(255,255,255,.12),
+    transparent
+  ) !important;
+  opacity: 0 !important;
+  transition: opacity .22s ease, transform .95s ease !important;
+  pointer-events:none !important;
+}
+
+body .btn:hover::before{
+  opacity: 1 !important;
+  transform: translateX(46%) rotate(22deg) !important;
+}
+
+/* Keep your existing gold wave overlay on ::after.
+   If any duplicate block turned it off, force it back on. */
+body .btn::after{
+  opacity: 0;
+}
+body .btn:hover::after{
+  opacity: 1;
+}
+
+/* Optional: match header/side panel to the same liquid glass (safe overrides) */
+body .site-header__inner{
+  background: linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.10)) !important;
+  border: 1px solid rgba(255,255,255,.40) !important;
+  box-shadow: var(--lg-shadow-soft) !important;
+  backdrop-filter: blur(24px) saturate(220%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(220%) !important;
+}
+
+body .sidebar{
+  background: linear-gradient(180deg, rgba(255,255,255,.26), rgba(255,255,255,.12)) !important;
+  border-left: 1px solid rgba(255,255,255,.30) !important;
+  box-shadow: -18px 0 70px rgba(0,0,0,.18) !important;
+  backdrop-filter: blur(34px) saturate(240%) !important;
+  -webkit-backdrop-filter: blur(34px) saturate(240%) !important;
+}
+
+/* Fallback for browsers without blur */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  body .btn,
+  body .site-header__inner,
+  body .sidebar{
+    background: rgba(0,0,0,.65) !important;
+    border-color: rgba(255,255,255,.22) !important;
+  }
+}
