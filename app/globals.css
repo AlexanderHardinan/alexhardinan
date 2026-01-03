@@ -1230,3 +1230,130 @@ a{color:inherit;text-decoration:none}
   }
 }
 
+/* =========================================================
+   iOS-Style Glass Material Upgrade (baseline preserved)
+   Paste at END of globals.css
+   ========================================================= */
+
+/* Glass tokens (does not change existing --bg/--fg) */
+:root{
+  --glass: rgba(255,255,255,.60);
+  --glass-strong: rgba(255,255,255,.78);
+  --glass-border: rgba(255,255,255,.55);
+  --glass-border-strong: rgba(255,255,255,.70);
+  --glass-shadow: 0 18px 60px rgba(0,0,0,.18);
+  --glass-shadow-soft: 0 10px 30px rgba(0,0,0,.12);
+  --glass-radius: 18px;
+}
+
+/* Premium light backdrop (subtle). Keeps your hero intact. */
+body{
+  background:
+    radial-gradient(900px 700px at 12% 10%, rgba(212,175,55,.14), transparent 60%),
+    radial-gradient(900px 700px at 85% 18%, rgba(99,102,241,.12), transparent 60%),
+    radial-gradient(900px 700px at 40% 92%, rgba(34,211,238,.10), transparent 62%),
+    linear-gradient(180deg, #ffffff, #f6f7fb);
+}
+
+/* HEADER: keep structure, add glass bar */
+.site-header__inner{
+  border-radius: 999px;
+  margin: 10px 14px 0;
+  background: linear-gradient(180deg, var(--glass-strong), var(--glass));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow-soft);
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+}
+
+/* Desktop nav: modern pill hover without changing layout */
+.nav-desktop a{
+  color: rgba(255,255,255,.92); /* your baseline expects white nav on hero */
+  font-weight: 600;
+  padding: 8px 10px;
+  border-radius: 12px;
+  transition: transform .18s ease, background .22s ease, box-shadow .22s ease, opacity .22s ease;
+}
+.nav-desktop a:hover{
+  opacity: 1;
+  background: rgba(255,255,255,.14);
+  box-shadow: 0 10px 28px rgba(0,0,0,.18);
+  transform: translateY(-1px);
+}
+
+/* SIDEBAR: glass panel */
+.sidebar{
+  background: linear-gradient(180deg, rgba(255,255,255,.76), rgba(255,255,255,.58));
+  border-left: 1px solid var(--glass-border-strong);
+  box-shadow: -18px 0 60px rgba(0,0,0,.18);
+  backdrop-filter: blur(22px) saturate(185%);
+  -webkit-backdrop-filter: blur(22px) saturate(185%);
+}
+.sidebar nav a{
+  color: rgba(0,0,0,.82);
+  font-weight: 600;
+}
+.sidebar nav a:hover{
+  background: rgba(255,255,255,.40);
+}
+
+/* BUTTONS: glass material + glossy sweep (keeps your existing .btn animation too) */
+.btn{
+  background: linear-gradient(180deg, rgba(255,255,255,.70), rgba(255,255,255,.42));
+  border: 1px solid rgba(255,255,255,.70);
+  color: rgba(0,0,0,.86);
+  box-shadow: 0 16px 46px rgba(0,0,0,.14);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+}
+.btn:hover{
+  box-shadow: 0 22px 70px rgba(0,0,0,.18);
+  border-color: rgba(212,175,55,.35);
+}
+
+/* optional premium gloss sweep (separate from your gold wave overlay) */
+.btn::before{
+  content:"";
+  position:absolute;
+  inset:-140% -60%;
+  transform: rotate(22deg);
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(255,255,255,.35),
+    rgba(212,175,55,.18),
+    transparent
+  );
+  opacity: 0;
+  transition: opacity .25s ease, transform .9s ease;
+  pointer-events:none;
+}
+.btn:hover::before{
+  opacity: 1;
+  transform: translateX(38%) rotate(22deg);
+}
+
+/* CARDS: subtle glass option (keeps your existing white cards; makes them premium) */
+.card,
+.blog-card,
+.offduty-card,
+.ethos-card{
+  border-radius: 14px;
+  box-shadow: 0 12px 36px rgba(0,0,0,.08);
+}
+
+/* If you want ethos cards to be consistent (your file currently sets ethos-card to rgba + blur) */
+.ethos-card{
+  border: 1px solid rgba(255,255,255,.22);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+}
+
+/* Fallback if blur unsupported */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .site-header__inner,
+  .sidebar,
+  .btn{
+    background: rgba(255,255,255,.92);
+  }
+}
+
