@@ -1357,3 +1357,86 @@ body{
   }
 }
 
+/* =========================================================
+   LIQUID GLASS (iPhone-style) — keep structure, override last
+   ========================================================= */
+
+:root{
+  --lg-tint: rgba(255,255,255,.18);      /* subtle tint */
+  --lg-tint-2: rgba(255,255,255,.10);
+  --lg-border: rgba(255,255,255,.38);
+  --lg-border-2: rgba(255,255,255,.22);
+  --lg-shadow: 0 24px 80px rgba(0,0,0,.18);
+  --lg-shadow-soft: 0 14px 40px rgba(0,0,0,.12);
+  --lg-blur: 22px;
+  --lg-sat: 190%;
+}
+
+/* Glass header bar */
+.site-header__inner{
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.10));
+  border: 1px solid var(--lg-border);
+  box-shadow: var(--lg-shadow-soft);
+  backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat));
+  -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat));
+}
+
+/* Sidebar liquid glass */
+.sidebar{
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.24), rgba(255,255,255,.10));
+  border-left: 1px solid rgba(255,255,255,.30);
+  box-shadow: -20px 0 80px rgba(0,0,0,.18);
+  backdrop-filter: blur(26px) saturate(200%);
+  -webkit-backdrop-filter: blur(26px) saturate(200%);
+}
+
+/* Liquid glass button (clear, premium, not milky) */
+.btn{
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.10));
+  border: 1px solid var(--lg-border);
+  color: rgba(255,255,255,.92); /* keeps your hero white look */
+  box-shadow: var(--lg-shadow-soft);
+  backdrop-filter: blur(20px) saturate(200%);
+  -webkit-backdrop-filter: blur(20px) saturate(200%);
+}
+
+/* Specular highlight */
+.btn::before{
+  content:"";
+  position:absolute;
+  inset:-160% -70%;
+  transform: rotate(22deg);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,255,255,.38),
+    rgba(255,255,255,.12),
+    transparent
+  );
+  opacity: .0;
+  transition: opacity .22s ease, transform .9s ease;
+  pointer-events:none;
+}
+.btn:hover::before{
+  opacity: 1;
+  transform: translateX(42%) rotate(22deg);
+}
+
+/* Subtle border gradient for “liquid edge” */
+.site-header__inner::after,
+.btn::after{
+  /* keep your existing ::after if you use it; this is safe because it only adds if not defined */
+}
+
+/* Fallback if blur unsupported */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .site-header__inner,
+  .sidebar,
+  .btn{
+    background: rgba(0,0,0,.65);
+    border-color: rgba(255,255,255,.22);
+  }
+}
