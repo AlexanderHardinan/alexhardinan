@@ -778,3 +778,19 @@ a{color:inherit;text-decoration:none}
     padding-top:110px;
   }
 }
+
+/* =========================
+   MyRecipeBook buttons: black text → white on hover
+   Scoped, non-destructive
+   ========================= */
+.myrecipebook-page .btn,
+.myrecipebook-backwrap .btn,
+.myrecipebook-auth .btn{
+  color: #000;
+}
+
+.myrecipebook-page .btn:hover,
+.myrecipebook-backwrap .btn:hover,
+.myrecipebook-auth .btn:hover{
+  color: #fff;
+}
