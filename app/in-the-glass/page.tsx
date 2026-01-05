@@ -1,6 +1,5 @@
-'use client';
-
 import ImageCard from '../../components/ImageCard';
+import RevealOnScroll from '../../components/RevealOnScroll';
 
 type Drink = {
   src: string;
@@ -34,24 +33,26 @@ export default function InTheGlass() {
   ];
 
   return (
-    <main className="container page-light-header" style={{ padding: '2rem 0' }}>
-      <section style={{ textAlign: 'center', marginBottom: '2rem' }}>
-        <h1 className="title">In the Glass</h1>
-        <p className="subtitle">
-          Every pour tells a story — precision, balance, and the pursuit of sensory harmony.
-        </p>
-      </section>
+    <RevealOnScroll>
+      <main className="container page-light-header" style={{ padding: '2rem 0' }}>
+        <section style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <h1 className="title">In the Glass</h1>
+          <p className="subtitle">
+            Every pour tells a story — precision, balance, and the pursuit of sensory harmony.
+          </p>
+        </section>
 
-      <section>
-        <div className="stories-grid">
-          {drinks.map((item, i) => (
-            <div key={i} className="story-card">
-              <ImageCard src={item.src} alt={`Drink ${i + 1}`} />
-              <p className="story-caption">{item.caption}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-    </main>
+        <section>
+          <div className="stories-grid">
+            {drinks.map((item, i) => (
+              <div key={i} className="story-card">
+                <ImageCard src={item.src} alt={`Drink ${i + 1}`} />
+                <p className="story-caption">{item.caption}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      </main>
+    </RevealOnScroll>
   );
 }
