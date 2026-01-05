@@ -1002,3 +1002,11 @@ button:focus-visible{
   -webkit-line-clamp:3;
   overflow:hidden;
 }
+
+/* Phase 7.2 — Guaranteed Off Duty caption clamp */
+.offduty-card .offduty-excerpt{
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:3;
+  overflow:hidden;
+}

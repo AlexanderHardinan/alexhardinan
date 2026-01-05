@@ -10,7 +10,6 @@ type Feature = {
 };
 
 export default function OffDuty() {
-  // ===== Scroll animation =====
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -25,7 +24,6 @@ export default function OffDuty() {
     return () => observer.disconnect();
   }, []);
 
-  // ===== Editable content section =====
   const features: Feature[] = [
     {
       src: '/offduty/photo1.png',
@@ -51,8 +49,6 @@ export default function OffDuty() {
       caption:
         'Fashion and form share rhythm with flavor. Off duty, I find creativity through design, tailoring, and timeless aesthetics.',
     },
-    // Add more as needed:
-    // { src: '/offduty/photo5.png', title: 'Title', caption: 'Your description here.' },
   ];
 
   return (
@@ -64,13 +60,13 @@ export default function OffDuty() {
 
       <section className="fade-up offduty-grid">
         {features.map((item, i) => (
-          <div key={i} className="offduty-card fade-up">
+          <div key={i} className="offduty-card">
             <div className="offduty-image">
               <ImageCard src={item.src} alt={item.title} />
             </div>
             <div className="offduty-text">
               <h2>{item.title}</h2>
-              <p>{item.caption}</p>
+              <p className="offduty-excerpt">{item.caption}</p>
             </div>
           </div>
         ))}
