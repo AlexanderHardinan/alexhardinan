@@ -811,3 +811,39 @@ a{color:inherit;text-decoration:none}
 .sidebar--myrecipebook nav a:hover{
   color:#fff;
 }
+
+/* =========================================================
+   Phase 6 — Dark Theme Wiring + Toggle placement
+   ========================================================= */
+
+/* Ensure global background/text follow theme tokens */
+body{
+  background: var(--bg);
+  color: var(--fg);
+}
+
+/* Header actions row (toggle + menu) */
+.header-actions{
+  display:flex;
+  align-items:center;
+  gap:.6rem;
+}
+
+/* Toggle sizing tweaks (optional but clean) */
+.theme-toggle{
+  min-width:72px;
+}
+
+:root[data-theme="dark"] .footer{
+  border-top-color: rgba(255,255,255,.10);
+}
+:root[data-theme="dark"] .story-caption,
+:root[data-theme="dark"] .press-content,
+:root[data-theme="dark"] .ethos-content,
+:root[data-theme="dark"] .offduty-text p,
+:root[data-theme="dark"] .blog-text p{
+  color: rgba(231,237,246,.80);
+}
+:root[data-theme="dark"] .divider{
+  border-top-color: rgba(255,255,255,.10);
+}

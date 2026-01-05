@@ -6,7 +6,7 @@ import ContactWidget from '../components/ContactWidget';
 
 const inter = Inter({
   subsets: ['latin'],
-  display: 'swap', // prevents font blocking render
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -34,13 +34,29 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* 🔥 Speed optimizations */}
+        {/* Speed optimizations */}
         <link rel="preconnect" href="https://vitals.vercel-insights.com" />
         <link rel="preconnect" href="https://res.cloudinary.com" />
         <link rel="dns-prefetch" href="https://vitals.vercel-insights.com" />
         <meta httpEquiv="Cache-Control" content="public, max-age=604800, immutable" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+        {/* Set a default theme-color; ThemeToggle will update this dynamically */}
         <meta name="theme-color" content="#ffffff" />
+
+        {/* Theme bootstrap (prevents flash) */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+(function () {
+  try {
+    var saved = localStorage.getItem('theme');
+    var theme = saved || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', theme);
+  } catch (e) {}
+})();`,
+          }}
+        />
       </head>
 
       <body className={inter.className}>

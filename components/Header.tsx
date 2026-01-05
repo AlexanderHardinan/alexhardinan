@@ -3,24 +3,22 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
+import ThemeToggle from './ThemeToggle';
 
 export default function Header() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
-  // Applies on /myrecipebook and all subroutes
   const isMyRecipeBook = pathname === '/myrecipebook' || pathname.startsWith('/myrecipebook/');
 
   return (
     <>
-      {/* Transparent, absolute, full-width header. No seam with hero. */}
       <header className={`site-header ${isMyRecipeBook ? 'site-header--myrecipebook' : ''}`}>
         <div className="site-header__inner">
           <Link href="/" className="brand" aria-label="My Profile Home">
             My Profile
           </Link>
 
-          {/* Desktop nav */}
           <nav className="nav-desktop">
             <Link href="/">Home</Link>
             <Link href="/stories-on-a-plate">Stories on a Plate</Link>
@@ -31,14 +29,15 @@ export default function Header() {
             <Link href="/off-duty">Off Duty</Link>
           </nav>
 
-          {/* Mobile toggle */}
-          <button className="btn nav-toggle" onClick={() => setOpen(true)}>
-            Menu
-          </button>
+          <div className="header-actions">
+            <ThemeToggle />
+            <button className="btn nav-toggle" onClick={() => setOpen(true)}>
+              Menu
+            </button>
+          </div>
         </div>
       </header>
 
-      {/* Mobile sidebar */}
       <aside
         className={`sidebar ${open ? 'open' : ''} ${isMyRecipeBook ? 'sidebar--myrecipebook' : ''}`}
         role="dialog"
@@ -70,7 +69,9 @@ export default function Header() {
               Off Duty
             </Link>
           </nav>
-          <div style={{ padding: 16 }}>
+
+          <div style={{ padding: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <ThemeToggle />
             <button className="btn" onClick={() => setOpen(false)}>
               Close
             </button>
