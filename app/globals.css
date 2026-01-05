@@ -1176,3 +1176,42 @@ button:hover,
 .btn:hover{
   color: var(--gold, #d4af37) !important;
 }
+
+/* =========================================================
+   FIX — Off Duty image sizing (responsive, all devices)
+   ========================================================= */
+
+/* Card container */
+.offduty-card{
+  display:flex;
+  flex-direction:column;
+}
+
+/* Image wrapper */
+.offduty-image{
+  width:100%;
+  height:220px;              /* mobile default */
+  overflow:hidden;
+  border-radius:14px;
+}
+
+/* Tablet */
+@media (min-width: 640px){
+  .offduty-image{
+    height:260px;
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px){
+  .offduty-image{
+    height:300px;
+  }
+}
+
+/* Force image fit */
+.offduty-image img{
+  width:100% !important;
+  height:100% !important;
+  object-fit:cover;
+}
