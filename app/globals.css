@@ -1905,3 +1905,110 @@ main{
 @media (max-width: 900px){
   .nav-desktop{ display: none; }
 }
+
+/* =========================================================
+   Phase 10.3 — Button system (primary / ghost / danger / sm)
+   ========================================================= */
+
+/* Base button (keep your animation hooks, force readable text) */
+.btn{
+  appearance: none;
+  -webkit-appearance: none;
+  border: 0;
+  cursor: pointer;
+  user-select: none;
+  text-decoration: none;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+
+  color: #000 !important; /* always visible default */
+}
+
+/* Ensure nested elements inherit */
+.btn *{ color: inherit !important; }
+.btn:disabled{
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+/* Hover: text becomes white for premium contrast */
+.btn:hover{
+  color: #fff !important;
+}
+
+/* Primary */
+.btn--primary{
+  background: linear-gradient(90deg, var(--gold-soft), var(--gold));
+  border: 1px solid rgba(0,0,0,.08);
+  box-shadow: 0 16px 40px rgba(212,175,55,.25);
+}
+.btn--primary:hover{
+  box-shadow: 0 20px 55px rgba(212,175,55,.33);
+}
+
+/* Ghost (glass) */
+.btn--ghost{
+  background: rgba(255,255,255,.75);
+  border: 1px solid rgba(0,0,0,.12);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  box-shadow: 0 14px 40px rgba(0,0,0,.10);
+}
+.btn--ghost:hover{
+  background: rgba(0,0,0,.80);
+  border-color: rgba(0,0,0,.25);
+}
+
+/* Danger */
+.btn--danger{
+  background: rgba(255,90,90,.16);
+  border: 1px solid rgba(255,90,90,.30);
+  box-shadow: 0 14px 40px rgba(255,90,90,.10);
+}
+.btn--danger:hover{
+  background: rgba(255,90,90,.85);
+  border-color: rgba(255,90,90,.65);
+}
+
+/* Small */
+.btn--sm{
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: .9rem;
+}
+.btn:not(.btn--sm){
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-size: .95rem;
+}
+
+/* Dark theme adjustments */
+:root[data-theme="dark"] .btn{
+  color: #fff !important;
+}
+:root[data-theme="dark"] .btn:hover{
+  color: #000 !important;
+}
+
+:root[data-theme="dark"] .btn--primary{
+  border-color: rgba(255,255,255,.14);
+}
+:root[data-theme="dark"] .btn--ghost{
+  background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.14);
+  box-shadow: 0 18px 60px rgba(0,0,0,.45);
+}
+:root[data-theme="dark"] .btn--ghost:hover{
+  background: rgba(255,255,255,.82);
+  border-color: rgba(255,255,255,.24);
+}
+
+/* Fix links that use button classes */
+a.btn{
+  display: inline-flex;
+}
