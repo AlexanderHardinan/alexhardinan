@@ -1078,3 +1078,57 @@ main.container{
 .sidebar nav a:hover{
   color:#fff;
 }
+
+/* =========================================================
+   HOTFIX — Stop header overlapping ALL titles
+   (overrides inline padding shorthand)
+   ========================================================= */
+main.container{
+  padding-top: calc(120px + 1rem) !important;
+}
+
+@media (max-width: 768px){
+  main.container{
+    padding-top: calc(110px + 1rem) !important;
+  }
+}
+
+/* =========================================================
+   HOTFIX — Global button text visibility
+   ========================================================= */
+
+/* Default: buttons readable on light/glass surfaces */
+.btn{
+  color:#000 !important;
+}
+.btn:hover{
+  color:#fff !important;
+}
+
+/* Hero/dark sections: keep buttons readable */
+.hero .btn,
+:root[data-theme="dark"] .hero .btn{
+  color:#fff !important;
+}
+.hero .btn:hover,
+:root[data-theme="dark"] .hero .btn:hover{
+  color:#000 !important;
+}
+
+/* Floating Get in touch button (FAB) */
+.fab button{
+  color:#000 !important;
+}
+.fab button:hover{
+  color:#fff !important;
+}
+
+/* If your "Discover more" uses a different class, cover it too */
+.discover-btn,
+.get-in-touch-btn{
+  color:#000 !important;
+}
+.discover-btn:hover,
+.get-in-touch-btn:hover{
+  color:#fff !important;
+}
