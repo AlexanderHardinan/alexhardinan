@@ -1132,3 +1132,47 @@ main.container{
 .get-in-touch-btn:hover{
   color:#fff !important;
 }
+
+/* =========================================================
+   HOTFIX — Hero "Discover more" CTA visibility
+   ========================================================= */
+
+/* Default hero CTA */
+.hero a,
+.hero .btn,
+.hero .cta,
+.hero .discover-more{
+  color:#000 !important;
+}
+
+/* Hover = gold */
+.hero a:hover,
+.hero .btn:hover,
+.hero .cta:hover,
+.hero .discover-more:hover{
+  color: var(--gold, #d4af37) !important;
+}
+
+/* Dark theme hero */
+:root[data-theme="dark"] .hero a,
+:root[data-theme="dark"] .hero .btn,
+:root[data-theme="dark"] .hero .cta,
+:root[data-theme="dark"] .hero .discover-more{
+  color:#fff !important;
+}
+
+/* Nav hover = gold */
+.site-header .nav-desktop a:hover,
+.sidebar nav a:hover{
+  color: var(--gold, #d4af37) !important;
+}
+
+/* =========================================================
+   GLOBAL — Text hover color (gold)
+   ========================================================= */
+
+a:hover,
+button:hover,
+.btn:hover{
+  color: var(--gold, #d4af37) !important;
+}
