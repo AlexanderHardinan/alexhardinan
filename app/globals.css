@@ -847,3 +847,150 @@ body{
 :root[data-theme="dark"] .divider{
   border-top-color: rgba(255,255,255,.10);
 }
+
+/* =========================================================
+   Phase 7 — Premium Cards + Grid Polish (CSS-only)
+   - No functional changes
+   - Stabilizes spacing, typography, focus, and truncation
+   ========================================================= */
+
+/* 7.1) Spacing scale (optional utilities, non-breaking) */
+:root{
+  --s-1: .25rem;
+  --s-2: .5rem;
+  --s-3: .75rem;
+  --s-4: 1rem;
+  --s-5: 1.25rem;
+  --s-6: 1.5rem;
+  --s-8: 2rem;
+  --s-10: 2.5rem;
+
+  --radius-sm: 12px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+}
+
+/* 7.2) Improve readability globally */
+body{
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 7.3) Consistent card inner padding where text blocks exist */
+.blog-card .blog-content,
+.offduty-card .offduty-content,
+.ethos-card .ethos-content,
+.card .card-content{
+  padding: var(--s-5);
+}
+
+/* If some pages use direct paragraphs inside cards, keep them tidy */
+.blog-card p,
+.offduty-card p,
+.ethos-card p,
+.card p{
+  margin: .5rem 0 0 0;
+  line-height: 1.6;
+}
+
+/* 7.4) Line clamp to prevent uneven grids (only applies if these classes exist) */
+.blog-card .excerpt,
+.offduty-card .excerpt,
+.ethos-card .excerpt,
+.story-caption{
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Standard clamps */
+.blog-card .excerpt{ -webkit-line-clamp: 3; }
+.offduty-card .excerpt{ -webkit-line-clamp: 3; }
+.ethos-card .excerpt{ -webkit-line-clamp: 3; }
+
+/* Stories captions can be longer on desktop but stable */
+.story-caption{ -webkit-line-clamp: 4; }
+
+/* 7.5) Premium hover behavior (keeps your existing transforms; only adds subtle specular) */
+.card,
+.blog-card,
+.offduty-card,
+.ethos-card{
+  position: relative;
+}
+
+.card::after,
+.blog-card::after,
+.offduty-card::after,
+.ethos-card::after{
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .25s ease;
+  /* Specular highlight (clear water feel) */
+  background: radial-gradient(
+    1200px 500px at 20% 10%,
+    rgba(255,255,255,.22),
+    transparent 60%
+  );
+}
+
+.card:hover::after,
+.blog-card:hover::after,
+.offduty-card:hover::after,
+.ethos-card:hover::after{
+  opacity: 1;
+}
+
+/* 7.6) Keyboard accessibility (professional) */
+:focus-visible{
+  outline: 2px solid rgba(212,175,55,.85);
+  outline-offset: 3px;
+  border-radius: 10px;
+}
+
+/* Make cards clickable without ugly outline if they are buttons/links */
+a:focus-visible,
+button:focus-visible{
+  outline: 2px solid rgba(212,175,55,.85);
+  outline-offset: 3px;
+}
+
+/* 7.7) Reduced motion support */
+@media (prefers-reduced-motion: reduce){
+  *{
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* 7.8) Dark theme: paragraph/text contrast inside cards */
+:root[data-theme="dark"] .blog-card p,
+:root[data-theme="dark"] .offduty-card p,
+:root[data-theme="dark"] .ethos-card p,
+:root[data-theme="dark"] .card p,
+:root[data-theme="dark"] .story-caption{
+  color: rgba(231,237,246,.82);
+}
+
+/* 7.9) Card headings (only affects if those elements exist) */
+.blog-card h3,
+.offduty-card h3,
+.ethos-card h3,
+.card h3{
+  margin: 0;
+  line-height: 1.25;
+  letter-spacing: .01em;
+}
+
+/* 7.10) Make grids breathe a bit on large screens without breaking layout */
+.grid,
+.stories-grid{
+  gap: clamp(1rem, 1.8vw, 1.6rem);
+}
