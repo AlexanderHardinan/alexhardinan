@@ -1018,3 +1018,11 @@ button:focus-visible{
   -webkit-line-clamp:3;
   overflow:hidden;
 }
+
+/* Phase 7.4 — Guaranteed Stories on a Plate caption clamp */
+.story-caption{
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:4;
+  overflow:hidden;
+}
