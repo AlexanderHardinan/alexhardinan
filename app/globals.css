@@ -1555,3 +1555,64 @@ button:hover,
 :root[data-theme="dark"] .blog-text .read-btn{
   color: #fff;
 }
+
+/* =========================================================
+   Blog Single Post — hero + readable body
+   ========================================================= */
+
+.blog-hero{
+  position: relative;
+  width: 100%;
+  height: clamp(260px, 38vw, 520px);
+  border-radius: 22px;
+  overflow: hidden;
+  margin: 0 auto;
+  box-shadow: 0 18px 60px rgba(0,0,0,.16);
+  border: 1px solid rgba(0,0,0,.08);
+}
+
+.blog-hero img{
+  object-fit: cover !important;
+}
+
+.hero-overlay{
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  padding: clamp(16px, 3vw, 28px);
+  background: linear-gradient(
+    180deg,
+    rgba(0,0,0,.00) 0%,
+    rgba(0,0,0,.35) 45%,
+    rgba(0,0,0,.82) 100%
+  );
+}
+
+.hero-content h1{
+  margin: 0;
+  color: #fff;
+  font-size: clamp(1.5rem, 3vw, 2.4rem);
+  line-height: 1.12;
+}
+
+.blog-article{
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 28px 16px 60px;
+}
+
+.article-wrapper{
+  margin-top: 12px;
+}
+
+.post-content p{
+  margin: 0 0 14px 0;
+  line-height: 1.75;
+  opacity: .92;
+}
+
+/* Dark theme harmony */
+:root[data-theme="dark"] .blog-hero{
+  border-color: rgba(255,255,255,.10);
+}

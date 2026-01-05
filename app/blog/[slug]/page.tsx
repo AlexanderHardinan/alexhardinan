@@ -1,5 +1,3 @@
-'use client';
-import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -9,10 +7,9 @@ type Article = {
   content: string[];
 };
 
-export default function SinglePost() {
-  const { slug } = useParams();
+export default function SinglePost({ params }: { params: { slug: string } }) {
+  const { slug } = params;
 
-  // ===== Blog Articles (Editable) =====
   const articles: Record<string, Article> = {
     'carrot-confidential': {
       title: '🥕 Carrot Confidential',
@@ -52,9 +49,9 @@ export default function SinglePost() {
     },
   };
 
-  const article = articles[slug as string];
+  const article = articles[slug];
 
-  if (!article)
+  if (!article) {
     return (
       <main className="container" style={{ padding: '4rem 1rem', textAlign: 'center' }}>
         <h2>Article Not Found</h2>
@@ -63,6 +60,7 @@ export default function SinglePost() {
         </Link>
       </main>
     );
+  }
 
   return (
     <main className="container" style={{ padding: 0 }}>
