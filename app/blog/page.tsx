@@ -1,8 +1,7 @@
-'use client';
-
-import { useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import RevealOnScroll from '../../components/RevealOnScroll';
+import BlogCarousel from '../../components/BlogCarousel';
 
 type BlogPost = {
   slug: string;
@@ -12,18 +11,6 @@ type BlogPost = {
 };
 
 export default function Blog() {
-  const carouselRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const obs = new IntersectionObserver(
-      (entries) => entries.forEach((e) => e.isIntersecting && e.target.classList.add('show')),
-      { threshold: 0.1 }
-    );
-
-    document.querySelectorAll('.fade-up').forEach((el) => obs.observe(el));
-    return () => obs.disconnect();
-  }, []);
-
   const featured = {
     src: '/blog/featured.png',
     title: 'A New Era of Culinary Expression',
@@ -60,57 +47,34 @@ export default function Blog() {
     },
   ];
 
-  const scrollBy = (offset: number) =>
-    carouselRef.current?.scrollBy({ left: offset, behavior: 'smooth' });
-
   return (
-    <main className="container" style={{ padding: '3rem 1rem' }}>
-      <section className="fade-up" style={{ textAlign: 'center', marginBottom: '3rem' }}>
-        <h1 className="title">Culinary Journal</h1>
-        <p className="subtitle">Insights • Inspiration • Innovation</p>
-      </section>
+    <RevealOnScroll>
+      <main className="container" style={{ padding: '3rem 1rem' }}>
+        {/* ===== HEADER ===== */}
+        <section className="fade-up" style={{ textAlign: 'center', marginBottom: '3rem' }}>
+          <h1 className="title">Culinary Journal</h1>
+          <p className="subtitle">Insights • Inspiration • Innovation</p>
+        </section>
 
-      <section className="fade-up featured-article">
-        <div className="featured-image">
-          <Image src={featured.src} alt={featured.title} fill priority />
-        </div>
-        <div className="featured-overlay">
-          <div className="featured-content">
-            <h2>{featured.title}</h2>
-            <p>{featured.excerpt}</p>
-            <Link href={`/blog/${featured.slug}`} className="read-btn">
-              Read Feature →
-            </Link>
+        {/* ===== FEATURED ARTICLE ===== */}
+        <section className="fade-up featured-article">
+          <div className="featured-image">
+            <Image src={featured.src} alt={featured.title} fill priority />
           </div>
-        </div>
-      </section>
+          <div className="featured-overlay">
+            <div className="featured-content">
+              <h2>{featured.title}</h2>
+              <p className="blog-excerpt">{featured.excerpt}</p>
+              <Link href={`/blog/${featured.slug}`} className="read-btn">
+                Read Feature →
+              </Link>
+            </div>
+          </div>
+        </section>
 
-      <section className="fade-up blog-carousel-section">
-        <button className="carousel-btn left" onClick={() => scrollBy(-400)} aria-label="Left">
-          ‹
-        </button>
-
-        <div className="blog-carousel" ref={carouselRef}>
-          {posts.map((post) => (
-            <article key={post.slug} className="blog-card">
-              <div className="blog-img">
-                <Image src={post.src} alt={post.title} width={500} height={300} />
-              </div>
-              <div className="blog-text">
-                <h2>{post.title}</h2>
-                <p className="blog-excerpt">{post.excerpt}</p>
-                <Link href={`/blog/${post.slug}`} className="read-btn">
-                  Read More →
-                </Link>
-              </div>
-            </article>
-          ))}
-        </div>
-
-        <button className="carousel-btn right" onClick={() => scrollBy(400)} aria-label="Right">
-          ›
-        </button>
-      </section>
-    </main>
+        {/* ===== BLOG CAROUSEL (client island) ===== */}
+        <BlogCarousel posts={posts} />
+      </main>
+    </RevealOnScroll>
   );
 }
