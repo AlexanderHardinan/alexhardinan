@@ -994,3 +994,11 @@ button:focus-visible{
 .stories-grid{
   gap: clamp(1rem, 1.8vw, 1.6rem);
 }
+
+/* Phase 7.1 — Guaranteed blog excerpt clamp */
+.blog-card .blog-excerpt{
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:3;
+  overflow:hidden;
+}
