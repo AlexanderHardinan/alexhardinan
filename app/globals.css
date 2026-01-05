@@ -1010,3 +1010,11 @@ button:focus-visible{
   -webkit-line-clamp:3;
   overflow:hidden;
 }
+
+/* Phase 7.3 — Guaranteed Food Ethos card clamp */
+.ethos-card .ethos-excerpt{
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:3;
+  overflow:hidden;
+}
