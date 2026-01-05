@@ -157,17 +157,6 @@ export default function RecipeShelf({ storageNS, heading, subtitle }: Props) {
         </div>
       )}
 
-      {/* Back to My Recipe Book */}
-      <div className="myrecipebook-backwrap" style={{ paddingTop: 0 }}>
-        <button
-          type="button"
-          className="btn btn--ghost"
-          onClick={() => router.push('/myrecipebook')}
-        >
-          ← Back to My Recipe Book
-        </button>
-      </div>
-
       <div style={{ textAlign: 'center', marginBottom: '1.25rem', marginTop: '1rem' }}>
         <h1 style={{ fontSize: '2rem', marginBottom: '.3rem' }}>{heading}</h1>
         {subtitle && <p style={{ color: 'rgba(0,0,0,0.6)' }}>{subtitle}</p>}
