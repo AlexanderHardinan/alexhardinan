@@ -1,21 +1,22 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
 export default function Header() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+
+  // Applies on /myrecipebook and all subroutes
+  const isMyRecipeBook = pathname === '/myrecipebook' || pathname.startsWith('/myrecipebook/');
 
   return (
     <>
       {/* Transparent, absolute, full-width header. No seam with hero. */}
-      <header className="site-header">
+      <header className={`site-header ${isMyRecipeBook ? 'site-header--myrecipebook' : ''}`}>
         <div className="site-header__inner">
-          <Link
-            href="/"
-            className="brand"
-            aria-label="My Profile Home"
-          >
+          <Link href="/" className="brand" aria-label="My Profile Home">
             My Profile
           </Link>
 
@@ -39,7 +40,7 @@ export default function Header() {
 
       {/* Mobile sidebar */}
       <aside
-        className={`sidebar ${open ? 'open' : ''}`}
+        className={`sidebar ${open ? 'open' : ''} ${isMyRecipeBook ? 'sidebar--myrecipebook' : ''}`}
         role="dialog"
         aria-label="Menu"
         onClick={() => setOpen(false)}

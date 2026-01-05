@@ -790,3 +790,24 @@ a{color:inherit;text-decoration:none}
   padding: .5rem .9rem;
   font-size: .9rem;
 }
+
+/* =========================================================
+   Phase 5 — Auto nav readability for MyRecipeBook routes
+   (no page wrapper required)
+   ========================================================= */
+
+/* Desktop nav */
+.site-header--myrecipebook .nav-desktop a{
+  color:#000;
+}
+.site-header--myrecipebook .nav-desktop a:hover{
+  color:#fff;
+}
+
+/* Mobile sidebar links */
+.sidebar--myrecipebook nav a{
+  color:#000;
+}
+.sidebar--myrecipebook nav a:hover{
+  color:#fff;
+}
