@@ -1,7 +1,5 @@
-'use client';
-
-import { useEffect } from 'react';
 import ImageCard from '../../components/ImageCard';
+import RevealOnScroll from '../../components/RevealOnScroll';
 
 type Feature = {
   src: string;
@@ -10,20 +8,6 @@ type Feature = {
 };
 
 export default function OffDuty() {
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) entry.target.classList.add('show');
-        });
-      },
-      { threshold: 0.1 }
-    );
-
-    document.querySelectorAll('.fade-up').forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, []);
-
   const features: Feature[] = [
     {
       src: '/offduty/photo1.png',
@@ -52,25 +36,27 @@ export default function OffDuty() {
   ];
 
   return (
-    <main className="container" style={{ padding: '3rem 1rem' }}>
-      <section className="fade-up" style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-        <h1 className="title">Off Duty</h1>
-        <p className="subtitle">The world beyond the kitchen — where passion meets lifestyle.</p>
-      </section>
+    <RevealOnScroll>
+      <main className="container" style={{ padding: '3rem 1rem' }}>
+        <section className="fade-up" style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+          <h1 className="title">Off Duty</h1>
+          <p className="subtitle">The world beyond the kitchen — where passion meets lifestyle.</p>
+        </section>
 
-      <section className="fade-up offduty-grid">
-        {features.map((item, i) => (
-          <div key={i} className="offduty-card">
-            <div className="offduty-image">
-              <ImageCard src={item.src} alt={item.title} />
+        <section className="fade-up offduty-grid">
+          {features.map((item, i) => (
+            <div key={i} className="offduty-card">
+              <div className="offduty-image">
+                <ImageCard src={item.src} alt={item.title} />
+              </div>
+              <div className="offduty-text">
+                <h2>{item.title}</h2>
+                <p className="offduty-excerpt">{item.caption}</p>
+              </div>
             </div>
-            <div className="offduty-text">
-              <h2>{item.title}</h2>
-              <p className="offduty-excerpt">{item.caption}</p>
-            </div>
-          </div>
-        ))}
-      </section>
-    </main>
+          ))}
+        </section>
+      </main>
+    </RevealOnScroll>
   );
 }
