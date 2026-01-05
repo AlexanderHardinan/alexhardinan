@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { collection, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+
 import PasswordModal from './PasswordModal';
 import RecipeEditor from './RecipeEditor';
 import RecipeModal from './RecipeModal';
-import { collection, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 
 type RecipeMeta = {
   id: string;
@@ -14,35 +15,35 @@ type RecipeMeta = {
   updatedAt?: number;
 };
 
-export default function RecipeShelf({
-  storageNS,
-  heading,
-  subtitle,
-}: {
+type Props = {
   storageNS: string;
   heading: string;
   subtitle?: string;
-}) {
+};
+
+export default function RecipeShelf({ storageNS, heading, subtitle }: Props) {
   const [recipes, setRecipes] = useState<RecipeMeta[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [viewerId, setViewerId] = useState<string | null>(null);
+
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [pendingAction, setPendingAction] = useState<null | (() => void)>(null);
+
   const [toast, setToast] = useState<string | null>(null);
 
-  // === Fetch live recipes ===
   useEffect(() => {
     const unsub = onSnapshot(collection(db, storageNS), (snap) => {
       const items = snap.docs.map((d) => ({
         id: d.id,
         ...(d.data() as any),
       })) as RecipeMeta[];
+
       setRecipes(items.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)));
     });
+
     return () => unsub();
   }, [storageNS]);
 
-  // === PASSWORD CONTROL ===
   const requirePassword = (action: () => void) => {
     setPendingAction(() => action);
     setShowPasswordModal(true);
@@ -53,13 +54,11 @@ export default function RecipeShelf({
     setPendingAction(null);
   };
 
-  // === Toast helper ===
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 1800);
   };
 
-  // === Create ===
   const handleNewRecipe = () => {
     requirePassword(() => {
       const id = Math.random().toString(36).slice(2, 9);
@@ -68,17 +67,14 @@ export default function RecipeShelf({
     });
   };
 
-  // === Edit ===
   const handleEditRecipe = (id: string) => {
     requirePassword(() => setSelectedId(id));
   };
 
-  // === View ===
   const handleViewRecipe = (id: string) => {
     setViewerId(id);
   };
 
-  // === Delete ===
   const handleDeleteRecipe = (id: string) => {
     requirePassword(async () => {
       if (!confirm('Delete this recipe?')) return;
@@ -87,17 +83,14 @@ export default function RecipeShelf({
     });
   };
 
-  // === Back ===
-  const handleBack = () => setSelectedId(null);
-
-  // === Meta update ===
-  const handleMetaUpdate = (partial: Partial<RecipeMeta>) => {
-    setRecipes((prev) =>
-      prev.map((r) => (r.id === selectedId ? { ...r, ...partial } : r))
-    );
+  const handleBack = () => {
+    setSelectedId(null);
   };
 
-  // === Render ===
+  const handleMetaUpdate = (partial: Partial<RecipeMeta>) => {
+    setRecipes((prev) => prev.map((r) => (r.id === selectedId ? { ...r, ...partial } : r)));
+  };
+
   if (selectedId) {
     return (
       <RecipeEditor
@@ -134,18 +127,8 @@ export default function RecipeShelf({
       <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
         <h1 style={{ fontSize: '2rem', marginBottom: '.3rem' }}>{heading}</h1>
         {subtitle && <p style={{ color: 'rgba(0,0,0,0.6)' }}>{subtitle}</p>}
-        <button
-          onClick={handleNewRecipe}
-          style={{
-            marginTop: '1rem',
-            background: 'linear-gradient(90deg,#c59d5f,#d4af37)',
-            color: 'white',
-            border: 'none',
-            padding: '10px 22px',
-            borderRadius: '999px',
-            cursor: 'pointer',
-          }}
-        >
+
+        <button onClick={handleNewRecipe} className="btn btn--primary" style={{ marginTop: '1rem' }}>
           ➕ New Recipe
         </button>
       </div>
@@ -165,68 +148,43 @@ export default function RecipeShelf({
             style={{
               borderRadius: 16,
               overflow: 'hidden',
-              boxShadow: '0 4px 15px rgba(0,0,0,0.08)',
               background: 'white',
-              transition: 'transform 0.2s ease',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.08)',
             }}
           >
-            <div
-              style={{
-                position: 'relative',
-                overflow: 'hidden',
-                height: 180,
-              }}
-            >
+            <div style={{ height: 180, overflow: 'hidden' }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={r.cover || '/placeholder.png'}
                 alt={r.title}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  transition: 'transform 0.3s ease',
-                }}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
             </div>
+
             <div style={{ padding: '14px 16px' }}>
               <h3 style={{ marginBottom: 6 }}>{r.title}</h3>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 6 }}>
+
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <button
+                  type="button"
+                  className="btn btn--ghost btn--sm"
                   onClick={() => handleViewRecipe(r.id)}
-                  style={{
-                    background: 'white',
-                    border: '1px solid #d4af37',
-                    color: '#d4af37',
-                    borderRadius: 999,
-                    padding: '6px 14px',
-                    cursor: 'pointer',
-                  }}
                 >
                   View
                 </button>
+
                 <button
+                  type="button"
+                  className="btn btn--primary btn--sm"
                   onClick={() => handleEditRecipe(r.id)}
-                  style={{
-                    background: 'linear-gradient(90deg,#c59d5f,#d4af37)',
-                    border: 'none',
-                    color: 'white',
-                    borderRadius: 999,
-                    padding: '6px 14px',
-                    cursor: 'pointer',
-                  }}
                 >
                   Edit
                 </button>
+
                 <button
+                  type="button"
+                  className="btn btn--danger btn--sm"
                   onClick={() => handleDeleteRecipe(r.id)}
-                  style={{
-                    background: '#ffbaba',
-                    border: 'none',
-                    borderRadius: 999,
-                    padding: '6px 14px',
-                    cursor: 'pointer',
-                  }}
                 >
                   Delete
                 </button>
@@ -236,7 +194,6 @@ export default function RecipeShelf({
         ))}
       </section>
 
-      {/* View Recipe Modal */}
       {viewerId && (
         <RecipeModal
           storageNS={storageNS}
@@ -249,7 +206,6 @@ export default function RecipeShelf({
         />
       )}
 
-      {/* Password Modal */}
       <PasswordModal
         isOpen={showPasswordModal}
         onClose={() => setShowPasswordModal(false)}
