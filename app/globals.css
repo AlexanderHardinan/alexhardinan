@@ -1215,3 +1215,62 @@ button:hover,
   height:100% !important;
   object-fit:cover;
 }
+
+/* =========================================================
+   FIX — Off Duty responsive grid + correct media sizing
+   ========================================================= */
+
+/* Make Off Duty a real responsive grid */
+.offduty-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));
+  gap:clamp(1rem, 2vw, 1.5rem);
+  align-items:start;
+}
+
+/* Off Duty card layout */
+.offduty-card{
+  border-radius:18px;
+  overflow:hidden;
+}
+
+/* Media area: controlled height (prevents giant banners) */
+.offduty-image{
+  width:100%;
+  height:190px;              /* mobile */
+  overflow:hidden;
+}
+
+/* tablet */
+@media (min-width: 640px){
+  .offduty-image{ height:220px; }
+}
+
+/* desktop */
+@media (min-width: 1024px){
+  .offduty-image{ height:240px; }
+}
+
+/* Force ImageCard wrapper to obey the media box */
+.offduty-image .image-card{
+  height:100% !important;
+}
+
+/* Force the actual <img> inside next/image to fill and crop */
+.offduty-image .image-card :where(img){
+  width:100% !important;
+  height:100% !important;
+  object-fit:cover !important;
+}
+
+/* Optional: tighten text spacing */
+.offduty-text{
+  padding:14px 16px 16px;
+}
+.offduty-text h2{
+  margin:0 0 8px 0;
+}
+.offduty-text p{
+  margin:0;
+  line-height:1.6;
+}
