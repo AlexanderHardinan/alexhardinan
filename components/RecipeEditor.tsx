@@ -391,14 +391,6 @@ export default function RecipeEditor({
           <button type="button" className="btn btn--ghost" onClick={onBack}>
             ← Back to Shelf
           </button>
-
-          <button
-            type="button"
-            className="btn btn--ghost"
-            onClick={() => router.push('/myrecipebook')}
-          >
-            ← Back to My Recipe Book
-          </button>
         </div>
 
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
