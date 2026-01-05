@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { doc, setDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { useRouter } from 'next/navigation';
 import { db, storage } from '@/lib/firebase';
 
 type Ingredient = { id: string; baseAmount: number | ''; unit: string; item: string };
@@ -15,7 +16,7 @@ export type RecipeData = {
   targetYield: number;
   ingredients: Ingredient[];
   steps: Step[];
-  cover?: string;                 // ALWAYS http(s) or data: URL (never blob:)
+  cover?: string; // ALWAYS http(s) or data: URL (never blob:)
   createdAt: number;
   updatedAt: number;
   status?: 'draft' | 'published';
@@ -23,6 +24,20 @@ export type RecipeData = {
 
 function uid() {
   return Math.random().toString(36).slice(2, 9);
+}
+
+function formatTime(ts: number) {
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(ts));
+  } catch {
+    const d = new Date(ts);
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    return `${hh}:${mm}`;
+  }
 }
 
 export default function RecipeEditor({
@@ -40,6 +55,7 @@ export default function RecipeEditor({
   onBack: () => void;
   onMetaUpdate: (partial: Partial<Pick<RecipeData, 'title' | 'cover' | 'updatedAt'>>) => void;
 }) {
+  const router = useRouter();
   const key = `${storageNS}:item:${recipeId}`;
 
   const [title, setTitle] = useState('New Recipe');
@@ -47,10 +63,18 @@ export default function RecipeEditor({
   const [targetYield, setTargetYield] = useState<number>(1);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [steps, setSteps] = useState<Step[]>([{ id: uid(), text: '' }]);
-  const [cover, setCover] = useState<string>('');          // http(s) or data:
+  const [cover, setCover] = useState<string>(''); // http(s) or data:
   const [toast, setToast] = useState<string | null>(null);
   const [saving, setSaving] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+
+  // Phase 8.4 UX
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'draft'>('idle');
+  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+
+  // Avoid autosave loops / excessive writes
+  const hydratedRef = useRef(false);
+  const autosaveTimerRef = useRef<number | null>(null);
 
   // === LIVE SYNC FROM FIRESTORE ===
   useEffect(() => {
@@ -60,12 +84,15 @@ export default function RecipeEditor({
       (snap) => {
         if (snap.exists()) {
           const d = snap.data() as any;
+
           setTitle(d.title || 'New Recipe');
           setBaseYield(Math.max(1, d.baseYield || 1));
           setTargetYield(d.targetYield || 1);
           setIngredients(d.ingredients || []);
           setSteps(d.steps?.length ? d.steps : [{ id: uid(), text: '' }]);
-          setCover(d.cover || ''); // guaranteed http(s) or data:
+          setCover(d.cover || '');
+
+          // Local mirror
           localStorage.setItem(
             key,
             JSON.stringify({
@@ -81,6 +108,9 @@ export default function RecipeEditor({
               status: 'published',
             })
           );
+
+          setSaveState('saved');
+          setLastSavedAt(Date.now());
         } else {
           const raw = localStorage.getItem(key);
           if (raw) {
@@ -91,15 +121,23 @@ export default function RecipeEditor({
             setIngredients(r.ingredients);
             setSteps(r.steps);
             setCover(r.cover ?? '');
+            setSaveState(r.status === 'draft' ? 'draft' : 'idle');
+          } else {
+            setSaveState('idle');
           }
         }
+
+        hydratedRef.current = true;
         setLoading(false);
       },
       (err) => {
         console.error('Sync error:', err);
+        hydratedRef.current = true;
+        setSaveState('draft');
         setLoading(false);
       }
     );
+
     return () => unsub();
   }, [key, recipeId, storageNS]);
 
@@ -109,7 +147,25 @@ export default function RecipeEditor({
     return t / b;
   }, [baseYield, targetYield]);
 
-  // === SAVE TO FIRESTORE ===
+  // === LOCAL DRAFT PERSIST ===
+  function persistDraft(customCover?: string) {
+    const draft: RecipeData & { status: 'draft' } = {
+      id: recipeId,
+      title: title || 'New Recipe',
+      baseYield: Math.max(1, Number(baseYield) || 1),
+      targetYield: Number(targetYield) || 1,
+      ingredients,
+      steps,
+      cover: customCover ?? cover,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      status: 'draft',
+    };
+    localStorage.setItem(key, JSON.stringify(draft));
+    setSaveState((prev) => (prev === 'saving' ? prev : 'draft'));
+  }
+
+  // === SAVE TO FIRESTORE (cloud) ===
   async function publishToFirebase(customCover?: string) {
     if (!title.trim()) {
       alert('Please add a title before saving.');
@@ -117,6 +173,8 @@ export default function RecipeEditor({
     }
 
     setSaving(true);
+    setSaveState('saving');
+
     try {
       const payload: RecipeData = {
         id: recipeId,
@@ -125,7 +183,7 @@ export default function RecipeEditor({
         targetYield: Number(targetYield) || 1,
         ingredients,
         steps,
-        cover: customCover ?? cover, // http(s) or data:
+        cover: customCover ?? cover,
         createdAt: Date.now(),
         updatedAt: Date.now(),
         status: 'published',
@@ -139,80 +197,21 @@ export default function RecipeEditor({
 
       localStorage.setItem(key, JSON.stringify(payload));
       onMetaUpdate({ title: payload.title, cover: payload.cover, updatedAt: payload.updatedAt });
+
+      setSaveState('saved');
+      setLastSavedAt(Date.now());
       setToast('💾 Saved & synced to cloud');
     } catch (err) {
       console.error(err);
-      alert('⚠️ Save failed. Check Firebase connection.');
+      setSaveState('draft');
+      alert('⚠️ Save failed. Stored as local draft. Check Firebase connection.');
     } finally {
       setSaving(false);
       setTimeout(() => setToast(null), 2000);
     }
   }
 
-  // === FAST IMAGE UPLOAD WITH AUTOMATIC FALLBACK (NO BLOB IN FIRESTORE) ===
-  async function onCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      alert('Please upload a valid image.');
-      return;
-    }
-
-    // Instant preview ONLY in state (not saved anywhere)
-    const previewUrl = URL.createObjectURL(file);
-    setCover(previewUrl);
-
-    try {
-      // Try Storage first
-      const storageRef = ref(storage, `${storageNS}/${recipeId}/cover-${Date.now()}.png`);
-      await uploadBytes(storageRef, file, { contentType: file.type });
-      const downloadURL = await getDownloadURL(storageRef);
-
-      // Success: use permanent HTTPS URL
-      setCover(downloadURL);
-      persistDraft(downloadURL);
-      await setDoc(
-        doc(db, storageNS, recipeId),
-        { cover: downloadURL, updatedAt: serverTimestamp() },
-        { merge: true }
-      );
-      setToast('✅ Image uploaded & synced');
-    } catch (err) {
-      console.warn('Storage unavailable, using inline data URL fallback.', err);
-      // Fallback: compress → data URL → save (works without Storage)
-      const dataUrl = await fileToCompressedDataURL(file, 1280, 0.9);
-      setCover(dataUrl);
-      persistDraft(dataUrl);
-      await setDoc(
-        doc(db, storageNS, recipeId),
-        { cover: dataUrl, updatedAt: serverTimestamp() },
-        { merge: true }
-      );
-      setToast('✅ Image saved (inline) & synced');
-    } finally {
-      URL.revokeObjectURL(previewUrl);
-      setTimeout(() => setToast(null), 2000);
-    }
-  }
-
-  // === LOCAL DRAFT PERSIST ===
-  function persistDraft(customCover?: string) {
-    const draft: RecipeData & { status: 'draft' } = {
-      id: recipeId,
-      title: title || 'New Recipe',
-      baseYield: Math.max(1, Number(baseYield) || 1),
-      targetYield: Number(targetYield) || 1,
-      ingredients,
-      steps,
-      cover: customCover ?? cover, // http(s) or data:
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      status: 'draft',
-    };
-    localStorage.setItem(key, JSON.stringify(draft));
-  }
-
-  // Compress to data URL (fast, ~instant on modern devices)
+  // Compress to data URL (fast)
   function fileToCompressedDataURL(file: File, maxWidth: number, quality: number): Promise<string> {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -229,13 +228,66 @@ export default function RecipeEditor({
         const ctx = canvas.getContext('2d');
         if (!ctx) return reject('no canvas');
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        // JPEG gives smallest payload for covers; browsers load it fastest.
         const dataUrl = canvas.toDataURL('image/jpeg', quality);
         resolve(dataUrl);
       };
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
+  }
+
+  // === FAST IMAGE UPLOAD WITH AUTOMATIC FALLBACK (NO BLOB IN FIRESTORE) ===
+  async function onCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload a valid image.');
+      return;
+    }
+
+    // Instant preview ONLY in state (not saved anywhere)
+    const previewUrl = URL.createObjectURL(file);
+    setCover(previewUrl);
+
+    try {
+      setSaveState('saving');
+
+      const storageRef = ref(storage, `${storageNS}/${recipeId}/cover-${Date.now()}.png`);
+      await uploadBytes(storageRef, file, { contentType: file.type });
+      const downloadURL = await getDownloadURL(storageRef);
+
+      setCover(downloadURL);
+      persistDraft(downloadURL);
+
+      await setDoc(
+        doc(db, storageNS, recipeId),
+        { cover: downloadURL, updatedAt: serverTimestamp() },
+        { merge: true }
+      );
+
+      setSaveState('saved');
+      setLastSavedAt(Date.now());
+      setToast('✅ Image uploaded & synced');
+    } catch (err) {
+      console.warn('Storage unavailable, using inline data URL fallback.', err);
+
+      const dataUrl = await fileToCompressedDataURL(file, 1280, 0.9);
+      setCover(dataUrl);
+      persistDraft(dataUrl);
+
+      await setDoc(
+        doc(db, storageNS, recipeId),
+        { cover: dataUrl, updatedAt: serverTimestamp() },
+        { merge: true }
+      );
+
+      setSaveState('saved');
+      setLastSavedAt(Date.now());
+      setToast('✅ Image saved (inline) & synced');
+    } finally {
+      URL.revokeObjectURL(previewUrl);
+      setTimeout(() => setToast(null), 2000);
+    }
   }
 
   const removeCover = () => {
@@ -247,27 +299,58 @@ export default function RecipeEditor({
 
   // === INGREDIENT / STEP HANDLERS ===
   const addIngredient = () =>
-    setIngredients([...ingredients, { id: uid(), baseAmount: '', unit: '', item: '' }]);
+    setIngredients((prev) => [...prev, { id: uid(), baseAmount: '', unit: '', item: '' }]);
+
   const updateIngredient = (id: string, field: keyof Ingredient, value: any) =>
     setIngredients((prev) => prev.map((ing) => (ing.id === id ? { ...ing, [field]: value } : ing)));
+
   const removeIngredient = (id: string) =>
     setIngredients((prev) => prev.filter((ing) => ing.id !== id));
 
-  const addStep = () => setSteps([...steps, { id: uid(), text: '' }]);
+  const addStep = () => setSteps((prev) => [...prev, { id: uid(), text: '' }]);
+
   const updateStep = (id: string, text: string) =>
     setSteps((prev) => prev.map((s) => (s.id === id ? { ...s, text } : s)));
+
   const removeStep = (id: string) => setSteps((prev) => prev.filter((s) => s.id !== id));
 
-  // === SAVE BUTTON ===
-  const handleSave = async () => {
-    await publishToFirebase();
-    onBack();
-  };
-
+  // === AUTOSAVE (debounced) ===
   useEffect(() => {
     persistDraft();
+
+    if (!hydratedRef.current) return;
+    if (!title.trim()) return;
+
+    if (autosaveTimerRef.current) window.clearTimeout(autosaveTimerRef.current);
+
+    autosaveTimerRef.current = window.setTimeout(async () => {
+      // Avoid autosaving while the explicit save is running
+      if (saving) return;
+      try {
+        await publishToFirebase();
+      } catch {
+        // publishToFirebase already handles UI + fallback
+      }
+    }, 900);
+
+    return () => {
+      if (autosaveTimerRef.current) window.clearTimeout(autosaveTimerRef.current);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title, baseYield, targetYield, ingredients, steps, cover]);
+
+  const handleSaveNow = async () => {
+    await publishToFirebase();
+  };
+
+  const saveLabel =
+    saveState === 'saving'
+      ? 'Saving…'
+      : saveState === 'saved' && lastSavedAt
+      ? `Saved ${formatTime(lastSavedAt)}`
+      : saveState === 'draft'
+      ? 'Offline draft'
+      : 'Ready';
 
   if (loading) return <p style={{ textAlign: 'center', marginTop: 100 }}>Loading recipe...</p>;
 
@@ -291,25 +374,60 @@ export default function RecipeEditor({
         </div>
       )}
 
-      {/* Back */}
-      <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-        <button
-          onClick={onBack}
-          style={{
-            background: 'linear-gradient(90deg,#c59d5f,#d4af37)',
-            color: 'white',
-            border: 'none',
-            padding: '10px 22px',
-            borderRadius: '999px',
-            cursor: 'pointer',
-          }}
-        >
-          ← Back to My Recipe Book
-        </button>
+      {/* Top actions */}
+      <div
+        className="recipe-editor-topbar"
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: 12,
+          flexWrap: 'wrap',
+          maxWidth: 1100,
+          margin: '0 auto 1rem',
+        }}
+      >
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <button type="button" className="btn btn--ghost" onClick={onBack}>
+            ← Back to Shelf
+          </button>
+
+          <button
+            type="button"
+            className="btn btn--ghost"
+            onClick={() => router.push('/myrecipebook')}
+          >
+            ← Back to My Recipe Book
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          <span className="save-pill">{saveLabel}</span>
+          <button type="button" className="btn btn--primary" onClick={handleSaveNow} disabled={saving}>
+            💾 Save Now
+          </button>
+        </div>
       </div>
 
+      {/* Heading */}
+      <section
+        className="card"
+        style={{
+          maxWidth: 1100,
+          margin: '0 auto 1rem',
+          padding: 20,
+          borderRadius: 16,
+        }}
+      >
+        <h2 style={{ margin: 0 }}>{heading}</h2>
+        {subtitle && <p style={{ marginTop: 6, opacity: 0.7 }}>{subtitle}</p>}
+      </section>
+
       {/* Title */}
-      <section className="card" style={{ maxWidth: 1100, margin: '0 auto 1rem', padding: 20, borderRadius: 16 }}>
+      <section
+        className="card"
+        style={{ maxWidth: 1100, margin: '0 auto 1rem', padding: 20, borderRadius: 16 }}
+      >
         <label style={{ fontWeight: 600, display: 'block', marginBottom: 8 }}>Recipe Title</label>
         <input
           type="text"
@@ -325,28 +443,36 @@ export default function RecipeEditor({
       </section>
 
       {/* Cover */}
-      <section className="card" style={{ maxWidth: 1100, margin: '0 auto 1.25rem', padding: 20, borderRadius: 16 }}>
-        <h3>Cover Image</h3>
+      <section
+        className="card"
+        style={{ maxWidth: 1100, margin: '0 auto 1.25rem', padding: 20, borderRadius: 16 }}
+      >
+        <h3 style={{ marginTop: 0 }}>Cover Image</h3>
+
         {!cover ? (
           <div style={{ textAlign: 'center' }}>
-            <input type="file" accept="image/*" id="upload" onChange={onCoverChange} style={{ display: 'none' }} />
-            <label
-              htmlFor="upload"
-              style={{
-                display: 'inline-block',
-                padding: '10px 20px',
-                borderRadius: 12,
-                background: 'linear-gradient(90deg,#c59d5f,#d4af37)',
-                color: 'white',
-                cursor: 'pointer',
-              }}
-            >
+            <input
+              type="file"
+              accept="image/*"
+              id="upload"
+              onChange={onCoverChange}
+              style={{ display: 'none' }}
+            />
+            <label htmlFor="upload" className="btn btn--primary" style={{ borderRadius: 12 }}>
               📷 Upload Image
             </label>
           </div>
         ) : (
           <div style={{ position: 'relative', marginTop: 10 }}>
-            <img src={cover} alt="cover" style={{ width: '100%', borderRadius: 12, border: '1px solid #ccc' }} />
+            <img
+              src={cover}
+              alt="cover"
+              style={{
+                width: '100%',
+                borderRadius: 12,
+                border: '1px solid rgba(0,0,0,.15)',
+              }}
+            />
             <div
               style={{
                 position: 'absolute',
@@ -356,16 +482,37 @@ export default function RecipeEditor({
                 padding: '6px 10px',
                 borderRadius: 8,
                 display: 'flex',
-                gap: 8,
+                gap: 10,
+                alignItems: 'center',
               }}
             >
-              <input type="file" accept="image/*" id="replace" onChange={onCoverChange} style={{ display: 'none' }} />
-              <label htmlFor="replace" style={{ color: 'white', cursor: 'pointer', fontSize: 13, textDecoration: 'underline' }}>
+              <input
+                type="file"
+                accept="image/*"
+                id="replace"
+                onChange={onCoverChange}
+                style={{ display: 'none' }}
+              />
+              <label
+                htmlFor="replace"
+                style={{
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontSize: 13,
+                  textDecoration: 'underline',
+                }}
+              >
                 Replace
               </label>
+
               <span
                 onClick={removeCover}
-                style={{ color: '#ffbaba', cursor: 'pointer', fontSize: 13, textDecoration: 'underline' }}
+                style={{
+                  color: '#ffbaba',
+                  cursor: 'pointer',
+                  fontSize: 13,
+                  textDecoration: 'underline',
+                }}
               >
                 Delete
               </span>
@@ -375,9 +522,12 @@ export default function RecipeEditor({
       </section>
 
       {/* Yield */}
-      <section className="card" style={{ maxWidth: 1100, margin: '0 auto 1rem', padding: 20, borderRadius: 16 }}>
-        <h3>Yield</h3>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+      <section
+        className="card"
+        style={{ maxWidth: 1100, margin: '0 auto 1rem', padding: 20, borderRadius: 16 }}
+      >
+        <h3 style={{ marginTop: 0 }}>Yield</h3>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
           <label>
             Base Yield:
             <input
@@ -385,95 +535,105 @@ export default function RecipeEditor({
               min={1}
               value={baseYield}
               onChange={(e) => {
-                const val = e.target.value === '' ? '' : Math.max(1,
-            Number(e.target.value));
-                setBaseYield(val as number);
+                const n = Number(e.target.value || '1');
+                setBaseYield(Math.max(1, n));
               }}
-              style={{ marginLeft: 8, width: 80 }}
+              style={{ marginLeft: 8, width: 90 }}
             />
           </label>
+
           <label>
             Target Yield:
             <input
               type="number"
+              min={1}
               value={targetYield}
               onChange={(e) => {
-                const val = e.target.value === '' ? '' : Math.max(1,
-            Number(e.target.value));
-                setTargetYield(val as number);
+                const n = Number(e.target.value || '1');
+                setTargetYield(Math.max(1, n));
               }}
-              style={{ marginLeft: 8, width: 80 }}
+              style={{ marginLeft: 8, width: 90 }}
             />
           </label>
-          <div style={{ alignSelf: 'center' }}>Scaling ×{factor.toFixed(2)}</div>
+
+          <div style={{ opacity: 0.8 }}>Scaling ×{factor.toFixed(2)}</div>
         </div>
       </section>
 
       {/* Ingredients */}
-      <section className="card" style={{ maxWidth: 1100, margin: '0 auto 1rem', padding: 20, borderRadius: 16 }}>
-        <h3>Ingredients</h3>
+      <section
+        className="card"
+        style={{ maxWidth: 1100, margin: '0 auto 1rem', padding: 20, borderRadius: 16 }}
+      >
+        <h3 style={{ marginTop: 0 }}>Ingredients</h3>
+
         {ingredients.map((ing) => (
-          <div key={ing.id} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+          <div key={ing.id} style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
             <input
               type="number"
               placeholder="Qty"
               value={typeof ing.baseAmount === 'number' ? +(ing.baseAmount * factor).toFixed(2) : ''}
-              onChange={(e) => updateIngredient(ing.id, 'baseAmount', parseFloat(e.target.value || '0') / factor)}
-              style={{ width: 70 }}
+              onChange={(e) => {
+                const scaled = parseFloat(e.target.value || '0');
+                updateIngredient(ing.id, 'baseAmount', scaled / factor);
+              }}
+              style={{ width: 90 }}
             />
             <input
               type="text"
               placeholder="Unit"
               value={ing.unit}
               onChange={(e) => updateIngredient(ing.id, 'unit', e.target.value)}
-              style={{ width: 80 }}
+              style={{ width: 120 }}
             />
             <input
               type="text"
               placeholder="Ingredient"
               value={ing.item}
               onChange={(e) => updateIngredient(ing.id, 'item', e.target.value)}
-              style={{ flex: 1 }}
+              style={{ flex: 1, minWidth: 220 }}
             />
-            <button onClick={() => removeIngredient(ing.id)}>✕</button>
+
+            <button type="button" className="btn btn--danger btn--sm" onClick={() => removeIngredient(ing.id)}>
+              ✕
+            </button>
           </div>
         ))}
-        <button onClick={addIngredient}>+ Add Ingredient</button>
+
+        <button type="button" className="btn btn--ghost btn--sm" onClick={addIngredient}>
+          + Add Ingredient
+        </button>
       </section>
 
       {/* Steps */}
-      <section className="card" style={{ maxWidth: 1100, margin: '0 auto 1rem', padding: 20, borderRadius: 16 }}>
-        <h3>Method</h3>
+      <section
+        className="card"
+        style={{ maxWidth: 1100, margin: '0 auto 1rem', padding: 20, borderRadius: 16 }}
+      >
+        <h3 style={{ marginTop: 0 }}>Method</h3>
+
         {steps.map((s) => (
-          <div key={s.id} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+          <div key={s.id} style={{ display: 'flex', gap: 8, marginBottom: 10, alignItems: 'flex-start' }}>
             <textarea
               value={s.text}
               onChange={(e) => updateStep(s.id, e.target.value)}
-              style={{ flex: 1, height: 80 }}
+              style={{ flex: 1, height: 92, padding: 10, borderRadius: 10, border: '1px solid rgba(0,0,0,.15)' }}
             />
-            <button onClick={() => removeStep(s.id)}>✕</button>
+            <button type="button" className="btn btn--danger btn--sm" onClick={() => removeStep(s.id)}>
+              ✕
+            </button>
           </div>
         ))}
-        <button onClick={addStep}>+ Add Step</button>
+
+        <button type="button" className="btn btn--ghost btn--sm" onClick={addStep}>
+          + Add Step
+        </button>
       </section>
 
-      {/* Save */}
+      {/* Bottom save */}
       <div style={{ textAlign: 'center', marginTop: 20 }}>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          style={{
-            background: 'linear-gradient(90deg,#c59d5f,#d4af37)',
-            color: 'white',
-            border: 'none',
-            padding: '12px 30px',
-            fontSize: '1rem',
-            borderRadius: '999px',
-            cursor: 'pointer',
-            opacity: saving ? 0.7 : 1,
-          }}
-        >
-          {saving ? 'Saving...' : '💾 Save Recipe'}
+        <button type="button" className="btn btn--primary" onClick={handleSaveNow} disabled={saving}>
+          {saving ? 'Saving…' : '💾 Save Now'}
         </button>
       </div>
     </main>
