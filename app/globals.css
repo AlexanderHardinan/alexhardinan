@@ -1274,3 +1274,66 @@ button:hover,
   margin:0;
   line-height:1.6;
 }
+
+/* =========================================================
+   Phase 8 — RecipeBook UI controls (search/sort/empty)
+   ========================================================= */
+
+.recipe-search,
+.recipe-sort{
+  height:44px;
+  border-radius:999px;
+  border:1px solid rgba(0,0,0,.10);
+  padding:0 14px;
+  font-size:.95rem;
+  outline:none;
+  background:rgba(255,255,255,.70);
+  backdrop-filter:blur(14px) saturate(160%);
+  -webkit-backdrop-filter:blur(14px) saturate(160%);
+  box-shadow:0 10px 30px rgba(0,0,0,.08);
+  color:#000;
+}
+
+.recipe-search{
+  width:min(340px, 86vw);
+}
+
+.recipe-search::placeholder{
+  color:rgba(0,0,0,.45);
+}
+
+.recipe-sort{
+  cursor:pointer;
+}
+
+:root[data-theme="dark"] .recipe-search,
+:root[data-theme="dark"] .recipe-sort{
+  border-color:rgba(255,255,255,.12);
+  background:rgba(255,255,255,.06);
+  color:#fff;
+}
+
+:root[data-theme="dark"] .recipe-search::placeholder{
+  color:rgba(255,255,255,.45);
+}
+
+.recipe-empty{
+  border-radius:18px;
+  padding:22px 18px;
+  text-align:center;
+  background:linear-gradient(180deg, var(--gc-top, rgba(255,255,255,.72)), var(--gc-bot, rgba(255,255,255,.52)));
+  border:1px solid var(--gc-border, rgba(255,255,255,.60));
+  box-shadow:var(--gc-shadow, 0 18px 60px rgba(0,0,0,.12));
+  backdrop-filter:blur(var(--gc-blur, 18px)) saturate(var(--gc-sat, 170%));
+  -webkit-backdrop-filter:blur(var(--gc-blur, 18px)) saturate(var(--gc-sat, 170%));
+}
+
+.recipe-empty__title{
+  font-size:1.15rem;
+  font-weight:800;
+  margin-bottom:6px;
+}
+
+.recipe-empty__sub{
+  opacity:.75;
+}
