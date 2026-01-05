@@ -19,23 +19,20 @@ export default function Page() {
       },
       { threshold: 0.1 }
     );
-    document.querySelectorAll('.fade-up, .fade-left, .fade-right').forEach((el) => observer.observe(el));
+
+    document
+      .querySelectorAll('.fade-up, .fade-left, .fade-right')
+      .forEach((el) => observer.observe(el));
+
     return () => observer.disconnect();
   }, []);
 
   return (
     <main>
-      {/* ===== HERO ===== */}
+      {/* ===== HERO (IMAGE ONLY) ===== */}
       <section className="hero">
         <Bubbles />
         <Image src="/hero.png" alt="Cover" fill priority />
-        <div className="content fade-up">
-          <h1 className="title">Chef Alex Hardinan</h1>
-          <p className="subtitle">Culinary Innovator. Executive Chef. Visionary Leader.</p>
-          <a href="#about">
-            <button className="btn">Discover More</button>
-          </a>
-        </div>
       </section>
 
       {/* ===== ABOUT SECTION ===== */}
@@ -43,8 +40,8 @@ export default function Page() {
         <div className="about-wrapper">
           <h2 className="about-heading fade-up">About Chef Alex</h2>
           <p className="about-subtitle fade-up">
-            Culinary Innovator | Executive Chef | General Manager | Mixologist | Founder of
-            Gastronomist International
+            Executive Chef | Operations Leader | Fine Dining & Luxury Hospitality |
+            Founder of Gastronomist International | Independent Full-Stack Developer
           </p>
 
           <hr className="divider" />
@@ -72,8 +69,7 @@ export default function Page() {
               </p>
               <p>
                 Currently, he leads <strong>The Globe’s Heritage by Chef Alex</strong> in Pattaya,
-                Thailand, elevating the city’s gastronomic reputation to rival Bangkok. Learn more
-                at{' '}
+                Thailand, elevating the city’s gastronomic reputation to rival Bangkok. Learn more at{' '}
                 <a href="https://www.theglobeasia.com" target="_blank" rel="noreferrer">
                   www.theglobeasia.com
                 </a>
@@ -95,6 +91,7 @@ export default function Page() {
                 dedication and those who believe in his craft.
               </p>
             </div>
+
             <div className="about-image fade-left">
               <Image
                 src="/about-chef.png"
@@ -176,8 +173,9 @@ export default function Page() {
             <div className="about-text fade-left">
               <h3 className="about-subhead">Beyond the Kitchen</h3>
               <p>
-                Outside of his culinary and managerial pursuits, Chef Alex is also a website designer
-                and data analyst, driven by curiosity and creativity in digital design and analytics.
+                Outside of his culinary and managerial pursuits, Chef Alex is also a website
+                designer and data analyst, driven by curiosity and creativity in digital design and
+                analytics.
               </p>
               <p>
                 He is the Founder and President of <strong>Gastronomist International</strong>, a
@@ -200,7 +198,7 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ===== GALLERY CAROUSEL ===== */}
+      {/* ===== GALLERY ===== */}
       <section id="gallery" className="fade-up" style={{ padding: '3rem 1rem' }}>
         <h2 className="title" style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
           Gallery
