@@ -1026,3 +1026,55 @@ button:focus-visible{
   -webkit-line-clamp:4;
   overflow:hidden;
 }
+
+.story-caption{
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:4;
+  overflow:hidden;
+}
+
+/* =========================================================
+   FIX — Page top offset for floating header
+   ========================================================= */
+
+/* Default page content offset */
+main.container{
+  padding-top: calc(120px + 1rem);
+}
+
+/* Smaller screens */
+@media (max-width: 768px){
+  main.container{
+    padding-top: calc(110px + 1rem);
+  }
+}
+
+/* =========================================================
+   FIX — Header navigation + buttons visibility
+   (global safe default)
+   ========================================================= */
+
+/* Desktop navigation */
+.site-header .nav-desktop a{
+  color:#000;
+}
+.site-header .nav-desktop a:hover{
+  color:#fff;
+}
+
+/* Header buttons (Menu, Dark toggle) */
+.site-header .btn{
+  color:#000;
+}
+.site-header .btn:hover{
+  color:#fff;
+}
+
+/* Mobile sidebar links */
+.sidebar nav a{
+  color:#000;
+}
+.sidebar nav a:hover{
+  color:#fff;
+}
