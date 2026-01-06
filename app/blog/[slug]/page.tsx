@@ -9,6 +9,7 @@ type Article = {
 };
 
 const SITE = 'https://alexhardinan.com';
+const SITE_NAME = 'Alexander Hardinan';
 
 const articles: Record<string, Article> = {
   'carrot-confidential': {
@@ -45,7 +46,7 @@ const articles: Record<string, Article> = {
       'Travel defines perspective.',
       'From Asia’s spice markets to Europe’s cellars, each journey expands my sensory library.',
       'Global inspiration is not imitation — it’s dialogue. My goal is to translate those influences into dishes that feel local yet speak universal.',
-    ],
+      ],
   },
 };
 
@@ -70,20 +71,20 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
   const url = `${SITE}/blog/${params.slug}`;
 
   return {
-    title: `${article.title} | Alexander Hardinan`,
+    title: `${article.title} | ${SITE_NAME}`,
     description,
     alternates: { canonical: url },
     openGraph: {
-      title: `${article.title} | Alexander Hardinan`,
+      title: `${article.title} | ${SITE_NAME}`,
       description,
       url,
-      siteName: 'Alexander Hardinan',
+      siteName: SITE_NAME,
       images: [{ url: article.src, width: 1200, height: 630, alt: article.title }],
       type: 'article',
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${article.title} | Alexander Hardinan`,
+      title: `${article.title} | ${SITE_NAME}`,
       description,
       images: [article.src],
     },
@@ -105,8 +106,51 @@ export default function SinglePost({ params }: { params: { slug: string } }) {
     );
   }
 
+  const description =
+    article.content?.[1] ||
+    article.content?.[0] ||
+    'Chef Alex shares insights on modern gastronomy, sourcing, technique, and culinary storytelling.';
+
+  const url = `${SITE}/blog/${slug}`;
+  const imageAbs = new URL(article.src, SITE).toString();
+
+  const blogPostingLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: article.title,
+    description,
+    image: [imageAbs],
+    author: {
+      '@type': 'Person',
+      name: SITE_NAME,
+      url: SITE,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: SITE_NAME,
+      url: SITE,
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': url,
+    },
+    url,
+    isPartOf: {
+      '@type': 'Blog',
+      name: 'Culinary Journal',
+      url: `${SITE}/blog`,
+    },
+  };
+
   return (
     <main className="container" style={{ padding: 0 }}>
+      {/* JSON-LD: BlogPosting */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(blogPostingLd) }}
+      />
+
+      {/* ===== HERO BANNER ===== */}
       <section className="blog-hero">
         <Image src={article.src} alt={article.title} fill priority />
         <div className="hero-overlay">
@@ -116,6 +160,7 @@ export default function SinglePost({ params }: { params: { slug: string } }) {
         </div>
       </section>
 
+      {/* ===== ARTICLE BODY ===== */}
       <section className="blog-article">
         <div className="article-wrapper">
           <Link href="/blog" className="read-btn back-btn">
