@@ -2012,3 +2012,47 @@ main{
 a.btn{
   display: inline-flex;
 }
+
+/* =========================================================
+   Phase 14.1 — Visible focus (keyboard accessibility)
+   ========================================================= */
+
+:focus-visible{
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* Prevent ugly focus rings on mouse click */
+:focus:not(:focus-visible){
+  outline: none;
+}
+
+/* Ensure links styled as buttons remain accessible */
+a.btn{
+  role: button;
+}
+
+/* =========================================================
+   Phase 14.3 — Reduced motion support
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce){
+  *{
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Prevent decorative images from stealing focus */
+img{
+  pointer-events: none;
+}
+
+/* But allow interactive images (cards) */
+.image-card img,
+.story-card img,
+.blog-card img{
+  pointer-events: auto;
+}
