@@ -37,16 +37,49 @@ export const metadata: Metadata = {
   },
 };
 
+const SITE_NAME = 'Alexander Hardinan';
+const SITE_URL = 'https://alexhardinan.com';
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Performance */}
         <link rel="preconnect" href="https://vitals.vercel-insights.com" />
         <link rel="preconnect" href="https://res.cloudinary.com" />
         <link rel="dns-prefetch" href="https://vitals.vercel-insights.com" />
+
+        {/* Caching + viewport */}
         <meta httpEquiv="Cache-Control" content="public, max-age=604800, immutable" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta name="theme-color" content="#ffffff" />
+
+        {/* Phase 13 — Global JSON-LD (WebSite + Person) */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@graph': [
+                {
+                  '@type': 'WebSite',
+                  name: SITE_NAME,
+                  url: SITE_URL,
+                },
+                {
+                  '@type': 'Person',
+                  name: SITE_NAME,
+                  url: SITE_URL,
+                  jobTitle: 'Executive Chef',
+                  sameAs: [
+                    'https://www.instagram.com/bw_bychefalex?igsh=dTlhdnp4MjZjaTg5&utm_source=qr',
+                    'https://www.facebook.com/share/1DQne9DYkt/?mibextid=wwXIfr',
+                  ],
+                },
+              ],
+            }),
+          }}
+        />
       </head>
 
       <body className={inter.className}>
@@ -72,6 +105,7 @@ function Footer() {
           <path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm5 5a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm6.5-.25a1.25 1.25 0 1 0 0 2.5 1.25 1.25 0 0 0 0-2.5z" />
         </svg>
       </a>
+
       <a
         href="https://www.facebook.com/share/1DQne9DYkt/?mibextid=wwXIfr"
         target="_blank"
