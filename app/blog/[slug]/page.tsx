@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
+import Breadcrumbs from '../../../components/Breadcrumbs';
 
 type Article = {
   title: string;
@@ -46,19 +47,21 @@ const articles: Record<string, Article> = {
       'Travel defines perspective.',
       'From Asia’s spice markets to Europe’s cellars, each journey expands my sensory library.',
       'Global inspiration is not imitation — it’s dialogue. My goal is to translate those influences into dishes that feel local yet speak universal.',
-      ],
+    ],
   },
 };
 
+const blogOrder = Object.keys(articles);
+
 export function generateStaticParams() {
-  return Object.keys(articles).map((slug) => ({ slug }));
+  return blogOrder.map((slug) => ({ slug }));
 }
 
 export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
   const article = articles[params.slug];
   if (!article) {
     return {
-      title: 'Article Not Found | Alexander Hardinan',
+      title: `Article Not Found | ${SITE_NAME}`,
       robots: { index: false, follow: false },
     };
   }
@@ -142,13 +145,17 @@ export default function SinglePost({ params }: { params: { slug: string } }) {
     },
   };
 
+  const idx = blogOrder.indexOf(slug);
+  const prevSlug = idx > 0 ? blogOrder[idx - 1] : null;
+  const nextSlug = idx < blogOrder.length - 1 ? blogOrder[idx + 1] : null;
+
   return (
     <main className="container" style={{ padding: 0 }}>
       {/* JSON-LD: BlogPosting */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(blogPostingLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(blogPostingLd) }} />
+
+      {/* Breadcrumbs */}
+      <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Blog', href: '/blog' }, { label: article.title }]} />
 
       {/* ===== HERO BANNER ===== */}
       <section className="blog-hero">
@@ -172,6 +179,33 @@ export default function SinglePost({ params }: { params: { slug: string } }) {
               <p key={i}>{p}</p>
             ))}
           </article>
+
+          {/* Explore Next (internal linking) */}
+          <div className="post-next">
+            <h3 className="post-next__title">Explore Next</h3>
+
+            <div className="post-next__links">
+              {prevSlug && (
+                <Link className="btn btn--ghost btn--sm" href={`/blog/${prevSlug}`}>
+                  ← Previous
+                </Link>
+              )}
+
+              {nextSlug && (
+                <Link className="btn btn--ghost btn--sm" href={`/blog/${nextSlug}`}>
+                  Next →
+                </Link>
+              )}
+
+              <Link className="btn btn--primary btn--sm" href="/stories-on-a-plate">
+                Stories on a Plate →
+              </Link>
+
+              <Link className="btn btn--ghost btn--sm" href="/in-the-glass">
+                In the Glass →
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
     </main>
