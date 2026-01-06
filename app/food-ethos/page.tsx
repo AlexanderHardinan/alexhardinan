@@ -1,4 +1,5 @@
 import RevealOnScroll from '../../components/RevealOnScroll';
+import Link from 'next/link';
 
 export default function FoodEthos() {
   return (
@@ -12,10 +13,10 @@ export default function FoodEthos() {
         <section className="fade-up ethos-content">
           <h2>My Philosophy</h2>
           <p>
-            Food is more than nourishment — it is a connection to culture, environment, and
-            community. My food ethos is built on sustainability, health, and ethical responsibility.
-            I believe in using locally sourced, minimally processed ingredients that respect both
-            the planet and the people behind them.
+            Food is more than nourishment — it is a connection to culture, environment, and community.
+            My food ethos is built on sustainability, health, and ethical responsibility. I believe in
+            using locally sourced, minimally processed ingredients that respect both the planet and
+            the people behind them.
           </p>
 
           <hr className="divider" />
@@ -26,17 +27,17 @@ export default function FoodEthos() {
             <div className="ethos-card">
               <h3>Quality and Freshness</h3>
               <p className="ethos-excerpt">
-                Commitment to fresh, seasonal, and locally sourced ingredients ensures both
-                superior taste and support for regional farmers and producers.
+                Commitment to fresh, seasonal, and locally sourced ingredients ensures both superior
+                taste and support for regional farmers and producers.
               </p>
             </div>
 
             <div className="ethos-card">
               <h3>Sustainability</h3>
               <p className="ethos-excerpt">
-                Integrating environmental care, economic balance, and social equity into every
-                aspect of food sourcing and service — aiming for a food system that benefits both
-                people and the planet.
+                Integrating environmental care, economic balance, and social equity into every aspect
+                of food sourcing and service — aiming for a food system that benefits both people and
+                the planet.
               </p>
             </div>
 
@@ -59,17 +60,16 @@ export default function FoodEthos() {
             <div className="ethos-card">
               <h3>Waste Reduction</h3>
               <p className="ethos-excerpt">
-                Minimizing waste through responsible meal planning, composting, and creative reuse
-                of ingredients — turning efficiency into an act of sustainability.
+                Minimizing waste through responsible meal planning, composting, and creative reuse of
+                ingredients — turning efficiency into an act of sustainability.
               </p>
             </div>
 
             <div className="ethos-card">
               <h3>Global Awareness</h3>
               <p className="ethos-excerpt">
-                Recognizing the global impact of food systems, supporting fair trade, food
-                sovereignty, and sustainable practices that promote global equity and environmental
-                stewardship.
+                Recognizing the global impact of food systems, supporting fair trade, food sovereignty,
+                and sustainable practices that promote global equity and environmental stewardship.
               </p>
             </div>
           </div>
@@ -81,6 +81,24 @@ export default function FoodEthos() {
             respects the earth, and uplifts the people who make it possible — one mindful dish at a
             time.
           </p>
+
+          <section className="explore-block fade-up" style={{ marginTop: 22 }}>
+            <h3 className="explore-block__title">Explore</h3>
+            <div className="explore-block__links">
+              <Link className="btn btn--primary btn--sm" href="/blog">
+                Culinary Journal →
+              </Link>
+              <Link className="btn btn--ghost btn--sm" href="/stories-on-a-plate">
+                Stories on a Plate →
+              </Link>
+              <Link className="btn btn--ghost btn--sm" href="/in-the-glass">
+                In the Glass →
+              </Link>
+              <Link className="btn btn--ghost btn--sm" href="/off-duty">
+                Off Duty →
+              </Link>
+            </div>
+          </section>
         </section>
       </main>
     </RevealOnScroll>

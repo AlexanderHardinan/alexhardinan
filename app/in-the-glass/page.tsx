@@ -1,5 +1,6 @@
 import ImageCard from '../../components/ImageCard';
 import RevealOnScroll from '../../components/RevealOnScroll';
+import Link from 'next/link';
 
 type Drink = {
   src: string;
@@ -50,6 +51,24 @@ export default function InTheGlass() {
                 <p className="story-caption">{item.caption}</p>
               </div>
             ))}
+          </div>
+        </section>
+
+        <section className="explore-block fade-up">
+          <h3 className="explore-block__title">Explore</h3>
+          <div className="explore-block__links">
+            <Link className="btn btn--primary btn--sm" href="/blog">
+              Culinary Journal →
+            </Link>
+            <Link className="btn btn--ghost btn--sm" href="/stories-on-a-plate">
+              Stories on a Plate →
+            </Link>
+            <Link className="btn btn--ghost btn--sm" href="/food-ethos">
+              Food Ethos →
+            </Link>
+            <Link className="btn btn--ghost btn--sm" href="/off-duty">
+              Off Duty →
+            </Link>
           </div>
         </section>
       </main>

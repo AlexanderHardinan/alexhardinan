@@ -1,5 +1,6 @@
 import ImageCard from '../../components/ImageCard';
 import RevealOnScroll from '../../components/RevealOnScroll';
+import Link from 'next/link';
 
 type Story = {
   src: string;
@@ -21,7 +22,6 @@ export default function StoriesOnAPlate() {
     { src: '/stories/closing-bites.png', caption: 'Closing Bites - irish coffee jelly, baileys cream sphere, citrus basket, lemon confit.' },
     { src: '/stories/carrot-confidential.png', caption: 'Carrot Confidential - carrot cappellini, carrot sphere, carrot caviar, carrot crème, carrot roll, carrot oil crumble, carrot jelly, carrot glaze, carrot tuile.' },
 
-    /* ===== NEW ADDITIONS ===== */
     { src: '/stories/thai-ravioli.png', caption: 'Thai Blue Crab Ravioli — inspired by seasonal ingredients in Thailand, Chef’s Table: Winter Edition III.' },
     { src: '/stories/thai-rissoto.png', caption: 'Khao Hom Mali risotto — jasmine rice reinterpretation of the classic risotto.' },
     { src: '/stories/tiramisu-sphere.png', caption: 'Tiramisu Reimagined — from classic to sphere.' },
@@ -82,6 +82,24 @@ export default function StoriesOnAPlate() {
                 <p className="story-caption">{item.caption}</p>
               </div>
             ))}
+          </div>
+        </section>
+
+        <section className="explore-block fade-up">
+          <h3 className="explore-block__title">Explore</h3>
+          <div className="explore-block__links">
+            <Link className="btn btn--primary btn--sm" href="/blog">
+              Culinary Journal →
+            </Link>
+            <Link className="btn btn--ghost btn--sm" href="/in-the-glass">
+              In the Glass →
+            </Link>
+            <Link className="btn btn--ghost btn--sm" href="/food-ethos">
+              Food Ethos →
+            </Link>
+            <Link className="btn btn--ghost btn--sm" href="/off-duty">
+              Off Duty →
+            </Link>
           </div>
         </section>
       </main>

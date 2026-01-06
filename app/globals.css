@@ -2116,3 +2116,25 @@ img{
   flex-wrap: wrap;
   gap: 10px;
 }
+
+/* =========================================================
+   Phase 15.3 — Pillar page "Explore" internal linking block
+   ========================================================= */
+.explore-block{
+  max-width: 1180px;
+  margin: 22px auto 0;
+  padding: 16px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, var(--glass-top), var(--glass-bot));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-inset);
+}
+.explore-block__title{
+  margin: 0 0 10px 0;
+  font-size: 1.05rem;
+}
+.explore-block__links{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}

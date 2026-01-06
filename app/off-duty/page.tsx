@@ -1,5 +1,6 @@
 import ImageCard from '../../components/ImageCard';
 import RevealOnScroll from '../../components/RevealOnScroll';
+import Link from 'next/link';
 
 type Feature = {
   src: string;
@@ -55,6 +56,24 @@ export default function OffDuty() {
               </div>
             </div>
           ))}
+        </section>
+
+        <section className="explore-block fade-up">
+          <h3 className="explore-block__title">Explore</h3>
+          <div className="explore-block__links">
+            <Link className="btn btn--primary btn--sm" href="/blog">
+              Culinary Journal →
+            </Link>
+            <Link className="btn btn--ghost btn--sm" href="/stories-on-a-plate">
+              Stories on a Plate →
+            </Link>
+            <Link className="btn btn--ghost btn--sm" href="/in-the-glass">
+              In the Glass →
+            </Link>
+            <Link className="btn btn--ghost btn--sm" href="/food-ethos">
+              Food Ethos →
+            </Link>
+          </div>
         </section>
       </main>
     </RevealOnScroll>
