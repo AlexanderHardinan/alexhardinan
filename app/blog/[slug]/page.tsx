@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -6,6 +7,8 @@ type Article = {
   src: string;
   content: string[];
 };
+
+const SITE = 'https://alexhardinan.com';
 
 const articles: Record<string, Article> = {
   'carrot-confidential': {
@@ -50,6 +53,43 @@ export function generateStaticParams() {
   return Object.keys(articles).map((slug) => ({ slug }));
 }
 
+export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
+  const article = articles[params.slug];
+  if (!article) {
+    return {
+      title: 'Article Not Found | Alexander Hardinan',
+      robots: { index: false, follow: false },
+    };
+  }
+
+  const description =
+    article.content?.[1] ||
+    article.content?.[0] ||
+    'Chef Alex shares insights on modern gastronomy, sourcing, technique, and culinary storytelling.';
+
+  const url = `${SITE}/blog/${params.slug}`;
+
+  return {
+    title: `${article.title} | Alexander Hardinan`,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title: `${article.title} | Alexander Hardinan`,
+      description,
+      url,
+      siteName: 'Alexander Hardinan',
+      images: [{ url: article.src, width: 1200, height: 630, alt: article.title }],
+      type: 'article',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${article.title} | Alexander Hardinan`,
+      description,
+      images: [article.src],
+    },
+  };
+}
+
 export default function SinglePost({ params }: { params: { slug: string } }) {
   const { slug } = params;
   const article = articles[slug];
@@ -67,7 +107,6 @@ export default function SinglePost({ params }: { params: { slug: string } }) {
 
   return (
     <main className="container" style={{ padding: 0 }}>
-      {/* ===== HERO BANNER ===== */}
       <section className="blog-hero">
         <Image src={article.src} alt={article.title} fill priority />
         <div className="hero-overlay">
@@ -77,7 +116,6 @@ export default function SinglePost({ params }: { params: { slug: string } }) {
         </div>
       </section>
 
-      {/* ===== ARTICLE BODY ===== */}
       <section className="blog-article">
         <div className="article-wrapper">
           <Link href="/blog" className="read-btn back-btn">
