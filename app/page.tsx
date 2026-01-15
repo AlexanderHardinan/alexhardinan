@@ -40,9 +40,32 @@ export default function Page() {
         <div className="about-wrapper">
           <h2 className="about-heading fade-up">About Chef Alex</h2>
           <p className="about-subtitle fade-up">
-            Executive Chef | Operations Leader | Fine Dining & Luxury Hospitality |
-            Founder of Gastronomist International | Independent Full-Stack Developer
+            Executive Chef | Operations Leader | Fine Dining & Luxury Hospitality | Founder of
+            Gastronomist International | Independent Full-Stack Developer
           </p>
+
+          <hr className="divider" />
+
+          {/* ===== CINEMATIC MP4 (between About Chef Alex and As a Chef) ===== */}
+          <section className="cinema-wrap fade-up" aria-label="Cinematic Feature">
+            <div className="cinema-frame glass">
+              <video
+                className="cinema-video"
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="metadata"
+                poster="/cinema-poster.png"
+              >
+                <source src="/cinema.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+
+              <div className="cinema-overlay" aria-hidden="true" />
+              <div className="cinema-vignette" aria-hidden="true" />
+            </div>
+          </section>
 
           <hr className="divider" />
 
@@ -184,11 +207,7 @@ export default function Page() {
               </p>
               <p>
                 Visit{' '}
-                <a
-                  href="https://www.gastronomistinternational.com"
-                  target="_blank"
-                  rel="noreferrer"
-                >
+                <a href="https://www.gastronomistinternational.com" target="_blank" rel="noreferrer">
                   www.gastronomistinternational.com
                 </a>{' '}
                 to learn more.
