@@ -2188,3 +2188,76 @@ img{
     border-radius: 18px;
   }
 }
+
+/* =========================================================
+   Cinematic Enhancements (Dogma-style)
+   - Subtle film grain overlay (CSS only)
+   - Slow parallax zoom on video (CSS only)
+   - Fully scoped to .cinema-frame / .cinema-video
+   ========================================================= */
+
+/* Film grain overlay */
+.cinema-frame::before{
+  content:"";
+  position:absolute;
+  inset:-20%;
+  pointer-events:none;
+  z-index: 3;
+
+  /* Tiny procedural noise via inline SVG */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+  background-size: 220px 220px;
+
+  opacity: .10;
+  mix-blend-mode: overlay;
+  filter: contrast(120%) brightness(110%);
+  transform: translate3d(0,0,0);
+
+  animation: cinemaGrain 6s steps(10) infinite;
+}
+
+/* Keep your existing overlays below the grain */
+.cinema-overlay{ z-index: 1; }
+.cinema-vignette{ z-index: 2; }
+
+/* Slow zoom + micro-parallax */
+.cinema-video{
+  animation: cinemaParallax 18s ease-in-out infinite alternate;
+  transform-origin: center;
+  will-change: transform;
+}
+
+@keyframes cinemaGrain{
+  0%   { transform: translate3d(-3%, -2%, 0) scale(1.06); }
+  10%  { transform: translate3d( 2%, -1%, 0) scale(1.07); }
+  20%  { transform: translate3d(-2%,  3%, 0) scale(1.06); }
+  30%  { transform: translate3d( 4%,  2%, 0) scale(1.08); }
+  40%  { transform: translate3d(-1%, -3%, 0) scale(1.07); }
+  50%  { transform: translate3d( 3%,  1%, 0) scale(1.06); }
+  60%  { transform: translate3d(-4%,  2%, 0) scale(1.08); }
+  70%  { transform: translate3d( 1%, -2%, 0) scale(1.07); }
+  80%  { transform: translate3d(-2%,  1%, 0) scale(1.06); }
+  90%  { transform: translate3d( 3%, -3%, 0) scale(1.08); }
+  100% { transform: translate3d(-1%,  2%, 0) scale(1.07); }
+}
+
+@keyframes cinemaParallax{
+  0%   { transform: scale(1.05) translate3d(0, 0, 0); }
+  100% { transform: scale(1.12) translate3d(0, -2.5%, 0); }
+}
+
+/* Mobile: slightly gentler motion (keeps it premium) */
+@media (max-width: 768px){
+  .cinema-video{
+    animation-duration: 22s;
+  }
+  .cinema-frame::before{
+    opacity: .09;
+  }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce){
+  .cinema-video{ animation: none !important; transform: none !important; }
+  .cinema-frame::before{ animation: none !important; }
+}
