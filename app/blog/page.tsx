@@ -12,11 +12,11 @@ type BlogPost = {
 
 export default function Blog() {
   const featured = {
-    src: '/blog/featured.png',
-    title: 'A New Era of Culinary Expression',
+    src: '/platform.png',
+    title: 'Built by a Chef: A Smarter Way to Control Restaurant Costs',
     excerpt:
-      'Chef Alex redefines modern dining — merging artistry, sustainability, and emotion into an unforgettable global culinary experience.',
-    slug: 'carrot-confidential',
+      'In hospitality, cost leakage often goes unnoticed — not because teams don’t care, but because systems don’t provide clarity. Track Me Solutions brings real kitchen logic to inventory, expiry, and decision-making.',
+    slug: 'built-by-a-chef-restaurant-cost-control',
   };
 
   const posts: BlogPost[] = [
