@@ -12,7 +12,8 @@ type BlogPost = {
 
 export default function Blog() {
   const featured = {
-    src: '/blog/featured.png',
+    src: '/platform.png',
+    slug: 'built-by-a-chef-restaurant-cost-control',
   };
 
   const posts: BlogPost[] = [
@@ -21,7 +22,7 @@ export default function Blog() {
       src: '/platform.png',
       title: 'Built by a Chef: A Smarter Way to Control Restaurant Costs',
       excerpt:
-        'Cost leakage often goes unnoticed — not because teams don’t care, but because systems don’t provide clarity. Track Me Solutions brings real kitchen logic to inventory, expiry, and decision-making.',
+        'Cost leakage often goes unnoticed — not because teams don’t care, but because systems don’t provide clarity.',
     },
     {
       slug: 'carrot-confidential',
@@ -59,20 +60,13 @@ export default function Blog() {
           <p className="subtitle">Insights • Inspiration • Innovation</p>
         </section>
 
-        {/* ===== FEATURED ARTICLE ===== */}
+        {/* ===== FEATURED IMAGE ONLY ===== */}
         <section className="fade-up featured-article">
-          <div className="featured-image">
-            <Image src={featured.src} alt={featured.title} fill priority />
-          </div>
-          <div className="featured-overlay">
-            <div className="featured-content">
-              <h2>{featured.title}</h2>
-              <p className="blog-excerpt">{featured.excerpt}</p>
-              <Link href={`/blog/${featured.slug}`} className="read-btn">
-                Read Feature →
-              </Link>
+          <Link href={`/blog/${featured.slug}`} aria-label="Read featured article">
+            <div className="featured-image">
+              <Image src={featured.src} alt="Featured article" fill priority />
             </div>
-          </div>
+          </Link>
         </section>
 
         {/* ===== BLOG CAROUSEL (client island) ===== */}
