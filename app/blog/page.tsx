@@ -13,10 +13,6 @@ type BlogPost = {
 export default function Blog() {
   const featured = {
     src: '/blog/featured.png',
-    title: 'A New Era of Culinary Expression',
-    excerpt:
-      'Chef Alex redefines modern dining — merging artistry, sustainability, and emotion into an unforgettable global culinary experience.',
-    slug: 'carrot-confidential',
   };
 
   const posts: BlogPost[] = [
