@@ -13,6 +13,20 @@ const SITE = 'https://alexhardinan.com';
 const SITE_NAME = 'Alexander Hardinan';
 
 const articles: Record<string, Article> = {
+  'built-by-a-chef-restaurant-cost-control': {
+    title: 'Built by a Chef: A Smarter Way to Control Restaurant Costs',
+    src: '/platform.png',
+    content: [
+      'In hospitality, cost leakage often goes unnoticed — not because teams don’t care, but because systems fail to provide clarity where it matters most.',
+      'Many restaurants struggle with stock levels that are either too low or too high, products expiring before they’re noticed, manual calorie and recipe calculations, and overcomplicated systems that teams avoid using.',
+      'A Platform Designed From Real Kitchen Experience',
+      'Track Me Solutions was built by a chef who understands how kitchens and bars actually operate. Instead of forcing teams to adapt to software, the platform adapts to the kitchen.',
+      'The platform delivers automated alerts for low and overstock situations, expiry notifications 3 days before deadlines with a dismiss function, an integrated AI Chef Alex that explains the platform and provides calorie data, simple workflows requiring minimal training, and a modern dashboard designed for decision-making — not guesswork.',
+      'Cost That Makes Sense',
+      'At $1.30 per day, Track Me Solutions costs less than the daily waste and leakage most businesses already accept. It’s not an added expense — it’s a smarter way to protect margins.',
+      'Learn more at trackme.solutions.',
+    ],
+  },
   'carrot-confidential': {
     title: '🥕 Carrot Confidential',
     src: '/blog/blog1.png',
@@ -149,13 +163,20 @@ export default function SinglePost({ params }: { params: { slug: string } }) {
   const prevSlug = idx > 0 ? blogOrder[idx - 1] : null;
   const nextSlug = idx < blogOrder.length - 1 ? blogOrder[idx + 1] : null;
 
+  const isNewPlatformPost = slug === 'built-by-a-chef-restaurant-cost-control';
+
   return (
     <main className="container" style={{ padding: 0 }}>
       {/* JSON-LD: BlogPosting */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(blogPostingLd) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(blogPostingLd) }}
+      />
 
       {/* Breadcrumbs */}
-      <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Blog', href: '/blog' }, { label: article.title }]} />
+      <Breadcrumbs
+        items={[{ label: 'Home', href: '/' }, { label: 'Blog', href: '/blog' }, { label: article.title }]}
+      />
 
       {/* ===== HERO BANNER ===== */}
       <section className="blog-hero">
@@ -175,9 +196,66 @@ export default function SinglePost({ params }: { params: { slug: string } }) {
           </Link>
 
           <article className="post-content">
-            {article.content.map((p, i) => (
-              <p key={i}>{p}</p>
-            ))}
+            {isNewPlatformPost ? (
+              <>
+                <p>
+                  In hospitality, cost leakage often goes unnoticed — not because teams don’t care,
+                  but because systems fail to provide clarity where it matters most.
+                </p>
+
+                <p>Many restaurants struggle with:</p>
+                <ul>
+                  <li>Stock levels that are either too low or too high</li>
+                  <li>Products expiring before they’re noticed</li>
+                  <li>Manual calorie and recipe calculations</li>
+                  <li>Overcomplicated systems that teams avoid using</li>
+                </ul>
+
+                <h2>A Platform Designed From Real Kitchen Experience</h2>
+                <p>
+                  Track Me Solutions was built by a chef who understands how kitchens and bars
+                  actually operate. Instead of forcing teams to adapt to software, the platform
+                  adapts to the kitchen.
+                </p>
+
+                <p>The platform delivers:</p>
+                <ul>
+                  <li>Automated alerts for low and overstock situations</li>
+                  <li>
+                    Expiry notifications 3 days before deadlines, with a dismiss function once
+                    resolved
+                  </li>
+                  <li>
+                    An integrated AI Chef Alex, explaining the platform and providing calorie data
+                    for products
+                  </li>
+                  <li>Simple, intuitive workflows that require minimal training</li>
+                  <li>A modern dashboard designed for decision-making, not guesswork</li>
+                </ul>
+
+                <h2>Cost That Makes Sense</h2>
+                <p>
+                  At $1.30 per day, Track Me Solutions costs less than the daily waste and leakage
+                  most businesses already accept.
+                </p>
+                <p>
+                  It’s not an added expense. It’s a smarter way to protect margins.
+                </p>
+
+                <p>
+                  <strong>Learn more at </strong>
+                  <a href="https://trackme.solutions" target="_blank" rel="noreferrer">
+                    https://trackme.solutions
+                  </a>
+                </p>
+              </>
+            ) : (
+              <>
+                {article.content.map((p, i) => (
+                  <p key={i}>{p}</p>
+                ))}
+              </>
+            )}
           </article>
 
           {/* Explore Next (internal linking) */}
