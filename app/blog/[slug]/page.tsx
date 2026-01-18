@@ -21,12 +21,29 @@ const articles: Record<string, Article> = {
       'Many restaurants struggle with stock levels that are either too low or too high, products expiring before they’re noticed, manual calorie and recipe calculations, and overcomplicated systems that teams avoid using.',
       'A Platform Designed From Real Kitchen Experience',
       'Track Me Solutions was built by a chef who understands how kitchens and bars actually operate. Instead of forcing teams to adapt to software, the platform adapts to the kitchen.',
-      'The platform delivers automated alerts for low and overstock situations, expiry notifications 3 days before deadlines with a dismiss function, an integrated AI Chef Alex that explains the platform and provides calorie data, simple workflows requiring minimal training, and a modern dashboard designed for decision-making — not guesswork.',
+      'The platform delivers automated alerts for low and overstock situations, expiry notifications 3 days before deadlines with a dismiss function, an integrated AI Chef Alex that explains the platform and provides calorie data for products, simple workflows requiring minimal training, and a modern dashboard designed for decision-making — not guesswork.',
       'Cost That Makes Sense',
       'At $1.30 per day, Track Me Solutions costs less than the daily waste and leakage most businesses already accept. It’s not an added expense — it’s a smarter way to protect margins.',
       'Learn more at trackme.solutions.',
     ],
   },
+
+  'track-me-solutions-phase-1-startup-guide': {
+    title: 'Track Me Solutions — Phase 1: Startup Guide',
+    src: '/phase-1.png',
+    content: [
+      'The Best Inventory SaaS Platform for Restaurants in 2026',
+      'In 2026, restaurant and bar operations demand more than spreadsheets, manual stock counts, or disconnected tools. The industry now requires real-time inventory management, cloud-based access, and chef-driven software that delivers immediate control without complexity.',
+      'Track Me Solutions stands out as one of the best inventory SaaS platforms for hospitality in 2026 — designed specifically for restaurants, bars, and culinary operations that need accuracy, speed, and visibility from day one.',
+      'Getting started with Track Me Solutions is intentionally simple.',
+      'As a cloud-based inventory SaaS platform, there is no software to install, no hardware dependency, and no technical setup required. As long as you have an internet connection, you can access the system from any device — desktop, tablet, or mobile.',
+      'During onboarding, users create an account, register their business, and receive a unique Business ID with email verification for security and accountability. Once verified, logging in automatically unlocks the full operational dashboard, inventory controls, and system features.',
+      'This fast onboarding process is designed for modern hospitality businesses that cannot afford downtime, complexity, or long implementation cycles.',
+      'The result is immediate access to a professional inventory management system, zero learning friction for teams, and full operational visibility from day one.',
+      'In a market crowded with generic tools, Track Me Solutions sets the benchmark for inventory SaaS platforms in 2026 — built by a chef, powered by modern technology, and designed for real-world hospitality operations.',
+    ],
+  },
+
   'carrot-confidential': {
     title: '🥕 Carrot Confidential',
     src: '/blog/blog1.png',
@@ -164,6 +181,7 @@ export default function SinglePost({ params }: { params: { slug: string } }) {
   const nextSlug = idx < blogOrder.length - 1 ? blogOrder[idx + 1] : null;
 
   const isNewPlatformPost = slug === 'built-by-a-chef-restaurant-cost-control';
+  const isPhase1Post = slug === 'track-me-solutions-phase-1-startup-guide';
 
   return (
     <main className="container" style={{ padding: 0 }}>
@@ -238,15 +256,66 @@ export default function SinglePost({ params }: { params: { slug: string } }) {
                   At $1.30 per day, Track Me Solutions costs less than the daily waste and leakage
                   most businesses already accept.
                 </p>
-                <p>
-                  It’s not an added expense. It’s a smarter way to protect margins.
-                </p>
+                <p>It’s not an added expense. It’s a smarter way to protect margins.</p>
 
                 <p>
                   <strong>Learn more at </strong>
                   <a href="https://trackme.solutions" target="_blank" rel="noreferrer">
                     https://trackme.solutions
                   </a>
+                </p>
+              </>
+            ) : isPhase1Post ? (
+              <>
+                <h2>Track Me Solutions — Phase 1: Startup Guide</h2>
+                <p>
+                  <strong>The Best Inventory SaaS Platform for Restaurants in 2026</strong>
+                </p>
+
+                <p>
+                  In 2026, restaurant and bar operations demand more than spreadsheets, manual stock
+                  counts, or disconnected tools. The industry now requires real-time inventory
+                  management, cloud-based access, and chef-driven software that delivers immediate
+                  control without complexity.
+                </p>
+
+                <p>
+                  Track Me Solutions stands out as one of the best inventory SaaS platforms for
+                  hospitality in 2026 — designed specifically for restaurants, bars, and culinary
+                  operations that need accuracy, speed, and visibility from day one.
+                </p>
+
+                <h2>Getting Started Is Intentionally Simple</h2>
+                <p>
+                  As a cloud-based inventory SaaS platform, there is no software to install, no
+                  hardware dependency, and no technical setup required. As long as you have an
+                  internet connection, you can access the system from any device — desktop, tablet,
+                  or mobile.
+                </p>
+
+                <p>
+                  During onboarding, users create an account, register their business, and receive a
+                  unique Business ID with email verification for security and accountability. Once
+                  verified, logging in automatically unlocks the full operational dashboard,
+                  inventory controls, and system features.
+                </p>
+
+                <p>
+                  This fast onboarding process is designed for modern hospitality businesses that
+                  cannot afford downtime, complexity, or long implementation cycles.
+                </p>
+
+                <p>The result is:</p>
+                <ul>
+                  <li>Immediate access to a professional inventory management system</li>
+                  <li>Zero learning friction for teams</li>
+                  <li>Full operational visibility from day one</li>
+                </ul>
+
+                <p>
+                  In a market crowded with generic tools, Track Me Solutions sets the benchmark for
+                  inventory SaaS platforms in 2026 — built by a chef, powered by modern technology,
+                  and designed for real-world hospitality operations.
                 </p>
               </>
             ) : (
