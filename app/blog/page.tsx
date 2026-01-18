@@ -12,11 +12,17 @@ type BlogPost = {
 
 export default function Blog() {
   const featured = {
-    src: '/platform.png',
-    slug: 'built-by-a-chef-restaurant-cost-control',
+    src: '/phase-1.png',
+    slug: 'track-me-solutions-phase-1-startup-guide',
   };
 
   const posts: BlogPost[] = [
+    {
+      slug: 'track-me-solutions-phase-1-startup-guide',
+      src: '/phase-1.png',
+      title: 'Track Me Solutions — Phase 1: Startup Guide',
+      excerpt: 'The best inventory SaaS platform for restaurants in 2026 — fast onboarding, cloud access, and immediate operational visibility.',
+    },
     {
       slug: 'built-by-a-chef-restaurant-cost-control',
       src: '/platform.png',
