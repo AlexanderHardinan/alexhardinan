@@ -44,6 +44,18 @@ const articles: Record<string, Article> = {
     ],
   },
 
+  'track-me-solutions-phase-2-chef-alex-ai-model': {
+    title: 'Track Me Solutions – Phase 2: Chef Alex AI Model',
+    src: '/phase-2.png',
+    content: [
+      'The Most Advanced AI Inventory & Calorie Intelligence for Restaurants in 2026',
+      'In 2026, restaurant and hospitality operations are no longer driven by intuition alone. Rising food costs, stricter regulations, and growing consumer demand for transparency require intelligent, AI-powered restaurant management software that understands how kitchens actually work.',
+      'This is where Track Me Solutions separates itself from traditional inventory systems.',
+      'Phase 2 introduces Chef Alex AI, a chef-built artificial intelligence model designed specifically for restaurant inventory management, recipe development, calorie calculation, and operational guidance.',
+      'Unlike generic AI tools, Chef Alex is purpose-built for hospitality professionals.',
+    ],
+  },
+
   'carrot-confidential': {
     title: '🥕 Carrot Confidential',
     src: '/blog/blog1.png',
@@ -182,6 +194,7 @@ export default function SinglePost({ params }: { params: { slug: string } }) {
 
   const isNewPlatformPost = slug === 'built-by-a-chef-restaurant-cost-control';
   const isPhase1Post = slug === 'track-me-solutions-phase-1-startup-guide';
+  const isPhase2Post = slug === 'track-me-solutions-phase-2-chef-alex-ai-model';
 
   return (
     <main className="container" style={{ padding: 0 }}>
@@ -316,6 +329,179 @@ export default function SinglePost({ params }: { params: { slug: string } }) {
                   In a market crowded with generic tools, Track Me Solutions sets the benchmark for
                   inventory SaaS platforms in 2026 — built by a chef, powered by modern technology,
                   and designed for real-world hospitality operations.
+                </p>
+              </>
+            ) : isPhase2Post ? (
+              <>
+                <h2>Track Me Solutions – Phase 2: Chef Alex AI Model</h2>
+                <p>
+                  <strong>
+                    The Most Advanced AI Inventory &amp; Calorie Intelligence for Restaurants in 2026
+                  </strong>
+                </p>
+
+                <p>
+                  In 2026, restaurant and hospitality operations are no longer driven by intuition
+                  alone. Rising food costs, stricter regulations, and growing consumer demand for
+                  transparency require intelligent, AI-powered restaurant management software that
+                  understands how kitchens actually work.
+                </p>
+
+                <p>
+                  This is where Track Me Solutions separates itself from traditional inventory
+                  systems.
+                </p>
+
+                <p>
+                  Phase 2 introduces Chef Alex AI, a chef-built artificial intelligence model
+                  designed specifically for restaurant inventory management, recipe development,
+                  calorie calculation, and operational guidance.
+                </p>
+
+                <p>Unlike generic AI tools, Chef Alex is purpose-built for hospitality professionals.</p>
+
+                <h2>What Is Chef Alex AI?</h2>
+                <p>
+                  Chef Alex AI is an integrated artificial intelligence model inside Track Me
+                  Solutions, created by a professional chef who is also a full-stack developer. It
+                  is designed to assist chefs, restaurant owners, culinary directors, and
+                  hospitality operators with real operational tasks, not abstract automation.
+                </p>
+
+                <p>Chef Alex AI helps users:</p>
+                <ul>
+                  <li>Understand platform structure and functionality</li>
+                  <li>Navigate inventory workflows with clarity</li>
+                  <li>Access calorie and nutritional data instantly</li>
+                  <li>Reduce manual calculations and operational friction</li>
+                </ul>
+
+                <p>
+                  This makes Track Me Solutions one of the most advanced AI-powered inventory SaaS
+                  platforms for restaurants in 2026.
+                </p>
+
+                <h2>AI That Explains the Platform — Not Just Automates</h2>
+                <p>
+                  Most restaurant software fails at adoption because it is complex, technical, or
+                  poorly explained.
+                </p>
+
+                <p>
+                  Chef Alex AI solves this problem by acting as an intelligent guide inside the
+                  system.
+                </p>
+
+                <p>Instead of relying on manuals, onboarding calls, or support tickets, users can understand:</p>
+                <ul>
+                  <li>How inventory modules work</li>
+                  <li>How products, recipes, and stock connect</li>
+                  <li>How data flows across the dashboard</li>
+                </ul>
+
+                <p>
+                  This dramatically reduces training time and increases system adoption — a critical
+                  factor for multi-outlet restaurants and fast-growing hospitality groups.
+                </p>
+
+                <h2>Calories Pad: Built-In Nutritional Intelligence</h2>
+                <p>
+                  One of the most powerful features of Phase 2 is the Calories Pad, powered entirely
+                  by Chef Alex AI.
+                </p>
+
+                <p>With the Calories Pad:</p>
+                <ul>
+                  <li>Chefs can type any ingredient or product</li>
+                  <li>Instantly receive calorie information</li>
+                  <li>Use accurate nutritional data during recipe creation</li>
+                </ul>
+
+                <p>This removes the need for:</p>
+                <ul>
+                  <li>External calorie calculators</li>
+                  <li>Manual nutrition spreadsheets</li>
+                  <li>Third-party compliance tools</li>
+                </ul>
+
+                <p>
+                  For chefs working in GCC countries, where menu calorie disclosure is mandatory,
+                  this feature is essential for compliance and operational speed.
+                </p>
+
+                <h2>Why Calorie Compliance Matters in 2026</h2>
+                <p>
+                  Governments and regulatory bodies across the GCC and global markets continue to
+                  enforce stricter nutritional transparency laws.
+                </p>
+
+                <p>Restaurants must now:</p>
+                <ul>
+                  <li>Display accurate calorie counts</li>
+                  <li>Ensure consistency across menus</li>
+                  <li>Avoid legal and reputational risk</li>
+                </ul>
+
+                <p>
+                  Track Me Solutions provides built-in calorie intelligence, making it one of the
+                  best restaurant compliance SaaS platforms in 2026.
+                </p>
+
+                <h2>Chef-Built AI for Real Kitchens</h2>
+                <p>
+                  Chef Alex AI was not created as a marketing feature. It was built to support real
+                  kitchen workflows, real recipe development, and real cost and compliance
+                  challenges.
+                </p>
+
+                <p>
+                  This is AI that supports chefs — not replaces them. By reducing repetitive tasks
+                  and improving data accuracy, Chef Alex allows culinary professionals to focus on
+                  creativity, consistency, and execution.
+                </p>
+
+                <h2>Why Track Me Solutions Leads in 2026</h2>
+                <p>Track Me Solutions combines:</p>
+                <ul>
+                  <li>AI-powered inventory management</li>
+                  <li>Chef-driven system design</li>
+                  <li>Built-in calorie and compliance tools</li>
+                  <li>Cloud-based SaaS accessibility</li>
+                  <li>Real-time operational visibility</li>
+                </ul>
+
+                <p>
+                  This positions Track Me Solutions as one of the best inventory and AI restaurant
+                  SaaS platforms in 2026.
+                </p>
+
+                <h2>From Phase 2 to Full Operational Control</h2>
+                <p>
+                  Phase 2 is a critical step in building a fully intelligent hospitality operation.
+                  By integrating AI guidance and calorie intelligence early, restaurants gain
+                  faster onboarding, better data accuracy, stronger compliance foundations, and
+                  smarter decision-making.
+                </p>
+
+                <p>Chef Alex AI is not the future — it is the present.</p>
+
+                <h2>Conclusion</h2>
+                <p>
+                  In an industry where margins are tight and expectations are high, restaurants need
+                  systems that think like chefs and operate like technology.
+                </p>
+
+                <p>
+                  Phase 2 of Track Me Solutions delivers exactly that: AI built by a chef, calorie
+                  intelligence built into workflows, and a platform designed for control in 2026 and
+                  beyond.
+                </p>
+
+                <p>
+                  <strong>Learn more and get started at </strong>
+                  <a href="https://trackme.solutions" target="_blank" rel="noreferrer">
+                    https://trackme.solutions
+                  </a>
                 </p>
               </>
             ) : (
