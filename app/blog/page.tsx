@@ -13,14 +13,14 @@ type BlogPost = {
 
 export default function Blog() {
   const featured = {
-    src: '/phase-3.png',
+    src: '/phase-3-og.jpg',
     slug: 'track-me-solutions-phase-3-supplier-product-inventory',
   };
 
   const posts: BlogPost[] = [
     {
       slug: 'track-me-solutions-phase-3-supplier-product-inventory',
-      src: '/phase-3.png',
+      src: '/phase-3-og.jpg',
       title: 'Track Me Solutions — Phase 3: Supplier & Product Inventory System',
       excerpt:
         'The most advanced supplier and product inventory system for restaurants in 2026 — real-time tracking, par stock, expiry alerts, and valuation.',

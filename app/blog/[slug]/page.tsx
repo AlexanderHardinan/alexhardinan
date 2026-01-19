@@ -60,7 +60,7 @@ const articles: Record<string, Article> = {
   // ✅ NEW: PHASE 3
   'track-me-solutions-phase-3-supplier-product-inventory': {
     title: 'Track Me Solutions — Phase 3: Supplier & Product Inventory System',
-    src: '/phase-3.png',
+    src: '/phase-3-og.jpg',
     content: [
       'The Most Advanced Supplier and Product Inventory System for Restaurants in 2026',
       'In 2026, restaurant inventory management is no longer just about counting stock. It is about supplier intelligence, product-level control, real-time alerts, and accurate stock valuation — all working together in one cloud-based SaaS platform.',
