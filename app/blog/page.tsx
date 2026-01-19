@@ -1,3 +1,4 @@
+// app/blog/page.tsx
 import Image from 'next/image';
 import Link from 'next/link';
 import RevealOnScroll from '../../components/RevealOnScroll';
@@ -12,11 +13,18 @@ type BlogPost = {
 
 export default function Blog() {
   const featured = {
-    src: '/phase-2.png',
-    slug: 'track-me-solutions-phase-2-chef-alex-ai-model',
+    src: '/phase-3.png',
+    slug: 'track-me-solutions-phase-3-supplier-product-inventory',
   };
 
   const posts: BlogPost[] = [
+    {
+      slug: 'track-me-solutions-phase-3-supplier-product-inventory',
+      src: '/phase-3.png',
+      title: 'Track Me Solutions — Phase 3: Supplier & Product Inventory System',
+      excerpt:
+        'The most advanced supplier and product inventory system for restaurants in 2026 — real-time tracking, par stock, expiry alerts, and valuation.',
+    },
     {
       slug: 'track-me-solutions-phase-2-chef-alex-ai-model',
       src: '/phase-2.png',
