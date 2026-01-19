@@ -12,16 +12,24 @@ type BlogPost = {
 
 export default function Blog() {
   const featured = {
-    src: '/phase-1.png',
-    slug: 'track-me-solutions-phase-1-startup-guide',
+    src: '/phase-2.png',
+    slug: 'track-me-solutions-phase-2-chef-alex-ai-model',
   };
 
   const posts: BlogPost[] = [
     {
+      slug: 'track-me-solutions-phase-2-chef-alex-ai-model',
+      src: '/phase-2.png',
+      title: 'Track Me Solutions – Phase 2: Chef Alex AI Model',
+      excerpt:
+        'The most advanced AI inventory & calorie intelligence for restaurants in 2026 — platform guidance, calorie data, and compliance support.',
+    },
+    {
       slug: 'track-me-solutions-phase-1-startup-guide',
       src: '/phase-1.png',
       title: 'Track Me Solutions — Phase 1: Startup Guide',
-      excerpt: 'The best inventory SaaS platform for restaurants in 2026 — fast onboarding, cloud access, and immediate operational visibility.',
+      excerpt:
+        'The best inventory SaaS platform for restaurants in 2026 — fast onboarding, cloud access, and immediate operational visibility.',
     },
     {
       slug: 'built-by-a-chef-restaurant-cost-control',
