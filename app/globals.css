@@ -2391,3 +2391,34 @@ main.dash{
     overflow-x: hidden !important;
   }
 }
+
+/* =========================================================
+   MOBILE HOTFIX — Dashboard landing (home) spacing only
+   - Prevent iOS Safari/Chrome "double top padding"
+   - Desktop/Tablet unchanged
+   ========================================================= */
+@media (max-width: 768px){
+  /* Global main padding exists for fixed header, but the dashboard shell already accounts for it.
+     Remove the extra padding ONLY for the homepage dashboard layout. */
+  main.dash{
+    padding-top: 0 !important;
+  }
+
+  /* Ensure the dashboard content starts below the fixed header */
+  .dash-shell{
+    padding-top: var(--header-h) !important;
+  }
+
+  /* Avoid any accidental margin-collapsing creating blank space */
+  .dash-shell > .dash-grid{
+    margin-top: 0 !important;
+  }
+
+  /* iOS: prevent horizontal layout break from rail/grid */
+  .dash-grid{
+    grid-template-columns: 1fr !important;
+  }
+  .dash-rail{
+    display: none !important; /* mobile: hide right rail to stop layout chaos */
+  }
+}
