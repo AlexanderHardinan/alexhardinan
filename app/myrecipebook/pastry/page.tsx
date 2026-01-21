@@ -1,4 +1,5 @@
 'use client';
+
 import RecipeShelf from '../../../components/RecipeShelf';
 
 export default function PastryPage() {

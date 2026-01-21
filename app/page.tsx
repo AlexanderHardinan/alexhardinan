@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import Image from 'next/image';
 import Bubbles from '../components/Bubbles';
 import ImageCard from '../components/ImageCard';
+import PerformanceWidget from '@/components/PerformanceWidget';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination } from 'swiper/modules';
 import 'swiper/css';
@@ -141,6 +142,10 @@ export default function Page() {
                       height={720}
                       className="panel-image"
                     />
+
+                    <div className="panel-gap" aria-hidden="true" />
+
+                    <PerformanceWidget />
                   </div>
                 </div>
               </div>
