@@ -2323,3 +2323,155 @@ main.dash{
    - Your existing .hero section still exists in CSS but the new
      landing uses .panel-hero now (dashboard layout).
    ========================================================= */
+
+   /* =========================================================
+   LOCKED DESKTOP/TABLET — MOBILE FIX ONLY (Dashboard Landing)
+   Paste at END of app/globals.css
+   ========================================================= */
+
+@media (max-width: 768px){
+
+  /* --- Global spacing: prevent “crushed” header/first panel --- */
+  main.dash{
+    padding-top: 0 !important; /* your dash-shell handles padding */
+  }
+
+  .dash-shell{
+    padding: calc(var(--header-h) + 12px) 12px 40px !important;
+  }
+
+  .dash-grid{
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    perspective: none !important;
+  }
+
+  .dash-rail{
+    position: relative !important;
+    top: auto !important;
+    gap: 12px !important;
+  }
+
+  /* --- Panels: reduce radius + stop overflow clipping text --- */
+  .panel{
+    border-radius: 18px !important;
+  }
+  .panel-head{
+    padding: 14px 14px 0 !important;
+  }
+  .panel-body{
+    padding: 12px 14px 14px !important;
+  }
+
+  /* --- HERO PANEL: stack cleanly, correct heights, no “messed” overlap --- */
+  .panel-hero{
+    min-height: unset !important;
+  }
+
+  .panel-hero__content{
+    grid-template-columns: 1fr !important;
+    padding: 14px !important;
+    gap: 12px !important;
+  }
+
+  .panel-kicker{
+    font-size: .72rem !important;
+    letter-spacing: .06em !important;
+  }
+
+  .panel-title{
+    font-size: clamp(1.55rem, 7vw, 2.15rem) !important;
+    line-height: 1.08 !important;
+  }
+
+  .panel-subtitle{
+    max-width: 100% !important;
+    font-size: .98rem !important;
+    line-height: 1.55 !important;
+  }
+
+  .panel-actions{
+    margin-top: 12px !important;
+    gap: 10px !important;
+  }
+
+  /* Make CTA buttons full width on mobile (prevents broken wrapping) */
+  .panel-actions .btn{
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  /* --- Portrait: stable aspect + no huge/mini surprises --- */
+  .portrait-frame{
+    border-radius: 18px !important;
+    max-width: 520px !important;
+    margin: 0 auto !important;
+  }
+
+  .portrait-frame .portrait-img{
+    width: 100% !important;
+    height: auto !important;
+    display: block !important;
+    transform: none !important;
+  }
+
+  /* --- Split sections inside panels: ensure clean single column --- */
+  .panel-split{
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .panel-image{
+    border-radius: 16px !important;
+  }
+
+  /* --- Role grid: single column, consistent media --- */
+  .role-grid{
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .role-card{
+    padding: 14px !important;
+    border-radius: 16px !important;
+  }
+
+  .role-image{
+    border-radius: 12px !important;
+  }
+
+  /* --- Rail: gallery thumbs not too tall/short --- */
+  .rail-gallery{
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  .rail-thumb{
+    height: 96px !important;
+    border-radius: 12px !important;
+  }
+
+  /* --- Cinema section inside panel: avoid huge height on mobile --- */
+  .panel .cinema-frame{
+    height: clamp(200px, 30vh, 340px) !important;
+    border-radius: 16px !important;
+  }
+
+  /* --- Prevent any accidental horizontal scroll --- */
+  .dash-shell,
+  .panel,
+  .panel-hero__content{
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+}
+
+/* Extra-tight phones */
+@media (max-width: 390px){
+  .dash-shell{
+    padding: calc(var(--header-h) + 10px) 10px 36px !important;
+  }
+  .rail-thumb{
+    height: 88px !important;
+  }
+}
