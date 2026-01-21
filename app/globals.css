@@ -1,8 +1,8 @@
 /* app/globals.css
    CLEAN BASELINE + SINGLE LIQUID GLASS SYSTEM
    - Structure preserved (same class names)
-   - Single definitions for header/sidebar/buttons to stop “style disappears”
-   - Premium iPhone-like liquid glass for header/sidebar/buttons
+   - Adds DASHBOARD / EDITORIAL LANDING layout (left canvas + right rail)
+   - Adds perspective + depth to match the reference image
 */
 
 /* =========================
@@ -544,7 +544,6 @@ a{color:inherit;text-decoration:none}
 
 /* =========================
    OPTIONAL: light-page mode for dark text in header/buttons
-   (Apply by wrapping page content in a container that has .page-light-header)
    ========================= */
 .page-light-header .nav-desktop a{
   color:rgba(15,23,42,.88);
@@ -657,14 +656,9 @@ a{color:inherit;text-decoration:none}
 
 /* =========================================================
    Phase 3 — Clear-Water Glass Surfaces (Global)
-   - No markup changes required
-   - Unifies cards/surfaces using theme tokens
    ========================================================= */
-
-/* 3.1) Add surface tokens (derived from theme) */
 :root,
 :root[data-theme="light"]{
-  /* Clear-water card glass (light) */
   --gc-top: rgba(255,255,255,.72);
   --gc-bot: rgba(255,255,255,.52);
   --gc-border: rgba(255,255,255,.60);
@@ -675,7 +669,6 @@ a{color:inherit;text-decoration:none}
 }
 
 :root[data-theme="dark"]{
-  /* Clear-water card glass (dark) */
   --gc-top: rgba(255,255,255,.10);
   --gc-bot: rgba(255,255,255,.05);
   --gc-border: rgba(255,255,255,.16);
@@ -685,7 +678,6 @@ a{color:inherit;text-decoration:none}
   --gc-sat: 200%;
 }
 
-/* 3.2) One global glass-card recipe (applied to existing card classes) */
 .card,
 .blog-card,
 .offduty-card,
@@ -693,23 +685,16 @@ a{color:inherit;text-decoration:none}
   background: linear-gradient(180deg, var(--gc-top), var(--gc-bot));
   border: 1px solid var(--gc-border);
   box-shadow: var(--gc-shadow);
-
   backdrop-filter: blur(var(--gc-blur)) saturate(var(--gc-sat));
   -webkit-backdrop-filter: blur(var(--gc-blur)) saturate(var(--gc-sat));
-
-  /* keep your current rounded look */
   border-radius: 14px;
 }
-
-/* 3.3) Hover polish (keeps your current hover motion, only upgrades depth) */
 .card:hover,
 .blog-card:hover,
 .offduty-card:hover,
 .ethos-card:hover{
   box-shadow: var(--gc-shadow-hover);
 }
-
-/* 3.4) Make text readable on glass in both themes */
 .card,
 .blog-card,
 .offduty-card,
@@ -722,15 +707,11 @@ a{color:inherit;text-decoration:none}
 :root[data-theme="dark"] .ethos-card{
   color: var(--fg);
 }
-
-/* 3.5) If a card contains images, keep image rendering unchanged */
 .blog-img img,
 .offduty-image img,
 .card img{
   display:block;
 }
-
-/* 3.6) Fallback for browsers without blur */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .card,
   .blog-card,
@@ -752,40 +733,28 @@ a{color:inherit;text-decoration:none}
 
 /* =========================================================
    Phase 4 — Button Variants (non-breaking)
-   Requires base .btn to remain unchanged.
    ========================================================= */
-
-/* Primary (gold) */
 .btn--primary{
   background: linear-gradient(90deg, var(--gold-start, #c59d5f), var(--gold-end, #d4af37));
   border-color: rgba(212,175,55,.45);
   color: #000;
 }
-.btn--primary:hover{
-  color: #fff;
-}
+.btn--primary:hover{ color: #fff; }
 
-/* Ghost (glass outline, subtle) */
 .btn--ghost{
   background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.04));
   border-color: rgba(255,255,255,.46);
   color: #000;
 }
-.btn--ghost:hover{
-  color: #fff;
-}
+.btn--ghost:hover{ color: #fff; }
 
-/* Danger (delete) */
 .btn--danger{
   background: linear-gradient(180deg, rgba(255,90,90,.22), rgba(255,90,90,.10));
   border-color: rgba(255,90,90,.35);
   color: #000;
 }
-.btn--danger:hover{
-  color: #fff;
-}
+.btn--danger:hover{ color: #fff; }
 
-/* Small size helper (optional) */
 .btn--sm{
   padding: .5rem .9rem;
   font-size: .9rem;
@@ -793,50 +762,27 @@ a{color:inherit;text-decoration:none}
 
 /* =========================================================
    Phase 5 — Auto nav readability for MyRecipeBook routes
-   (no page wrapper required)
    ========================================================= */
-
-/* Desktop nav */
-.site-header--myrecipebook .nav-desktop a{
-  color:#000;
-}
-.site-header--myrecipebook .nav-desktop a:hover{
-  color:#fff;
-}
-
-/* Mobile sidebar links */
-.sidebar--myrecipebook nav a{
-  color:#000;
-}
-.sidebar--myrecipebook nav a:hover{
-  color:#fff;
-}
+.site-header--myrecipebook .nav-desktop a{ color:#000; }
+.site-header--myrecipebook .nav-desktop a:hover{ color:#fff; }
+.sidebar--myrecipebook nav a{ color:#000; }
+.sidebar--myrecipebook nav a:hover{ color:#fff; }
 
 /* =========================================================
    Phase 6 — Dark Theme Wiring + Toggle placement
    ========================================================= */
-
-/* Ensure global background/text follow theme tokens */
 body{
   background: var(--bg);
   color: var(--fg);
 }
-
-/* Header actions row (toggle + menu) */
 .header-actions{
   display:flex;
   align-items:center;
   gap:.6rem;
 }
+.theme-toggle{ min-width:72px; }
 
-/* Toggle sizing tweaks (optional but clean) */
-.theme-toggle{
-  min-width:72px;
-}
-
-:root[data-theme="dark"] .footer{
-  border-top-color: rgba(255,255,255,.10);
-}
+:root[data-theme="dark"] .footer{ border-top-color: rgba(255,255,255,.10); }
 :root[data-theme="dark"] .story-caption,
 :root[data-theme="dark"] .press-content,
 :root[data-theme="dark"] .ethos-content,
@@ -844,17 +790,11 @@ body{
 :root[data-theme="dark"] .blog-text p{
   color: rgba(231,237,246,.80);
 }
-:root[data-theme="dark"] .divider{
-  border-top-color: rgba(255,255,255,.10);
-}
+:root[data-theme="dark"] .divider{ border-top-color: rgba(255,255,255,.10); }
 
 /* =========================================================
    Phase 7 — Premium Cards + Grid Polish (CSS-only)
-   - No functional changes
-   - Stabilizes spacing, typography, focus, and truncation
    ========================================================= */
-
-/* 7.1) Spacing scale (optional utilities, non-breaking) */
 :root{
   --s-1: .25rem;
   --s-2: .5rem;
@@ -870,14 +810,12 @@ body{
   --radius-lg: 18px;
 }
 
-/* 7.2) Improve readability globally */
 body{
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* 7.3) Consistent card inner padding where text blocks exist */
 .blog-card .blog-content,
 .offduty-card .offduty-content,
 .ethos-card .ethos-content,
@@ -885,7 +823,6 @@ body{
   padding: var(--s-5);
 }
 
-/* If some pages use direct paragraphs inside cards, keep them tidy */
 .blog-card p,
 .offduty-card p,
 .ethos-card p,
@@ -894,7 +831,6 @@ body{
   line-height: 1.6;
 }
 
-/* 7.4) Line clamp to prevent uneven grids (only applies if these classes exist) */
 .blog-card .excerpt,
 .offduty-card .excerpt,
 .ethos-card .excerpt,
@@ -904,15 +840,11 @@ body{
   overflow: hidden;
 }
 
-/* Standard clamps */
 .blog-card .excerpt{ -webkit-line-clamp: 3; }
 .offduty-card .excerpt{ -webkit-line-clamp: 3; }
 .ethos-card .excerpt{ -webkit-line-clamp: 3; }
-
-/* Stories captions can be longer on desktop but stable */
 .story-caption{ -webkit-line-clamp: 4; }
 
-/* 7.5) Premium hover behavior (keeps your existing transforms; only adds subtle specular) */
 .card,
 .blog-card,
 .offduty-card,
@@ -931,7 +863,6 @@ body{
   pointer-events: none;
   opacity: 0;
   transition: opacity .25s ease;
-  /* Specular highlight (clear water feel) */
   background: radial-gradient(
     1200px 500px at 20% 10%,
     rgba(255,255,255,.22),
@@ -946,21 +877,18 @@ body{
   opacity: 1;
 }
 
-/* 7.6) Keyboard accessibility (professional) */
 :focus-visible{
   outline: 2px solid rgba(212,175,55,.85);
   outline-offset: 3px;
   border-radius: 10px;
 }
 
-/* Make cards clickable without ugly outline if they are buttons/links */
 a:focus-visible,
 button:focus-visible{
   outline: 2px solid rgba(212,175,55,.85);
   outline-offset: 3px;
 }
 
-/* 7.7) Reduced motion support */
 @media (prefers-reduced-motion: reduce){
   *{
     animation-duration: .01ms !important;
@@ -970,7 +898,6 @@ button:focus-visible{
   }
 }
 
-/* 7.8) Dark theme: paragraph/text contrast inside cards */
 :root[data-theme="dark"] .blog-card p,
 :root[data-theme="dark"] .offduty-card p,
 :root[data-theme="dark"] .ethos-card p,
@@ -979,7 +906,6 @@ button:focus-visible{
   color: rgba(231,237,246,.82);
 }
 
-/* 7.9) Card headings (only affects if those elements exist) */
 .blog-card h3,
 .offduty-card h3,
 .ethos-card h3,
@@ -989,44 +915,29 @@ button:focus-visible{
   letter-spacing: .01em;
 }
 
-/* 7.10) Make grids breathe a bit on large screens without breaking layout */
 .grid,
 .stories-grid{
   gap: clamp(1rem, 1.8vw, 1.6rem);
 }
 
-/* Phase 7.1 — Guaranteed blog excerpt clamp */
 .blog-card .blog-excerpt{
   display:-webkit-box;
   -webkit-box-orient:vertical;
   -webkit-line-clamp:3;
   overflow:hidden;
 }
-
-/* Phase 7.2 — Guaranteed Off Duty caption clamp */
 .offduty-card .offduty-excerpt{
   display:-webkit-box;
   -webkit-box-orient:vertical;
   -webkit-line-clamp:3;
   overflow:hidden;
 }
-
-/* Phase 7.3 — Guaranteed Food Ethos card clamp */
 .ethos-card .ethos-excerpt{
   display:-webkit-box;
   -webkit-box-orient:vertical;
   -webkit-line-clamp:3;
   overflow:hidden;
 }
-
-/* Phase 7.4 — Guaranteed Stories on a Plate caption clamp */
-.story-caption{
-  display:-webkit-box;
-  -webkit-box-orient:vertical;
-  -webkit-line-clamp:4;
-  overflow:hidden;
-}
-
 .story-caption{
   display:-webkit-box;
   -webkit-box-orient:vertical;
@@ -1037,13 +948,9 @@ button:focus-visible{
 /* =========================================================
    FIX — Page top offset for floating header
    ========================================================= */
-
-/* Default page content offset */
 main.container{
   padding-top: calc(120px + 1rem);
 }
-
-/* Smaller screens */
 @media (max-width: 768px){
   main.container{
     padding-top: calc(110px + 1rem);
@@ -1052,41 +959,20 @@ main.container{
 
 /* =========================================================
    FIX — Header navigation + buttons visibility
-   (global safe default)
    ========================================================= */
-
-/* Desktop navigation */
-.site-header .nav-desktop a{
-  color:#000;
-}
-.site-header .nav-desktop a:hover{
-  color:#fff;
-}
-
-/* Header buttons (Menu, Dark toggle) */
-.site-header .btn{
-  color:#000;
-}
-.site-header .btn:hover{
-  color:#fff;
-}
-
-/* Mobile sidebar links */
-.sidebar nav a{
-  color:#000;
-}
-.sidebar nav a:hover{
-  color:#fff;
-}
+.site-header .nav-desktop a{ color:#000; }
+.site-header .nav-desktop a:hover{ color:#fff; }
+.site-header .btn{ color:#000; }
+.site-header .btn:hover{ color:#fff; }
+.sidebar nav a{ color:#000; }
+.sidebar nav a:hover{ color:#fff; }
 
 /* =========================================================
    HOTFIX — Stop header overlapping ALL titles
-   (overrides inline padding shorthand)
    ========================================================= */
 main.container{
   padding-top: calc(120px + 1rem) !important;
 }
-
 @media (max-width: 768px){
   main.container{
     padding-top: calc(110px + 1rem) !important;
@@ -1096,120 +982,69 @@ main.container{
 /* =========================================================
    HOTFIX — Global button text visibility
    ========================================================= */
+.btn{ color:#000 !important; }
+.btn:hover{ color:#fff !important; }
 
-/* Default: buttons readable on light/glass surfaces */
-.btn{
-  color:#000 !important;
-}
-.btn:hover{
-  color:#fff !important;
-}
-
-/* Hero/dark sections: keep buttons readable */
 .hero .btn,
-:root[data-theme="dark"] .hero .btn{
-  color:#fff !important;
-}
+:root[data-theme="dark"] .hero .btn{ color:#fff !important; }
 .hero .btn:hover,
-:root[data-theme="dark"] .hero .btn:hover{
-  color:#000 !important;
-}
+:root[data-theme="dark"] .hero .btn:hover{ color:#000 !important; }
 
-/* Floating Get in touch button (FAB) */
-.fab button{
-  color:#000 !important;
-}
-.fab button:hover{
-  color:#fff !important;
-}
+.fab button{ color:#000 !important; }
+.fab button:hover{ color:#fff !important; }
 
-/* If your "Discover more" uses a different class, cover it too */
 .discover-btn,
-.get-in-touch-btn{
-  color:#000 !important;
-}
+.get-in-touch-btn{ color:#000 !important; }
 .discover-btn:hover,
-.get-in-touch-btn:hover{
-  color:#fff !important;
-}
+.get-in-touch-btn:hover{ color:#fff !important; }
 
 /* =========================================================
    HOTFIX — Hero "Discover more" CTA visibility
    ========================================================= */
-
-/* Default hero CTA */
 .hero a,
 .hero .btn,
 .hero .cta,
-.hero .discover-more{
-  color:#000 !important;
-}
+.hero .discover-more{ color:#000 !important; }
 
-/* Hover = gold */
 .hero a:hover,
 .hero .btn:hover,
 .hero .cta:hover,
-.hero .discover-more:hover{
-  color: var(--gold, #d4af37) !important;
-}
+.hero .discover-more:hover{ color: var(--gold, #d4af37) !important; }
 
-/* Dark theme hero */
 :root[data-theme="dark"] .hero a,
 :root[data-theme="dark"] .hero .btn,
 :root[data-theme="dark"] .hero .cta,
-:root[data-theme="dark"] .hero .discover-more{
-  color:#fff !important;
-}
+:root[data-theme="dark"] .hero .discover-more{ color:#fff !important; }
 
-/* Nav hover = gold */
 .site-header .nav-desktop a:hover,
-.sidebar nav a:hover{
-  color: var(--gold, #d4af37) !important;
-}
+.sidebar nav a:hover{ color: var(--gold, #d4af37) !important; }
 
 /* =========================================================
    GLOBAL — Text hover color (gold)
    ========================================================= */
-
 a:hover,
 button:hover,
-.btn:hover{
-  color: var(--gold, #d4af37) !important;
-}
+.btn:hover{ color: var(--gold, #d4af37) !important; }
 
 /* =========================================================
    FIX — Off Duty image sizing (responsive, all devices)
    ========================================================= */
-
-/* Card container */
 .offduty-card{
   display:flex;
   flex-direction:column;
 }
-
-/* Image wrapper */
 .offduty-image{
   width:100%;
-  height:220px;              /* mobile default */
+  height:220px;
   overflow:hidden;
   border-radius:14px;
 }
-
-/* Tablet */
 @media (min-width: 640px){
-  .offduty-image{
-    height:260px;
-  }
+  .offduty-image{ height:260px; }
 }
-
-/* Desktop */
 @media (min-width: 1024px){
-  .offduty-image{
-    height:300px;
-  }
+  .offduty-image{ height:300px; }
 }
-
-/* Force image fit */
 .offduty-image img{
   width:100% !important;
   height:100% !important;
@@ -1219,8 +1054,6 @@ button:hover,
 /* =========================================================
    FIX — Off Duty responsive grid + correct media sizing
    ========================================================= */
-
-/* Make Off Duty a real responsive grid */
 .offduty-grid{
   display:grid;
   grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));
@@ -1228,57 +1061,42 @@ button:hover,
   align-items:start;
 }
 
-/* Off Duty card layout */
 .offduty-card{
   border-radius:18px;
   overflow:hidden;
 }
 
-/* Media area: controlled height (prevents giant banners) */
 .offduty-image{
   width:100%;
-  height:190px;              /* mobile */
+  height:190px;
   overflow:hidden;
 }
-
-/* tablet */
 @media (min-width: 640px){
   .offduty-image{ height:220px; }
 }
-
-/* desktop */
 @media (min-width: 1024px){
   .offduty-image{ height:240px; }
 }
 
-/* Force ImageCard wrapper to obey the media box */
 .offduty-image .image-card{
   height:100% !important;
 }
 
-/* Force the actual <img> inside next/image to fill and crop */
 .offduty-image .image-card :where(img){
   width:100% !important;
   height:100% !important;
   object-fit:cover !important;
 }
 
-/* Optional: tighten text spacing */
 .offduty-text{
   padding:14px 16px 16px;
 }
-.offduty-text h2{
-  margin:0 0 8px 0;
-}
-.offduty-text p{
-  margin:0;
-  line-height:1.6;
-}
+.offduty-text h2{ margin:0 0 8px 0; }
+.offduty-text p{ margin:0; line-height:1.6; }
 
 /* =========================================================
    Phase 8 — RecipeBook UI controls (search/sort/empty)
    ========================================================= */
-
 .recipe-search,
 .recipe-sort{
   height:44px;
@@ -1293,18 +1111,9 @@ button:hover,
   box-shadow:0 10px 30px rgba(0,0,0,.08);
   color:#000;
 }
-
-.recipe-search{
-  width:min(340px, 86vw);
-}
-
-.recipe-search::placeholder{
-  color:rgba(0,0,0,.45);
-}
-
-.recipe-sort{
-  cursor:pointer;
-}
+.recipe-search{ width:min(340px, 86vw); }
+.recipe-search::placeholder{ color:rgba(0,0,0,.45); }
+.recipe-sort{ cursor:pointer; }
 
 :root[data-theme="dark"] .recipe-search,
 :root[data-theme="dark"] .recipe-sort{
@@ -1312,10 +1121,7 @@ button:hover,
   background:rgba(255,255,255,.06);
   color:#fff;
 }
-
-:root[data-theme="dark"] .recipe-search::placeholder{
-  color:rgba(255,255,255,.45);
-}
+:root[data-theme="dark"] .recipe-search::placeholder{ color:rgba(255,255,255,.45); }
 
 .recipe-empty{
   border-radius:18px;
@@ -1327,21 +1133,12 @@ button:hover,
   backdrop-filter:blur(var(--gc-blur, 18px)) saturate(var(--gc-sat, 170%));
   -webkit-backdrop-filter:blur(var(--gc-blur, 18px)) saturate(var(--gc-sat, 170%));
 }
-
-.recipe-empty__title{
-  font-size:1.15rem;
-  font-weight:800;
-  margin-bottom:6px;
-}
-
-.recipe-empty__sub{
-  opacity:.75;
-}
+.recipe-empty__title{ font-size:1.15rem; font-weight:800; margin-bottom:6px; }
+.recipe-empty__sub{ opacity:.75; }
 
 /* =========================================================
    Phase 8.4 — Recipe editor save status pill
    ========================================================= */
-
 .save-pill{
   display:inline-flex;
   align-items:center;
@@ -1356,7 +1153,6 @@ button:hover,
   font-size:.9rem;
   color:#000;
 }
-
 :root[data-theme="dark"] .save-pill{
   border-color:rgba(255,255,255,.12);
   background:rgba(255,255,255,.06);
@@ -1366,15 +1162,12 @@ button:hover,
 /* =========================================================
    Phase 9.3 HOTFIX — Blog layout (featured + carousel)
    ========================================================= */
-
-/* Keep blog content centered and not full-bleed */
 .featured-article,
 .blog-carousel-section{
   max-width: 1180px;
   margin: 0 auto;
 }
 
-/* ===== FEATURED ARTICLE ===== */
 .featured-article{
   position: relative;
   border-radius: 22px;
@@ -1382,23 +1175,11 @@ button:hover,
   box-shadow: 0 18px 60px rgba(0,0,0,.16);
   border: 1px solid rgba(0,0,0,.08);
   background: #fff;
-}
-
-/* Control height so it never becomes a giant banner */
-.featured-article{
   height: clamp(320px, 42vw, 520px);
 }
+.featured-image{ position: absolute; inset: 0; }
+.featured-image img{ object-fit: cover !important; }
 
-/* Image fill must be properly anchored */
-.featured-image{
-  position: absolute;
-  inset: 0;
-}
-.featured-image img{
-  object-fit: cover !important;
-}
-
-/* Overlay should be readable and not “grey fog” */
 .featured-overlay{
   position: absolute;
   inset: 0;
@@ -1412,26 +1193,18 @@ button:hover,
     rgba(0,0,0,.78) 100%
   );
 }
-
-.featured-content{
-  max-width: 760px;
-  color: #fff;
-}
-
+.featured-content{ max-width: 760px; color: #fff; }
 .featured-content h2{
   margin: 0 0 10px 0;
   font-size: clamp(1.35rem, 2.4vw, 2.1rem);
   line-height: 1.15;
 }
-
 .featured-content p{
   margin: 0 0 14px 0;
   opacity: .92;
   line-height: 1.6;
   max-width: 62ch;
 }
-
-/* Make the featured CTA visible and premium */
 .featured-content .read-btn{
   display: inline-flex;
   align-items: center;
@@ -1445,16 +1218,13 @@ button:hover,
   box-shadow: 0 12px 35px rgba(0,0,0,.25);
   text-decoration: none;
 }
-.featured-content .read-btn:hover{
-  color: var(--gold, #d4af37);
-}
+.featured-content .read-btn:hover{ color: var(--gold, #d4af37); }
 
 /* ===== CAROUSEL ===== */
 .blog-carousel-section{
   position: relative;
   margin-top: 22px;
 }
-
 .blog-carousel{
   display: flex;
   gap: 16px;
@@ -1472,7 +1242,6 @@ button:hover,
   background: rgba(255,255,255,.18);
 }
 
-/* Card sizing so it never becomes “giant blocks” */
 .blog-card{
   flex: 0 0 clamp(260px, 36vw, 340px);
   scroll-snap-align: start;
@@ -1482,17 +1251,13 @@ button:hover,
   border: 1px solid rgba(0,0,0,.08);
   box-shadow: 0 16px 50px rgba(0,0,0,.12);
 }
-
 .blog-img img{
   width: 100% !important;
   height: 190px !important;
   object-fit: cover !important;
   display: block;
 }
-
-.blog-text{
-  padding: 14px 16px 16px;
-}
+.blog-text{ padding: 14px 16px 16px; }
 .blog-text h2{
   margin: 0 0 8px 0;
   font-size: 1.05rem;
@@ -1503,8 +1268,6 @@ button:hover,
   opacity: .78;
   line-height: 1.55;
 }
-
-/* Keep “Read More” visible */
 .blog-text .read-btn{
   display: inline-flex;
   align-items: center;
@@ -1513,11 +1276,8 @@ button:hover,
   font-weight: 700;
   color: #000;
 }
-.blog-text .read-btn:hover{
-  color: var(--gold, #d4af37);
-}
+.blog-text .read-btn:hover{ color: var(--gold, #d4af37); }
 
-/* Carousel arrows: properly aligned, not floating weird */
 .carousel-btn{
   position: absolute;
   top: 50%;
@@ -1533,33 +1293,24 @@ button:hover,
   box-shadow: 0 14px 40px rgba(0,0,0,.18);
   color: #000;
 }
-.carousel-btn:hover{
-  color: var(--gold, #d4af37);
-}
+.carousel-btn:hover{ color: var(--gold, #d4af37); }
 .carousel-btn.left{ left: -10px; }
 .carousel-btn.right{ right: -10px; }
 
-/* On small screens, hide arrows (native swipe/scroll works best) */
 @media (max-width: 768px){
   .carousel-btn{ display: none; }
 }
 
-/* Dark theme harmony */
-:root[data-theme="dark"] .featured-article{
-  border-color: rgba(255,255,255,.10);
-}
+:root[data-theme="dark"] .featured-article{ border-color: rgba(255,255,255,.10); }
 :root[data-theme="dark"] .blog-card{
   background: rgba(255,255,255,.06);
   border-color: rgba(255,255,255,.10);
 }
-:root[data-theme="dark"] .blog-text .read-btn{
-  color: #fff;
-}
+:root[data-theme="dark"] .blog-text .read-btn{ color: #fff; }
 
 /* =========================================================
    Blog Single Post — hero + readable body
    ========================================================= */
-
 .blog-hero{
   position: relative;
   width: 100%;
@@ -1570,10 +1321,7 @@ button:hover,
   box-shadow: 0 18px 60px rgba(0,0,0,.16);
   border: 1px solid rgba(0,0,0,.08);
 }
-
-.blog-hero img{
-  object-fit: cover !important;
-}
+.blog-hero img{ object-fit: cover !important; }
 
 .hero-overlay{
   position: absolute;
@@ -1588,40 +1336,28 @@ button:hover,
     rgba(0,0,0,.82) 100%
   );
 }
-
 .hero-content h1{
   margin: 0;
   color: #fff;
   font-size: clamp(1.5rem, 3vw, 2.4rem);
   line-height: 1.12;
 }
-
 .blog-article{
   max-width: 980px;
   margin: 0 auto;
   padding: 28px 16px 60px;
 }
-
-.article-wrapper{
-  margin-top: 12px;
-}
-
+.article-wrapper{ margin-top: 12px; }
 .post-content p{
   margin: 0 0 14px 0;
   line-height: 1.75;
   opacity: .92;
 }
-
-/* Dark theme harmony */
-:root[data-theme="dark"] .blog-hero{
-  border-color: rgba(255,255,255,.10);
-}
+:root[data-theme="dark"] .blog-hero{ border-color: rgba(255,255,255,.10); }
 
 /* =========================================================
    Phase 10.1 — Liquid Glass system (tokens + utilities)
    ========================================================= */
-
-/* Light mode glass tokens */
 :root{
   --glass-blur: 18px;
   --glass-sat: 175%;
@@ -1633,12 +1369,10 @@ button:hover,
   --glass-text: #000;
   --glass-muted: rgba(0,0,0,.68);
 
-  /* Gold accent */
   --gold: #d4af37;
   --gold-soft: #c59d5f;
 }
 
-/* Dark mode glass tokens */
 :root[data-theme="dark"]{
   --glass-border: rgba(255,255,255,.10);
   --glass-top: rgba(255,255,255,.08);
@@ -1649,7 +1383,6 @@ button:hover,
   --glass-muted: rgba(255,255,255,.70);
 }
 
-/* Universal glass surface */
 .glass{
   background: linear-gradient(180deg, var(--glass-top), var(--glass-bot));
   border: 1px solid var(--glass-border);
@@ -1658,7 +1391,6 @@ button:hover,
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
 }
 
-/* Liquid highlight sweep */
 .glass::before{
   content:"";
   position:absolute;
@@ -1670,13 +1402,11 @@ button:hover,
   opacity:.55;
 }
 
-/* Ensure pseudo element works */
 .glass{
   position: relative;
   overflow: hidden;
 }
 
-/* Upgrade your existing card class globally (no JSX changes) */
 .card,
 .story-card,
 .blog-card,
@@ -1689,7 +1419,6 @@ button:hover,
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
 }
 
-/* Better text contrast inside glass cards */
 .card h1,.card h2,.card h3,
 .story-card h1,.story-card h2,.story-card h3,
 .blog-card h1,.blog-card h2,.blog-card h3,
@@ -1706,16 +1435,14 @@ button:hover,
   color: var(--glass-muted);
 }
 
-/* Buttons — keep your current behavior, fix text readability */
 .btn{
-  color: #000 !important;              /* default */
+  color: #000 !important;
 }
 .btn:hover{
-  color: #fff !important;              /* hover */
+  color: #fff !important;
 }
 .btn a{ color: inherit; }
 
-/* Ghost button for glass UI */
 .btn--ghost{
   background: rgba(255,255,255,.72) !important;
   border: 1px solid rgba(0,0,0,.10) !important;
@@ -1726,7 +1453,6 @@ button:hover,
   color: #fff !important;
 }
 
-/* Global link hover stays gold */
 a:hover{
   color: var(--gold) !important;
 }
@@ -1734,21 +1460,17 @@ a:hover{
 /* =========================================================
    Phase 10.2 — Header / Navbar liquid glass + spacing fix
    ========================================================= */
-
-/* Ensure pages never slide under the fixed header */
 :root{
-  --header-h: 86px; /* desktop */
+  --header-h: 86px;
 }
 @media (max-width: 768px){
   :root{ --header-h: 78px; }
 }
 
-/* Global top padding to prevent title overlap everywhere */
 main{
   padding-top: var(--header-h);
 }
 
-/* Header: fixed glass strip */
 .site-header{
   position: fixed;
   top: 0;
@@ -1759,7 +1481,6 @@ main{
   background: transparent;
 }
 
-/* Inner bar becomes the glass pill */
 .site-header__inner{
   max-width: 1280px;
   margin: 0 auto;
@@ -1768,7 +1489,6 @@ main{
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-
   border-radius: 999px;
 
   background: linear-gradient(180deg, var(--glass-top), var(--glass-bot));
@@ -1776,11 +1496,9 @@ main{
   box-shadow: var(--glass-shadow), var(--glass-inset);
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-
   padding: 0 16px;
 }
 
-/* Subtle liquid highlight inside header bar */
 .site-header__inner::before{
   content:"";
   position:absolute;
@@ -1796,7 +1514,6 @@ main{
   overflow: hidden;
 }
 
-/* Brand */
 .site-header .brand{
   font-weight: 800;
   letter-spacing: .2px;
@@ -1804,7 +1521,6 @@ main{
   text-decoration: none;
 }
 
-/* Desktop nav */
 .nav-desktop{
   display: flex;
   align-items: center;
@@ -1827,7 +1543,6 @@ main{
   opacity: 1;
 }
 
-/* Mobile toggle button stays visible */
 .nav-toggle{
   height: 40px;
   padding: 0 14px;
@@ -1840,7 +1555,6 @@ main{
   color: #fff !important;
 }
 
-/* Sidebar glass panel */
 .sidebar{
   position: fixed;
   inset: 0;
@@ -1856,7 +1570,6 @@ main{
   pointer-events: auto;
 }
 
-/* Panel content */
 .sidebar > div{
   width: min(360px, 86vw);
   height: 100%;
@@ -1901,7 +1614,6 @@ main{
   color: var(--gold) !important;
 }
 
-/* Responsive: hide desktop nav on small screens (if not already) */
 @media (max-width: 900px){
   .nav-desktop{ display: none; }
 }
@@ -1909,8 +1621,6 @@ main{
 /* =========================================================
    Phase 10.3 — Button system (primary / ghost / danger / sm)
    ========================================================= */
-
-/* Base button (keep your animation hooks, force readable text) */
 .btn{
   appearance: none;
   -webkit-appearance: none;
@@ -1918,28 +1628,20 @@ main{
   cursor: pointer;
   user-select: none;
   text-decoration: none;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: .5rem;
-
-  color: #000 !important; /* always visible default */
+  color: #000 !important;
 }
-
-/* Ensure nested elements inherit */
 .btn *{ color: inherit !important; }
 .btn:disabled{
   opacity: .55;
   cursor: not-allowed;
 }
-
-/* Hover: text becomes white for premium contrast */
 .btn:hover{
   color: #fff !important;
 }
-
-/* Primary */
 .btn--primary{
   background: linear-gradient(90deg, var(--gold-soft), var(--gold));
   border: 1px solid rgba(0,0,0,.08);
@@ -1948,8 +1650,6 @@ main{
 .btn--primary:hover{
   box-shadow: 0 20px 55px rgba(212,175,55,.33);
 }
-
-/* Ghost (glass) */
 .btn--ghost{
   background: rgba(255,255,255,.75);
   border: 1px solid rgba(0,0,0,.12);
@@ -1961,8 +1661,6 @@ main{
   background: rgba(0,0,0,.80);
   border-color: rgba(0,0,0,.25);
 }
-
-/* Danger */
 .btn--danger{
   background: rgba(255,90,90,.16);
   border: 1px solid rgba(255,90,90,.30);
@@ -1972,8 +1670,6 @@ main{
   background: rgba(255,90,90,.85);
   border-color: rgba(255,90,90,.65);
 }
-
-/* Small */
 .btn--sm{
   height: 36px;
   padding: 0 12px;
@@ -1986,18 +1682,9 @@ main{
   border-radius: 999px;
   font-size: .95rem;
 }
-
-/* Dark theme adjustments */
-:root[data-theme="dark"] .btn{
-  color: #fff !important;
-}
-:root[data-theme="dark"] .btn:hover{
-  color: #000 !important;
-}
-
-:root[data-theme="dark"] .btn--primary{
-  border-color: rgba(255,255,255,.14);
-}
+:root[data-theme="dark"] .btn{ color: #fff !important; }
+:root[data-theme="dark"] .btn:hover{ color: #000 !important; }
+:root[data-theme="dark"] .btn--primary{ border-color: rgba(255,255,255,.14); }
 :root[data-theme="dark"] .btn--ghost{
   background: rgba(255,255,255,.06);
   border-color: rgba(255,255,255,.14);
@@ -2007,28 +1694,19 @@ main{
   background: rgba(255,255,255,.82);
   border-color: rgba(255,255,255,.24);
 }
-
-/* Fix links that use button classes */
-a.btn{
-  display: inline-flex;
-}
+a.btn{ display: inline-flex; }
 
 /* =========================================================
    Phase 14.1 — Visible focus (keyboard accessibility)
    ========================================================= */
-
 :focus-visible{
   outline: 3px solid var(--gold);
   outline-offset: 3px;
   border-radius: 6px;
 }
-
-/* Prevent ugly focus rings on mouse click */
 :focus:not(:focus-visible){
   outline: none;
 }
-
-/* Ensure links styled as buttons remain accessible */
 a.btn{
   role: button;
 }
@@ -2036,7 +1714,6 @@ a.btn{
 /* =========================================================
    Phase 14.3 — Reduced motion support
    ========================================================= */
-
 @media (prefers-reduced-motion: reduce){
   *{
     animation: none !important;
@@ -2045,12 +1722,9 @@ a.btn{
   }
 }
 
-/* Prevent decorative images from stealing focus */
 img{
   pointer-events: none;
 }
-
-/* But allow interactive images (cards) */
 .image-card img,
 .story-card img,
 .blog-card img{
@@ -2155,7 +1829,6 @@ img{
   height: clamp(240px, 52vh, 640px);
 }
 
-/* Full-bleed video */
 .cinema-video{
   width: 100%;
   height: 100%;
@@ -2164,7 +1837,6 @@ img{
   transform: scale(1.01);
 }
 
-/* soft overlay for premium readability */
 .cinema-overlay{
   position: absolute;
   inset: 0;
@@ -2181,7 +1853,6 @@ img{
   pointer-events: none;
 }
 
-/* Mobile: avoid too-tall sections */
 @media (max-width: 768px){
   .cinema-frame{
     height: clamp(220px, 38vh, 420px);
@@ -2189,38 +1860,25 @@ img{
   }
 }
 
-/* =========================================================
-   Cinematic Enhancements (Dogma-style)
-   - Subtle film grain overlay (CSS only)
-   - Slow parallax zoom on video (CSS only)
-   - Fully scoped to .cinema-frame / .cinema-video
-   ========================================================= */
-
-/* Film grain overlay */
+/* Cinematic Enhancements */
 .cinema-frame::before{
   content:"";
   position:absolute;
   inset:-20%;
   pointer-events:none;
   z-index: 3;
-
-  /* Tiny procedural noise via inline SVG */
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
   background-size: 220px 220px;
-
   opacity: .10;
   mix-blend-mode: overlay;
   filter: contrast(120%) brightness(110%);
   transform: translate3d(0,0,0);
-
   animation: cinemaGrain 6s steps(10) infinite;
 }
 
-/* Keep your existing overlays below the grain */
 .cinema-overlay{ z-index: 1; }
 .cinema-vignette{ z-index: 2; }
 
-/* Slow zoom + micro-parallax */
 .cinema-video{
   animation: cinemaParallax 18s ease-in-out infinite alternate;
   transform-origin: center;
@@ -2246,17 +1904,11 @@ img{
   100% { transform: scale(1.12) translate3d(0, -2.5%, 0); }
 }
 
-/* Mobile: slightly gentler motion (keeps it premium) */
 @media (max-width: 768px){
-  .cinema-video{
-    animation-duration: 22s;
-  }
-  .cinema-frame::before{
-    opacity: .09;
-  }
+  .cinema-video{ animation-duration: 22s; }
+  .cinema-frame::before{ opacity: .09; }
 }
 
-/* Respect reduced motion */
 @media (prefers-reduced-motion: reduce){
   .cinema-video{ animation: none !important; transform: none !important; }
   .cinema-frame::before{ animation: none !important; }
@@ -2264,10 +1916,7 @@ img{
 
 /* =========================================================
    Motion Mapping — Panels / Cards (IN + OUT)
-   - Uses existing RevealOnScroll selector classes
-   - Does not change layout, hover, or glass styling
    ========================================================= */
-
 .fade-up,
 .fade-left,
 .fade-right,
@@ -2294,7 +1943,6 @@ img{
   transform: translate3d(18px, 10px, 0);
 }
 
-/* “Show” state */
 .show.fade-up,
 .show.fade-left,
 .show.fade-right,
@@ -2306,7 +1954,6 @@ img{
   filter: blur(0);
 }
 
-/* Premium micro-depth on entry (no hover changes) */
 .show.card,
 .show.blog-card,
 .show.ethos-card,
@@ -2318,7 +1965,6 @@ img{
     box-shadow 900ms cubic-bezier(.2,.9,.2,1);
 }
 
-/* Reduced motion */
 @media (prefers-reduced-motion: reduce){
   .fade-up,
   .fade-left,
@@ -2332,3 +1978,348 @@ img{
     opacity: 1 !important;
   }
 }
+
+/* =========================================================
+   DASHBOARD / EDITORIAL LANDING (NEW)
+   - Matches the reference: 2-column grid, left main, right widgets
+   - Adds perspective + depth for “modern dashboard” feel
+   ========================================================= */
+
+/* Page background vibe (subtle) */
+main.dash{
+  min-height: 100vh;
+  background:
+    radial-gradient(1200px 600px at 18% 10%, rgba(212,175,55,.10), rgba(255,255,255,0) 58%),
+    radial-gradient(900px 520px at 78% 20%, rgba(0,0,0,.08), rgba(255,255,255,0) 60%),
+    var(--bg);
+}
+
+/* Shell keeps centered editorial width */
+.dash-shell{
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: calc(var(--header-h) + 18px) 16px 52px;
+}
+
+/* 2-col grid */
+.dash-grid{
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 18px;
+  align-items: start;
+}
+
+/* Rail becomes sticky like the reference right column */
+.dash-rail{
+  position: sticky;
+  top: calc(var(--header-h) + 12px);
+  display: grid;
+  gap: 16px;
+}
+
+/* Responsive: collapse to single column */
+@media (max-width: 1120px){
+  .dash-grid{
+    grid-template-columns: 1fr;
+  }
+  .dash-rail{
+    position: relative;
+    top: auto;
+  }
+}
+
+/* Panel base (used by all blocks) */
+.panel{
+  position: relative;
+  border-radius: 22px;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--glass-top), var(--glass-bot));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow), var(--glass-inset);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+}
+
+/* Perspective: subtle “dashboard slab” feel */
+.dash-main .panel{
+  transform-style: preserve-3d;
+}
+.dash-main .panel:hover{
+  box-shadow: 0 24px 90px rgba(0,0,0,.18), var(--glass-inset);
+}
+
+/* Panel header/body */
+.panel-head{
+  padding: 18px 18px 0;
+}
+.panel-body{
+  padding: 16px 18px 18px;
+}
+
+.panel-h2{
+  margin: 0;
+  font-size: 1.35rem;
+  letter-spacing: .01em;
+  color: var(--glass-text);
+  font-weight: 900;
+}
+.panel-lead{
+  margin: 8px 0 0 0;
+  color: var(--glass-muted);
+  line-height: 1.55;
+  max-width: 70ch;
+}
+
+/* Hero panel: split left text + right portrait */
+.panel-hero{
+  min-height: 420px;
+}
+.panel-hero__bg{
+  position: absolute;
+  inset: 0;
+}
+.panel-hero__bg img{
+  object-fit: cover;
+  opacity: .28;
+  filter: grayscale(.35);
+}
+.panel-hero__shade{
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(900px 420px at 22% 28%, rgba(255,255,255,.16), rgba(255,255,255,0) 55%),
+    linear-gradient(90deg, rgba(0,0,0,.20), rgba(0,0,0,.06) 55%, rgba(0,0,0,.22));
+  pointer-events:none;
+}
+.panel-hero__content{
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 340px;
+  gap: 18px;
+  align-items: center;
+  padding: 22px;
+}
+@media (max-width: 980px){
+  .panel-hero__content{
+    grid-template-columns: 1fr;
+  }
+}
+
+.panel-kicker{
+  margin: 0 0 8px 0;
+  font-weight: 800;
+  color: rgba(255,255,255,.85);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-size: .78rem;
+}
+.panel-title{
+  margin: 0;
+  font-weight: 950;
+  font-size: clamp(2rem, 3.4vw, 3rem);
+  color: #fff;
+  line-height: 1.05;
+}
+.panel-subtitle{
+  margin: 10px 0 0 0;
+  color: rgba(255,255,255,.86);
+  line-height: 1.55;
+  max-width: 60ch;
+}
+
+.panel-actions{
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Portrait frame (circular/rounded like the reference) */
+.portrait-frame{
+  width: 100%;
+  border-radius: 26px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.22);
+  box-shadow: 0 26px 80px rgba(0,0,0,.22);
+  background: rgba(255,255,255,.06);
+}
+.portrait-img{
+  width: 100%;
+  height: auto;
+  display: block;
+  transform: scale(1.02);
+}
+
+/* About split inside panel */
+.panel-split{
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr);
+  gap: 18px;
+  align-items: start;
+}
+@media (max-width: 980px){
+  .panel-split{ grid-template-columns: 1fr; }
+}
+.panel-h3{
+  margin: 0 0 10px 0;
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: var(--glass-text);
+}
+.panel-copy p{
+  margin: 0 0 12px 0;
+  line-height: 1.7;
+  color: var(--glass-muted);
+}
+.panel-copy a{
+  font-weight: 900;
+}
+.panel-image{
+  width: 100%;
+  height: auto;
+  border-radius: 18px;
+  display:block;
+  box-shadow: 0 14px 44px rgba(0,0,0,.12);
+}
+
+/* Role grid (2x2 cards) */
+.role-grid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 14px;
+}
+@media (max-width: 980px){
+  .role-grid{ grid-template-columns: 1fr; }
+}
+.role-card{
+  position: relative;
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.18);
+  box-shadow: 0 14px 44px rgba(0,0,0,.10);
+  padding: 16px;
+}
+:root[data-theme="dark"] .role-card{
+  background: rgba(255,255,255,.04);
+  border-color: rgba(255,255,255,.10);
+}
+.role-card p{
+  margin: 0 0 10px 0;
+  line-height: 1.65;
+  color: var(--glass-muted);
+}
+.role-image{
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+  display:block;
+  margin-top: 10px;
+  box-shadow: 0 12px 34px rgba(0,0,0,.16);
+}
+
+/* Right rail widgets */
+.panel-widget .panel-head{
+  padding: 16px 16px 0;
+}
+.panel-widget .panel-body{
+  padding: 12px 16px 16px;
+}
+
+/* Services list in rail */
+.widget-list{
+  list-style:none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+.widget-item{
+  padding: 12px 12px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.16);
+}
+.widget-title{
+  display:block;
+  font-weight: 950;
+  color: var(--glass-text);
+}
+.widget-meta{
+  display:block;
+  margin-top: 4px;
+  font-size: .92rem;
+  color: var(--glass-muted);
+}
+
+/* Rail mini gallery (2x2) */
+.rail-gallery{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 10px;
+}
+.rail-thumb{
+  position: relative;
+  border-radius: 14px;
+  overflow:hidden;
+  height: 110px;
+  border: 1px solid rgba(255,255,255,.16);
+  box-shadow: 0 12px 34px rgba(0,0,0,.10);
+}
+.rail-thumb img{
+  object-fit: cover;
+}
+
+/* Quote */
+.quote{
+  margin: 0;
+  padding: 14px 14px;
+  border-radius: 16px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.16);
+  color: var(--glass-muted);
+  line-height: 1.65;
+}
+.quote-by{
+  margin-top: 10px;
+  font-weight: 950;
+  color: var(--glass-text);
+}
+
+/* CTA stack */
+.rail-ctas{
+  display: grid;
+  gap: 10px;
+}
+.rail-ctas .btn{
+  width: 100%;
+}
+
+/* Slight “editorial depth” for the whole grid */
+.dash-grid{
+  perspective: 1200px;
+}
+.dash-main .panel{
+  transform: translateZ(0);
+}
+.dash-main .panel-hero{
+  transform: rotateX(.4deg) rotateY(-.5deg);
+}
+@media (max-width: 1120px){
+  .dash-main .panel-hero{
+    transform: none;
+  }
+}
+
+/* Keep cinema frame inside panels clean */
+.panel .cinema-frame{
+  height: clamp(240px, 42vh, 520px);
+  border-radius: 20px;
+}
+
+/* =========================================================
+   NOTE:
+   - Your existing .hero section still exists in CSS but the new
+     landing uses .panel-hero now (dashboard layout).
+   ========================================================= */
