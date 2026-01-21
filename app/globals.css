@@ -2496,3 +2496,59 @@ main.dash{
     display: block !important;
   }
 }
+
+/* =========================================================
+   MOBILE VARIANT — Show Right Rail UNDER main content
+   (Overrides the earlier mobile "hide rail" rule)
+   ========================================================= */
+@media (max-width: 768px){
+
+  /* Make grid stack: main then rail */
+  .dash-grid{
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+  }
+
+  /* Ensure main is first */
+  .dash-main{
+    order: 1 !important;
+    width: 100% !important;
+  }
+
+  /* Show rail and place it after main */
+  .dash-rail{
+    display: block !important;
+    order: 2 !important;
+    width: 100% !important;
+  }
+
+  /* Widgets should behave like normal panels on mobile */
+  .dash-rail .panel{
+    width: 100% !important;
+  }
+
+  /* Rail CTA/buttons wrap nicely */
+  .rail-ctas{
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+  .rail-ctas .btn{
+    width: 100% !important;
+  }
+
+  /* Rail gallery thumbnails: keep compact */
+  .rail-gallery{
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+  .rail-thumb{
+    position: relative !important;
+    width: 100% !important;
+    aspect-ratio: 1 / 1 !important;
+    border-radius: 14px !important;
+    overflow: hidden !important;
+  }
+}
