@@ -2261,3 +2261,74 @@ img{
   .cinema-video{ animation: none !important; transform: none !important; }
   .cinema-frame::before{ animation: none !important; }
 }
+
+/* =========================================================
+   Motion Mapping — Panels / Cards (IN + OUT)
+   - Uses existing RevealOnScroll selector classes
+   - Does not change layout, hover, or glass styling
+   ========================================================= */
+
+.fade-up,
+.fade-left,
+.fade-right,
+.panel-in,
+.panel-left,
+.panel-right{
+  opacity: 0;
+  transform: translate3d(0, 14px, 0);
+  filter: blur(6px);
+  transition:
+    opacity 600ms cubic-bezier(.2,.9,.2,1),
+    transform 800ms cubic-bezier(.2,.9,.2,1),
+    filter 800ms cubic-bezier(.2,.9,.2,1);
+  will-change: transform, opacity, filter;
+}
+
+.fade-left,
+.panel-left{
+  transform: translate3d(-18px, 10px, 0);
+}
+
+.fade-right,
+.panel-right{
+  transform: translate3d(18px, 10px, 0);
+}
+
+/* “Show” state */
+.show.fade-up,
+.show.fade-left,
+.show.fade-right,
+.show.panel-in,
+.show.panel-left,
+.show.panel-right{
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  filter: blur(0);
+}
+
+/* Premium micro-depth on entry (no hover changes) */
+.show.card,
+.show.blog-card,
+.show.ethos-card,
+.show.offduty-card{
+  transition:
+    opacity 600ms cubic-bezier(.2,.9,.2,1),
+    transform 800ms cubic-bezier(.2,.9,.2,1),
+    filter 800ms cubic-bezier(.2,.9,.2,1),
+    box-shadow 900ms cubic-bezier(.2,.9,.2,1);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce){
+  .fade-up,
+  .fade-left,
+  .fade-right,
+  .panel-in,
+  .panel-left,
+  .panel-right{
+    transition: none !important;
+    transform: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+  }
+}
