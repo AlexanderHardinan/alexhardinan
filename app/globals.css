@@ -2422,3 +2422,77 @@ main.dash{
     display: none !important; /* mobile: hide right rail to stop layout chaos */
   }
 }
+
+/* =========================================================
+   MOBILE FIX — Dashboard landing layout (iPhone Safari/Chrome)
+   - Stacks hero + panels correctly
+   - Stops the giant black/empty portrait block
+   - Desktop/Tablet unchanged
+   ========================================================= */
+@media (max-width: 768px){
+
+  /* Keep header spacing stable */
+  main.dash{
+    padding-top: 0 !important;
+  }
+  .dash-shell{
+    padding-top: calc(var(--header-h) + 12px) !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  /* One column on mobile */
+  .dash-grid{
+    display: block !important;
+  }
+
+  /* Hide rail on mobile (prevents layout break) */
+  .dash-rail{
+    display: none !important;
+  }
+
+  /* Panels should not force desktop height */
+  .panel{
+    width: 100% !important;
+  }
+
+  /* HERO: force vertical stack */
+  .panel-hero__content{
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 14px !important;
+    padding: 16px !important;
+  }
+
+  /* HERO buttons wrap properly */
+  .panel-actions{
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+  }
+  .panel-actions .btn{
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+  }
+
+  /* Portrait: controlled size (removes giant black block) */
+  .panel-hero__portrait{
+    width: 100% !important;
+  }
+  .portrait-frame{
+    width: 100% !important;
+    max-width: 420px !important;
+    margin: 0 auto !important;
+    aspect-ratio: 1 / 1 !important;
+    border-radius: 18px !important;
+    overflow: hidden !important;
+    background: #000 !important;
+  }
+  .portrait-img{
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    display: block !important;
+  }
+}
