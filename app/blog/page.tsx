@@ -12,12 +12,20 @@ type BlogPost = {
 };
 
 export default function Blog() {
+  // Featured must always be present — set to newest post (Phase 4)
   const featured = {
-    src: '/phase-3-og.jpg',
-    slug: 'track-me-solutions-phase-3-supplier-product-inventory',
+    src: '/phase-4.png',
+    slug: 'track-me-solutions-phase-4-recipe-sales-waste-management',
   };
 
   const posts: BlogPost[] = [
+    {
+      slug: 'track-me-solutions-phase-4-recipe-sales-waste-management',
+      src: '/phase-4.png',
+      title: 'Track Me Solutions — Phase 4: Recipe, Sales, and Waste Management System for Restaurants',
+      excerpt:
+        'Phase 4 is the operational core of Track Me Solutions — fully integrated recipe management, sales tracking, and waste control with real-time inventory deduction, costing, yield, and dashboard intelligence.',
+    },
     {
       slug: 'track-me-solutions-phase-3-supplier-product-inventory',
       src: '/phase-3-og.jpg',
