@@ -69,7 +69,7 @@ export default function Page() {
                 <div className="panel-hero__portrait">
                   <div className="portrait-frame">
                     <Image
-                      src="/about-chef.png"
+                      src="/about-chef-v2.png"
                       alt="Chef Alex Portrait"
                       width={520}
                       height={520}
@@ -273,7 +273,7 @@ export default function Page() {
                   }}
                   style={{ paddingBottom: '2rem' }}
                 >
-                  {['/g1.png', '/g2.png', '/g3.png', '/g4.png', '/g5.png', '/g6.png'].map((src, i) => (
+                  {['/g1-v2.png', '/g2-v2.png', '/g3-v2.png', '/g4-v2.png', '/g5-v2.png', '/g6-v2.png'].map((src, i) => (
                     <SwiperSlide key={i}>
                       <ImageCard src={src} alt={`Gallery image ${i + 1}`} />
                     </SwiperSlide>
@@ -325,7 +325,7 @@ export default function Page() {
 
               <div className="panel-body">
                 <div className="rail-gallery">
-                  {['/g1.png', '/g2.png', '/g3.png', '/g4.png'].map((src, i) => (
+                  {['/g1-v2.png', '/g2-v2.png', '/g3-v2.png', '/g4-v2.png'].map((src, i) => (
                     <div key={i} className="rail-thumb">
                       <Image src={src} alt={`Preview ${i + 1}`} fill />
                     </div>
