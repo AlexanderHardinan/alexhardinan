@@ -2,9 +2,9 @@
 import './globals.css';
 import { Inter } from 'next/font/google';
 import type { Metadata } from 'next';
-import Script from 'next/script';
 import Header from '../components/Header';
 import ContactWidget from '../components/ContactWidget';
+import BuyMeCoffeeWidget from '../components/BuyMeCoffeeWidget';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -93,20 +93,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Footer />
         <ContactWidget />
 
-        {/* Buy Me a Coffee floating widget */}
-        <Script
-          src="https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js"
-          strategy="afterInteractive"
-          data-name="BMC-Widget"
-          data-cfasync="false"
-          data-id="chefalex"
-          data-description="Support me on Buy me a coffee!"
-          data-message=""
-          data-color="#5F7FFF"
-          data-position="Right"
-          data-x_margin="18"
-          data-y_margin="18"
-        />
+        {/* Buy Me a Coffee floating widget (mounted once so useEffect runs) */}
+        <BuyMeCoffeeWidget />
       </body>
     </html>
   );
