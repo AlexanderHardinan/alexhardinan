@@ -3004,3 +3004,13 @@ main.dash{
     padding: 10px;
   }
 }
+
+/* Buy Me a Coffee widget – force visibility */
+#bmc-wbtn,
+#bmc-wbtn * {
+  z-index: 2147483647 !important;
+}
+
+#bmc-wbtn {
+  position: fixed !important;
+}
