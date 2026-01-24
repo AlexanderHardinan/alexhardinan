@@ -15,7 +15,17 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://alexhardinan.com'),
   title: 'Alexander Hardinan',
   description: 'Culinary innovator. Modern gastronomy.',
-  icons: '/favicon.ico',
+
+  // ✅ FORCE YOUR LOGO ACROSS ALL PLATFORMS
+  icons: {
+    icon: [
+      { url: '/site-logo.png', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/site-logo.png' },
+    ],
+  },
+
   openGraph: {
     title: 'Alexander Hardinan',
     description: 'Culinary innovator. Modern gastronomy.',
@@ -31,6 +41,7 @@ export const metadata: Metadata = {
     ],
     type: 'website',
   },
+
   twitter: {
     card: 'summary_large_image',
     title: 'Alexander Hardinan',
@@ -83,7 +94,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
 
-        {/* Proof marker so you can confirm this file is deployed */}
+        {/* Proof marker */}
         <meta name="bmc-proof" content="enabled" />
       </head>
 
@@ -92,8 +103,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         <Footer />
         <ContactWidget />
-
-        {/* Buy Me a Coffee floating widget (mounted once so useEffect runs) */}
         <BuyMeCoffeeWidget />
       </body>
     </html>
