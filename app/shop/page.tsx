@@ -67,6 +67,9 @@ export default function ShopPage() {
   const featured = useMemo(() => PRODUCTS.find((p) => p.featured) ?? PRODUCTS[0], []);
   const others = useMemo(() => PRODUCTS.filter((p) => p.id !== featured.id), [featured.id]);
 
+  // Only show official products (hide placeholders)
+  const visibleOthers = useMemo(() => others.filter((p) => p.priceUsdYearly > 0), [others]);
+
   const [cartOpen, setCartOpen] = useState(false);
   const [items, setItems] = useState<CartItem[]>([]);
 
@@ -96,9 +99,7 @@ export default function ShopPage() {
   }
 
   function inc(productId: string) {
-    setItems((prev) =>
-      prev.map((x) => (x.productId === productId ? { ...x, qty: x.qty + 1 } : x)),
-    );
+    setItems((prev) => prev.map((x) => (x.productId === productId ? { ...x, qty: x.qty + 1 } : x)));
   }
 
   function dec(productId: string) {
@@ -112,6 +113,8 @@ export default function ShopPage() {
   function remove(productId: string) {
     setItems((prev) => prev.filter((x) => x.productId !== productId));
   }
+
+  const youtubeEmbedSrc = 'https://www.youtube.com/embed/f6BOYilUJaY';
 
   return (
     <main className="shop">
@@ -142,7 +145,12 @@ export default function ShopPage() {
             </p>
           </div>
 
-          <button type="button" className="shop__drawerClose" onClick={() => setCartOpen(false)} aria-label="Close cart">
+          <button
+            type="button"
+            className="shop__drawerClose"
+            onClick={() => setCartOpen(false)}
+            aria-label="Close cart"
+          >
             ✕
           </button>
         </div>
@@ -175,13 +183,23 @@ export default function ShopPage() {
                     </p>
 
                     <div className="shop__qty">
-                      <button type="button" className="shop__qtyBtn" onClick={() => dec(l.product.id)} aria-label="Decrease quantity">
+                      <button
+                        type="button"
+                        className="shop__qtyBtn"
+                        onClick={() => dec(l.product.id)}
+                        aria-label="Decrease quantity"
+                      >
                         −
                       </button>
                       <span className="shop__qtyVal" aria-label={`Quantity ${l.qty}`}>
                         {l.qty}
                       </span>
-                      <button type="button" className="shop__qtyBtn" onClick={() => inc(l.product.id)} aria-label="Increase quantity">
+                      <button
+                        type="button"
+                        className="shop__qtyBtn"
+                        onClick={() => inc(l.product.id)}
+                        aria-label="Increase quantity"
+                      >
                         +
                       </button>
 
@@ -224,9 +242,7 @@ export default function ShopPage() {
             Continue
           </a>
 
-          <p className="shop__drawerNote">
-            This cart is a UI experience (no payment processing on this page).
-          </p>
+          <p className="shop__drawerNote">This cart is a UI experience (no payment processing on this page).</p>
         </div>
       </aside>
 
@@ -245,7 +261,13 @@ export default function ShopPage() {
             <Link href="/" className="shop__ghostBtn" aria-label="Back to Home">
               Back to Home
             </Link>
-            <a className="shop__primaryBtn" href={featured.href} target="_blank" rel="noreferrer" aria-label="Visit Track Me Solutions">
+            <a
+              className="shop__primaryBtn"
+              href={featured.href}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Visit Track Me Solutions"
+            >
               Visit Track Me Solutions
             </a>
           </div>
@@ -299,7 +321,13 @@ export default function ShopPage() {
                     Add to Cart
                   </button>
 
-                  <a className="shop__outlineBtn" href={featured.href} target="_blank" rel="noreferrer" aria-label="Learn more">
+                  <a
+                    className="shop__outlineBtn"
+                    href={featured.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Learn more"
+                  >
                     Learn More
                   </a>
                 </div>
@@ -325,63 +353,59 @@ export default function ShopPage() {
               </div>
             </article>
 
-            {/* Product grid (future-proof) */}
-            <div className="shop__cards" aria-label="More products">
-              {others.map((p) => (
-                <article className="shop__card" key={p.id} aria-label={p.name}>
-                  <div className="shop__cardMedia">
-                    <Image
-                      src={p.imagePng}
-                      alt={`${p.name} image`}
-                      width={520}
-                      height={320}
-                      className="shop__cardImg"
-                    />
-                    <div className="shop__cardSheen" aria-hidden="true" />
-                  </div>
-
-                  <div className="shop__cardBody">
-                    <div className="shop__cardTop">
-                      <div>
-                        <p className="shop__cardName">{p.name}</p>
-                        <p className="shop__cardTag">{p.tag}</p>
-                      </div>
-
-                      <div className="shop__cardPrice" aria-label="Price">
-                        {p.priceUsdYearly > 0 ? (
-                          <>
-                            <span className="shop__cardPriceMain">{usd(p.priceUsdYearly)}</span>
-                            <span className="shop__cardPriceMeta">/ yr</span>
-                          </>
-                        ) : (
-                          <span className="shop__cardPriceMain">TBA</span>
-                        )}
-                      </div>
+            {/* Product grid (future-proof) — hidden when only placeholders exist */}
+            {visibleOthers.length > 0 && (
+              <div className="shop__cards" aria-label="More products">
+                {visibleOthers.map((p) => (
+                  <article className="shop__card" key={p.id} aria-label={p.name}>
+                    <div className="shop__cardMedia">
+                      <Image src={p.imagePng} alt={`${p.name} image`} width={520} height={320} className="shop__cardImg" />
+                      <div className="shop__cardSheen" aria-hidden="true" />
                     </div>
 
-                    <p className="shop__cardTitle">{p.title}</p>
-                    <p className="shop__cardCopy">{p.copy}</p>
+                    <div className="shop__cardBody">
+                      <div className="shop__cardTop">
+                        <div>
+                          <p className="shop__cardName">{p.name}</p>
+                          <p className="shop__cardTag">{p.tag}</p>
+                        </div>
 
-                    <div className="shop__cardActions">
-                      <button
-                        type="button"
-                        className="shop__primaryBtn shop__primaryBtn--small"
-                        onClick={() => addToCart(p.id)}
-                        aria-label={`Add ${p.name} to cart`}
-                      >
-                        Add
-                      </button>
-                      <a className="shop__ghostBtn shop__ghostBtn--small" href={p.href} target="_blank" rel="noreferrer" aria-label="Open link">
-                        Open
-                      </a>
+                        <div className="shop__cardPrice" aria-label="Price">
+                          <span className="shop__cardPriceMain">{usd(p.priceUsdYearly)}</span>
+                          <span className="shop__cardPriceMeta">/ yr</span>
+                        </div>
+                      </div>
+
+                      <p className="shop__cardTitle">{p.title}</p>
+                      <p className="shop__cardCopy">{p.copy}</p>
+
+                      <div className="shop__cardActions">
+                        <button
+                          type="button"
+                          className="shop__primaryBtn shop__primaryBtn--small"
+                          onClick={() => addToCart(p.id)}
+                          aria-label={`Add ${p.name} to cart`}
+                        >
+                          Add
+                        </button>
+                        <a
+                          className="shop__ghostBtn shop__ghostBtn--small"
+                          href={p.href}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label="Open link"
+                        >
+                          Open
+                        </a>
+                      </div>
                     </div>
-                  </div>
-                </article>
-              ))}
-            </div>
+                  </article>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Right: Panels (kept, but aligned with new shopping UX) */}
+          {/* Right: Panels */}
           <aside className="shop__side" aria-label="Shop Dashboard Panels">
             <div className="shop__panel">
               <div className="shop__panelTop">
@@ -424,6 +448,34 @@ export default function ShopPage() {
               >
                 Review Cart
               </button>
+            </div>
+
+            {/* YouTube Verification (added, same panel style) */}
+            <div className="shop__panel shop__panel--video" aria-label="Product verification video">
+              <div className="shop__panelTop">
+                <p className="shop__panelTitle">Verify the product</p>
+                <p className="shop__panelHint">Watch a quick overview before you decide.</p>
+              </div>
+
+              <div className="shop__videoFrame" aria-label="YouTube video">
+                <iframe
+                  src={youtubeEmbedSrc}
+                  title="Track Me Solutions demo"
+                  loading="lazy"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                />
+              </div>
+
+              <a
+                className="shop__outlineBtn shop__outlineBtn--full"
+                href="https://youtu.be/f6BOYilUJaY?si=fyCJl7ObZx4Qf1Ga"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Open YouTube video"
+              >
+                Watch on YouTube
+              </a>
             </div>
           </aside>
         </div>
@@ -1181,6 +1233,30 @@ export default function ShopPage() {
           font-size: 12px;
           line-height: 1.5;
           opacity: 0.65;
+        }
+
+        /* Added (minimal): video frame + full-width outline btn */
+        .shop__videoFrame {
+          position: relative;
+          width: 100%;
+          padding-top: 56.25%;
+          border-radius: 16px;
+          overflow: hidden;
+          border: 1px solid rgba(0, 0, 0, 0.08);
+          background: rgba(255, 255, 255, 0.72);
+          margin-top: 10px;
+        }
+
+        .shop__videoFrame iframe {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+        }
+
+        .shop__outlineBtn--full {
+          width: 100%;
+          margin-top: 10px;
         }
 
         @media (max-width: 980px) {
