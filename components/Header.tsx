@@ -209,6 +209,7 @@ export default function Header() {
         .nav-group > summary::-webkit-details-marker {
           display: none;
         }
+
         .nav-submenu {
           position: absolute;
           top: calc(100% + 10px);
@@ -222,13 +223,25 @@ export default function Header() {
           background: rgba(255, 255, 255, 0.92);
           backdrop-filter: blur(10px);
           box-shadow: 0 14px 50px rgba(0, 0, 0, 0.18);
-          z-index: 9999;
+          z-index: 999999; /* above header layers */
         }
         .nav-submenu a {
           text-decoration: none;
           white-space: nowrap;
         }
-        /* Close dropdown when click outside is handled by native <details> behavior; keep it minimal */
+      `}</style>
+
+      {/* Global overrides to prevent dropdown clipping by header overflow */}
+      <style jsx global>{`
+        .site-header,
+        .site-header__inner,
+        .nav-desktop {
+          overflow: visible !important;
+        }
+        .site-header {
+          position: relative;
+          z-index: 9999;
+        }
       `}</style>
     </>
   );
