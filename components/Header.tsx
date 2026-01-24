@@ -138,46 +138,56 @@ export default function Header() {
               </span>
             </Link>
 
-            {/* My Craft section */}
-            <div style={{ marginTop: 14, opacity: 0.9, fontSize: 12, letterSpacing: 0.6 }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-                <IconCraft />
-                <span>MY CRAFT</span>
-              </span>
-            </div>
-            <div style={{ paddingLeft: 10 }}>
-              <Link href="/stories-on-a-plate" onClick={() => setOpen(false)}>
-                Stories on a Plate
-              </Link>
-              <Link href="/in-the-glass" onClick={() => setOpen(false)}>
-                In the Glass
-              </Link>
-            </div>
+            {/* My Craft (collapsible) */}
+            <details className="mobile-group" style={{ marginTop: 12 }}>
+              <summary className="mobile-summary" aria-label="My Craft (mobile)">
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+                  <IconCraft />
+                  <span>My Craft</span>
+                </span>
+                <span aria-hidden="true" className="chev">
+                  ▾
+                </span>
+              </summary>
+              <div className="mobile-sub">
+                <Link href="/stories-on-a-plate" onClick={() => setOpen(false)}>
+                  Stories on a Plate
+                </Link>
+                <Link href="/in-the-glass" onClick={() => setOpen(false)}>
+                  In the Glass
+                </Link>
+              </div>
+            </details>
 
-            {/* Learn More section */}
-            <div style={{ marginTop: 14, opacity: 0.9, fontSize: 12, letterSpacing: 0.6 }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-                <IconLearn />
-                <span>LEARN MORE</span>
-              </span>
-            </div>
-            <div style={{ paddingLeft: 10 }}>
-              <Link href="/press-release" onClick={() => setOpen(false)}>
-                Press Release
-              </Link>
-              <Link href="/food-ethos" onClick={() => setOpen(false)}>
-                Food Ethos
-              </Link>
-              <Link href="/off-duty" onClick={() => setOpen(false)}>
-                Off Duty
-              </Link>
-              <Link href="/myrecipebook" onClick={() => setOpen(false)}>
-                My Recipe Book
-              </Link>
-            </div>
+            {/* Learn More (collapsible) */}
+            <details className="mobile-group" style={{ marginTop: 12 }}>
+              <summary className="mobile-summary" aria-label="Learn More (mobile)">
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+                  <IconLearn />
+                  <span>Learn More</span>
+                </span>
+                <span aria-hidden="true" className="chev">
+                  ▾
+                </span>
+              </summary>
+              <div className="mobile-sub">
+                <Link href="/press-release" onClick={() => setOpen(false)}>
+                  Press Release
+                </Link>
+                <Link href="/food-ethos" onClick={() => setOpen(false)}>
+                  Food Ethos
+                </Link>
+                <Link href="/off-duty" onClick={() => setOpen(false)}>
+                  Off Duty
+                </Link>
+                <Link href="/myrecipebook" onClick={() => setOpen(false)}>
+                  My Recipe Book
+                </Link>
+              </div>
+            </details>
 
             {/* Shop */}
-            <div style={{ marginTop: 14 }}>
+            <div style={{ marginTop: 12 }}>
               <Link href="/shop" onClick={() => setOpen(false)}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
                   <IconShop />
@@ -223,11 +233,42 @@ export default function Header() {
           background: rgba(255, 255, 255, 0.92);
           backdrop-filter: blur(10px);
           box-shadow: 0 14px 50px rgba(0, 0, 0, 0.18);
-          z-index: 999999; /* above header layers */
+          z-index: 999999;
         }
         .nav-submenu a {
           text-decoration: none;
           white-space: nowrap;
+        }
+
+        /* Mobile collapsible groups */
+        .mobile-group > summary {
+          list-style: none;
+          cursor: pointer;
+        }
+        .mobile-group > summary::-webkit-details-marker {
+          display: none;
+        }
+        .mobile-summary {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          padding: 10px 2px;
+          user-select: none;
+        }
+        .mobile-sub {
+          padding-left: 14px;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          padding-bottom: 6px;
+        }
+        .chev {
+          opacity: 0.75;
+          transition: transform 180ms ease;
+        }
+        details[open] .chev {
+          transform: rotate(180deg);
         }
       `}</style>
 
