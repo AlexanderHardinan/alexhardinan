@@ -104,7 +104,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           style={{
             position: 'fixed',
             right: '18px',
-            bottom: '18px',
+            bottom: '148px',
             zIndex: 999999,
             display: 'inline-flex',
             alignItems: 'center',
