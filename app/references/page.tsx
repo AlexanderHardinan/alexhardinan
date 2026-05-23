@@ -1,3 +1,4 @@
+// app/references/page.tsx
 'use client';
 
 import { useState } from 'react';
@@ -144,7 +145,7 @@ export default function CharacterReferences() {
               </p>
             </article>
 
-            {/* Reference 2 (updated) */}
+            {/* Reference 2 */}
             <article className="card" style={{ padding: 20, lineHeight: 1.6 }}>
               <h2
                 style={{
@@ -165,6 +166,27 @@ export default function CharacterReferences() {
                 Email: kareem@westernroadksa.com
               </p>
               <p style={{ margin: 0 }}>Tel: +966 58 021 6412</p>
+            </article>
+
+            {/* Reference 3 */}
+            <article className="card" style={{ padding: 20, lineHeight: 1.6 }}>
+              <h2
+                style={{
+                  margin: '0 0 8px',
+                  fontSize: 'clamp(18px, 1.2rem, 22px)',
+                  fontWeight: 800,
+                }}
+              >
+                The Globe&apos;s Heritage
+              </h2>
+              <p style={{ margin: '0 0 6px', opacity: 0.9 }}>
+                Located in Pattaya, Thailand
+              </p>
+              <p style={{ margin: '0 0 6px' }}>
+                <strong>Mr. Mats A.H Holtekjolen</strong> | CEO
+              </p>
+              <p style={{ margin: '0 0 6px' }}>Email: Mats@doaroo.com</p>
+              <p style={{ margin: 0 }}>Tel: +66 94 719 7200</p>
             </article>
 
             <p
