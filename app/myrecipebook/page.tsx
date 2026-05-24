@@ -1,3 +1,4 @@
+// app/myrecipebook/page.tsx
 'use client';
 
 import Image from 'next/image';
@@ -11,9 +12,16 @@ type Section = {
   desc: string;
 };
 
+type Category = {
+  title: string;
+  image: string;
+  desc: string;
+};
+
 export default function MyRecipeBook() {
   const [password, setPassword] = useState('');
   const [accessGranted, setAccessGranted] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const router = useRouter();
 
   const correctPassword = 'TH9999';
@@ -25,6 +33,14 @@ export default function MyRecipeBook() {
       alert('Incorrect password. Please try again.');
     }
   }
+
+  const categories: Category[] = [
+    {
+      title: 'The Globe',
+      image: '/allabout.png',
+      desc: 'A complete recipe collection for The Globe — organized by pastry, sauces, gastronomy, and chef knowledge.',
+    },
+  ];
 
   const sections: Section[] = [
     {
@@ -76,35 +92,76 @@ export default function MyRecipeBook() {
   return (
     <main className="myrecipebook-page">
       <section className="myrecipebook-hero">
-        <h1 className="title">My Recipe Book</h1>
+        <h1 className="title">
+          {activeCategory ? activeCategory : 'My Recipe Book'}
+        </h1>
         <p className="subtitle">
-          A personal collection of crafted recipes, inspirations, and fine-dining knowledge.
+          {activeCategory
+            ? 'Select a recipe group under this category.'
+            : 'A personal collection of crafted recipes, inspirations, and fine-dining knowledge.'}
         </p>
+
+        {activeCategory && (
+          <button
+            type="button"
+            className="btn"
+            onClick={() => setActiveCategory(null)}
+            style={{ marginTop: 14 }}
+          >
+            Back to Categories
+          </button>
+        )}
       </section>
 
-      <div className="myrecipebook-grid">
-        {sections.map((s) => (
-          <button
-            key={s.title}
-            type="button"
-            className="myrecipebook-card"
-            onClick={() => router.push(s.link)}
-            aria-label={`Open ${s.title}`}
-          >
-            <Image
-              src={s.image}
-              alt={s.title}
-              width={600}
-              height={400}
-              className="myrecipebook-card__image"
-            />
-            <div className="myrecipebook-card__body">
-              <h3 className="myrecipebook-card__title">{s.title}</h3>
-              <p className="myrecipebook-card__desc">{s.desc}</p>
-            </div>
-          </button>
-        ))}
-      </div>
+      {!activeCategory ? (
+        <div className="myrecipebook-grid">
+          {categories.map((category) => (
+            <button
+              key={category.title}
+              type="button"
+              className="myrecipebook-card"
+              onClick={() => setActiveCategory(category.title)}
+              aria-label={`Open ${category.title}`}
+            >
+              <Image
+                src={category.image}
+                alt={category.title}
+                width={600}
+                height={400}
+                className="myrecipebook-card__image"
+              />
+              <div className="myrecipebook-card__body">
+                <h3 className="myrecipebook-card__title">{category.title}</h3>
+                <p className="myrecipebook-card__desc">{category.desc}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="myrecipebook-grid">
+          {sections.map((s) => (
+            <button
+              key={s.title}
+              type="button"
+              className="myrecipebook-card"
+              onClick={() => router.push(s.link)}
+              aria-label={`Open ${s.title}`}
+            >
+              <Image
+                src={s.image}
+                alt={s.title}
+                width={600}
+                height={400}
+                className="myrecipebook-card__image"
+              />
+              <div className="myrecipebook-card__body">
+                <h3 className="myrecipebook-card__title">{s.title}</h3>
+                <p className="myrecipebook-card__desc">{s.desc}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
     </main>
   );
 }
