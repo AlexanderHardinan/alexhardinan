@@ -19,6 +19,7 @@ type Category = {
   image: string;
   desc: string;
   groups: Group[];
+  password?: string;
 };
 
 const STORAGE_KEY = 'myrecipebook:categories:v1';
@@ -71,6 +72,18 @@ export default function MyRecipeBook() {
   const [accessGranted, setAccessGranted] = useState(false);
   const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
+
+  const [unlockedCategoryIds, setUnlockedCategoryIds] = useState<string[]>([]);
+  const [unlockCategoryId, setUnlockCategoryId] = useState<string | null>(null);
+  const [unlockPassword, setUnlockPassword] = useState('');
+  const [showUnlockPassword, setShowUnlockPassword] = useState(false);
+
+  const [passwordCategoryId, setPasswordCategoryId] = useState<string | null>(null);
+  const [oldCategoryPassword, setOldCategoryPassword] = useState('');
+  const [newCategoryPassword, setNewCategoryPassword] = useState('');
+  const [showOldCategoryPassword, setShowOldCategoryPassword] = useState(false);
+  const [showNewCategoryPassword, setShowNewCategoryPassword] = useState(false);
+
   const router = useRouter();
 
   const correctPassword = 'TH9999';
@@ -98,12 +111,125 @@ export default function MyRecipeBook() {
     [categories, activeCategoryId],
   );
 
+  const unlockCategory = useMemo(
+    () => categories.find((category) => category.id === unlockCategoryId) || null,
+    [categories, unlockCategoryId],
+  );
+
+  const passwordCategory = useMemo(
+    () => categories.find((category) => category.id === passwordCategoryId) || null,
+    [categories, passwordCategoryId],
+  );
+
   function handleAccess() {
     if (password === correctPassword) {
       setAccessGranted(true);
     } else {
       alert('Incorrect password. Please try again.');
     }
+  }
+
+  function openCategory(category: Category) {
+    if (!category.password || unlockedCategoryIds.includes(category.id)) {
+      setActiveCategoryId(category.id);
+      return;
+    }
+
+    setUnlockCategoryId(category.id);
+    setUnlockPassword('');
+    setShowUnlockPassword(false);
+  }
+
+  function submitUnlockCategory() {
+    if (!unlockCategory) return;
+
+    if (unlockPassword === unlockCategory.password) {
+      setUnlockedCategoryIds((prev) =>
+        prev.includes(unlockCategory.id) ? prev : [...prev, unlockCategory.id],
+      );
+      setActiveCategoryId(unlockCategory.id);
+      setUnlockCategoryId(null);
+      setUnlockPassword('');
+      setShowUnlockPassword(false);
+    } else {
+      alert('Incorrect category password.');
+      setUnlockPassword('');
+    }
+  }
+
+  function closeUnlockModal() {
+    setUnlockCategoryId(null);
+    setUnlockPassword('');
+    setShowUnlockPassword(false);
+  }
+
+  function openPasswordModal(categoryId: string) {
+    setPasswordCategoryId(categoryId);
+    setOldCategoryPassword('');
+    setNewCategoryPassword('');
+    setShowOldCategoryPassword(false);
+    setShowNewCategoryPassword(false);
+  }
+
+  function closePasswordModal() {
+    setPasswordCategoryId(null);
+    setOldCategoryPassword('');
+    setNewCategoryPassword('');
+    setShowOldCategoryPassword(false);
+    setShowNewCategoryPassword(false);
+  }
+
+  function saveCategoryPassword() {
+    if (!passwordCategory) return;
+
+    if (passwordCategory.password && oldCategoryPassword !== passwordCategory.password) {
+      alert('Old password is incorrect.');
+      setOldCategoryPassword('');
+      return;
+    }
+
+    if (!newCategoryPassword.trim()) {
+      alert('Please enter a new password.');
+      return;
+    }
+
+    setCategories((prev) =>
+      prev.map((category) =>
+        category.id === passwordCategory.id
+          ? { ...category, password: newCategoryPassword.trim() }
+          : category,
+      ),
+    );
+
+    setUnlockedCategoryIds((prev) =>
+      prev.filter((categoryId) => categoryId !== passwordCategory.id),
+    );
+
+    closePasswordModal();
+  }
+
+  function removeCategoryPassword() {
+    if (!passwordCategory?.password) return;
+
+    if (oldCategoryPassword !== passwordCategory.password) {
+      alert('Old password is incorrect.');
+      setOldCategoryPassword('');
+      return;
+    }
+
+    if (!confirm(`Remove password from "${passwordCategory.title}"?`)) return;
+
+    setCategories((prev) =>
+      prev.map((category) =>
+        category.id === passwordCategory.id ? { ...category, password: '' } : category,
+      ),
+    );
+
+    setUnlockedCategoryIds((prev) =>
+      prev.filter((categoryId) => categoryId !== passwordCategory.id),
+    );
+
+    closePasswordModal();
   }
 
   function addCategory() {
@@ -119,6 +245,7 @@ export default function MyRecipeBook() {
       image: image.trim(),
       desc: desc.trim(),
       groups: [],
+      password: '',
     };
 
     setCategories((prev) => [category, ...prev]);
@@ -145,6 +272,7 @@ export default function MyRecipeBook() {
     if (!confirm(`Delete category "${category.title}"?`)) return;
 
     setCategories((prev) => prev.filter((item) => item.id !== categoryId));
+    setUnlockedCategoryIds((prev) => prev.filter((item) => item !== categoryId));
 
     if (activeCategoryId === categoryId) {
       setActiveCategoryId(null);
@@ -315,7 +443,7 @@ export default function MyRecipeBook() {
             <div key={category.id} className="myrecipebook-card">
               <button
                 type="button"
-                onClick={() => setActiveCategoryId(category.id)}
+                onClick={() => openCategory(category)}
                 aria-label={`Open ${category.title}`}
                 style={{
                   border: 0,
@@ -334,7 +462,10 @@ export default function MyRecipeBook() {
                   className="myrecipebook-card__image"
                 />
                 <div className="myrecipebook-card__body">
-                  <h3 className="myrecipebook-card__title">{category.title}</h3>
+                  <h3 className="myrecipebook-card__title">
+                    {category.password ? '🔒 ' : ''}
+                    {category.title}
+                  </h3>
                   <p className="myrecipebook-card__desc">{category.desc}</p>
                 </div>
               </button>
@@ -345,6 +476,9 @@ export default function MyRecipeBook() {
                 </button>
                 <button type="button" className="btn-ghost" onClick={() => renameCategory(category.id)}>
                   Rename
+                </button>
+                <button type="button" className="btn-ghost" onClick={() => openPasswordModal(category.id)}>
+                  {category.password ? 'Change Password' : 'Set Password'}
                 </button>
                 <button type="button" className="btn-ghost" onClick={() => deleteCategory(category.id)}>
                   Delete
@@ -407,6 +541,178 @@ export default function MyRecipeBook() {
           )}
         </div>
       )}
+
+      {unlockCategory && (
+        <div className="myrecipebook-modal" role="dialog" aria-modal="true" aria-label="Unlock category">
+          <div className="myrecipebook-modal__card">
+            <h2 className="myrecipebook-modal__title">Unlock {unlockCategory.title}</h2>
+            <p className="myrecipebook-modal__desc">Enter this category password to access its groups.</p>
+
+            <div className="myrecipebook-password-field">
+              <input
+                type={showUnlockPassword ? 'text' : 'password'}
+                value={unlockPassword}
+                onChange={(e) => setUnlockPassword(e.target.value)}
+                placeholder="Category password"
+                className="myrecipebook-password-field__input"
+              />
+              <button
+                type="button"
+                className="myrecipebook-password-field__toggle"
+                onClick={() => setShowUnlockPassword((prev) => !prev)}
+                aria-label={showUnlockPassword ? 'Hide password' : 'Show password'}
+              >
+                {showUnlockPassword ? '🙈' : '👁️'}
+              </button>
+            </div>
+
+            <div className="myrecipebook-modal__actions">
+              <button type="button" className="btn" onClick={submitUnlockCategory}>
+                Unlock
+              </button>
+              <button type="button" className="btn-ghost" onClick={closeUnlockModal}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {passwordCategory && (
+        <div className="myrecipebook-modal" role="dialog" aria-modal="true" aria-label="Set category password">
+          <div className="myrecipebook-modal__card">
+            <h2 className="myrecipebook-modal__title">
+              {passwordCategory.password ? 'Change Password' : 'Set Password'}
+            </h2>
+            <p className="myrecipebook-modal__desc">
+              {passwordCategory.password
+                ? `Enter the old password first to change "${passwordCategory.title}".`
+                : `Create a password for "${passwordCategory.title}".`}
+            </p>
+
+            {passwordCategory.password && (
+              <div className="myrecipebook-password-field">
+                <input
+                  type={showOldCategoryPassword ? 'text' : 'password'}
+                  value={oldCategoryPassword}
+                  onChange={(e) => setOldCategoryPassword(e.target.value)}
+                  placeholder="Old password"
+                  className="myrecipebook-password-field__input"
+                />
+                <button
+                  type="button"
+                  className="myrecipebook-password-field__toggle"
+                  onClick={() => setShowOldCategoryPassword((prev) => !prev)}
+                  aria-label={showOldCategoryPassword ? 'Hide old password' : 'Show old password'}
+                >
+                  {showOldCategoryPassword ? '🙈' : '👁️'}
+                </button>
+              </div>
+            )}
+
+            <div className="myrecipebook-password-field">
+              <input
+                type={showNewCategoryPassword ? 'text' : 'password'}
+                value={newCategoryPassword}
+                onChange={(e) => setNewCategoryPassword(e.target.value)}
+                placeholder="New password"
+                className="myrecipebook-password-field__input"
+              />
+              <button
+                type="button"
+                className="myrecipebook-password-field__toggle"
+                onClick={() => setShowNewCategoryPassword((prev) => !prev)}
+                aria-label={showNewCategoryPassword ? 'Hide new password' : 'Show new password'}
+              >
+                {showNewCategoryPassword ? '🙈' : '👁️'}
+              </button>
+            </div>
+
+            <div className="myrecipebook-modal__actions">
+              <button type="button" className="btn" onClick={saveCategoryPassword}>
+                Save Password
+              </button>
+              {passwordCategory.password && (
+                <button type="button" className="btn-ghost" onClick={removeCategoryPassword}>
+                  Remove Password
+                </button>
+              )}
+              <button type="button" className="btn-ghost" onClick={closePasswordModal}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style jsx>{`
+        .myrecipebook-modal {
+          position: fixed;
+          inset: 0;
+          z-index: 999999;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 18px;
+          background: rgba(0, 0, 0, 0.58);
+          backdrop-filter: blur(10px);
+        }
+
+        .myrecipebook-modal__card {
+          width: min(440px, 100%);
+          border-radius: 22px;
+          padding: 22px;
+          background: rgba(255, 255, 255, 0.96);
+          border: 1px solid rgba(0, 0, 0, 0.08);
+          box-shadow: 0 30px 80px rgba(0, 0, 0, 0.28);
+        }
+
+        .myrecipebook-modal__title {
+          margin: 0;
+          font-size: 22px;
+          font-weight: 900;
+        }
+
+        .myrecipebook-modal__desc {
+          margin: 8px 0 16px;
+          font-size: 14px;
+          line-height: 1.5;
+          opacity: 0.72;
+        }
+
+        .myrecipebook-password-field {
+          position: relative;
+          margin-top: 10px;
+        }
+
+        .myrecipebook-password-field__input {
+          width: 100%;
+          padding: 12px 48px 12px 12px;
+          border-radius: 12px;
+          border: 1px solid rgba(0, 0, 0, 0.15);
+          font-size: 14px;
+        }
+
+        .myrecipebook-password-field__toggle {
+          position: absolute;
+          top: 50%;
+          right: 8px;
+          transform: translateY(-50%);
+          height: 34px;
+          width: 34px;
+          border-radius: 10px;
+          border: 1px solid rgba(0, 0, 0, 0.12);
+          background: rgba(255, 255, 255, 0.9);
+          cursor: pointer;
+        }
+
+        .myrecipebook-modal__actions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          margin-top: 16px;
+        }
+      `}</style>
     </main>
   );
 }
