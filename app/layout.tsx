@@ -123,8 +123,8 @@ export default function RootLayout({
           aria-label="Support with GSupport"
           style={{
             position: 'fixed',
-            right: '180px',
-            bottom: '1px',
+            right: '18px',
+            bottom: '180px',
             zIndex: 999999,
             display: 'inline-flex',
             alignItems: 'center',
